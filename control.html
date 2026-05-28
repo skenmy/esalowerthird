@@ -1,0 +1,2824 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESA Lower Third - Control</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0f0a1a;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: #1a1030;
+      border-bottom: 2px solid #6b4d8a;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .header h1 {
+      font-size: 18px;
+      font-weight: 700;
+      color: #e0b060;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .connection-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #9f4a4a;
+      transition: background 0.3s;
+    }
+
+    .status-dot.connected {
+      background: #4a9f4a;
+      box-shadow: 0 0 8px rgba(74, 159, 74, 0.5);
+    }
+
+    .main {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .columns {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    .col-presets {
+      flex: 3;
+      min-width: 0;
+    }
+
+    .col-tiltify {
+      flex: 2;
+      min-width: 0;
+    }
+
+    /* Queue preview */
+    .queue-section {
+      background: #1a1030;
+      border: 2px solid #6b4d8a;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+    }
+
+    .queue-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+
+    .queue-section h3 {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b4d8a;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .mode-toggle {
+      display: flex;
+      border: 2px solid #6b4d8a;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .mode-btn {
+      padding: 5px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      border: none;
+      cursor: pointer;
+      background: #2a1d42;
+      color: #6b4d8a;
+      transition: background 0.15s, color 0.15s;
+    }
+
+    .mode-btn + .mode-btn {
+      border-left: 2px solid #6b4d8a;
+    }
+
+    .mode-btn.active {
+      background: #e0b060;
+      color: #1a1030;
+    }
+
+    .mode-btn:not(.active):hover {
+      background: #3d2a5c;
+      color: #a08cc0;
+    }
+
+    .queue-preview {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 40px;
+      flex-wrap: wrap;
+    }
+
+    .queue-empty {
+      color: #3d2a5c;
+      font-size: 13px;
+      font-style: italic;
+    }
+
+    .queue-chip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #2a1d42;
+      border: 1px solid #6b4d8a;
+      border-radius: 6px;
+      padding: 6px 12px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .queue-chip .queue-pos {
+      color: #e0b060;
+      font-weight: 700;
+      font-size: 11px;
+    }
+
+    .queue-chip .queue-name {
+      color: #fff;
+    }
+
+    .queue-arrow {
+      color: #3d2a5c;
+      font-size: 14px;
+      user-select: none;
+    }
+
+    /* Go live / hide buttons */
+    .action-buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+    }
+
+    .btn-go-live {
+      flex: 2;
+      background: linear-gradient(135deg, #4a9f4a 0%, #3a7a3a 100%);
+      color: #fff;
+      border: none;
+      padding: 18px;
+      border-radius: 8px;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: transform 0.1s, opacity 0.1s;
+    }
+
+    .btn-go-live:disabled {
+      background: #2a2a2a;
+      color: #555;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-go-live:not(:disabled):hover {
+      transform: scale(1.02);
+    }
+
+    .btn-go-live:not(:disabled):active {
+      transform: scale(0.98);
+    }
+
+    .btn-go-live .shortcut {
+      font-weight: 400;
+      opacity: 0.7;
+      font-size: 11px;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    .btn-hide-global {
+      flex: 1;
+      background: linear-gradient(135deg, #9f4a4a 0%, #7a3a3a 100%);
+      color: #fff;
+      border: none;
+      padding: 18px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      transition: transform 0.1s, opacity 0.1s;
+    }
+
+    .btn-hide-global:hover {
+      transform: scale(1.02);
+    }
+
+    .btn-hide-global:active {
+      transform: scale(0.98);
+    }
+
+    .btn-hide-global .shortcut {
+      font-weight: 400;
+      opacity: 0.7;
+      font-size: 11px;
+      text-transform: none;
+      letter-spacing: 0;
+    }
+
+    /* Presets */
+    .presets-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+
+    .presets-header h2 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #a08cc0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .btn-add {
+      background: linear-gradient(135deg, #3d2a5c 0%, #2d1b4e 100%);
+      border: 2px solid #6b4d8a;
+      color: #e0b060;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: border-color 0.15s, transform 0.1s;
+    }
+
+    .btn-add:hover {
+      border-color: #e0b060;
+      transform: scale(1.02);
+    }
+
+    .btn-add:active {
+      transform: scale(0.98);
+    }
+
+    .preset-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 24px;
+    }
+
+    .preset-card {
+      background: #1a1030;
+      border: 2px solid #6b4d8a;
+      border-radius: 8px;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: border-color 0.2s, background 0.2s, transform 0.15s, opacity 0.15s;
+      cursor: grab;
+    }
+
+    .preset-card.dragging {
+      opacity: 0.4;
+      cursor: grabbing;
+    }
+
+    .preset-card.drag-over {
+      border-color: #e0b060;
+      transform: translateY(2px);
+    }
+
+    .preset-card.queued {
+      border-color: #e0b060;
+      background: #1f1a10;
+    }
+
+    .preset-key {
+      width: 36px;
+      height: 36px;
+      background: #2a1d42;
+      border: 2px solid #6b4d8a;
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 700;
+      color: #e0b060;
+      flex-shrink: 0;
+      user-select: none;
+    }
+
+    .preset-card.queued .preset-key {
+      border-color: #e0b060;
+      background: #2a2010;
+    }
+
+    .preset-fields {
+      flex: 1;
+      display: flex;
+      gap: 8px;
+      min-width: 0;
+    }
+
+    .preset-fields input {
+      flex: 1;
+      padding: 8px 12px;
+      border: 2px solid #3d2a5c;
+      border-radius: 6px;
+      background: #2a1d42;
+      color: #fff;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      min-width: 0;
+      transition: border-color 0.15s;
+    }
+
+    .preset-fields input.input-pronouns {
+      flex: 0 0 100px;
+      min-width: 100px;
+      color: #a08cc0;
+    }
+
+    .preset-fields input:focus {
+      outline: none;
+      border-color: #e0b060;
+    }
+
+    .preset-fields input::placeholder {
+      color: #6b4d8a;
+    }
+
+    .preset-actions {
+      display: flex;
+      gap: 6px;
+      flex-shrink: 0;
+      align-items: center;
+    }
+
+    .queue-badge {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, #e0b060 0%, #c0903a 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a1030;
+      flex-shrink: 0;
+    }
+
+    .btn-queue {
+      color: #fff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: transform 0.1s, opacity 0.1s;
+      white-space: nowrap;
+    }
+
+    .btn-queue.add {
+      background: linear-gradient(135deg, #3d2a5c 0%, #2d1b4e 100%);
+      border: 2px solid #6b4d8a;
+    }
+
+    .btn-queue.remove {
+      background: transparent;
+      border: 2px solid #e0b060;
+      color: #e0b060;
+    }
+
+    .btn-queue:hover {
+      transform: scale(1.04);
+    }
+
+    .btn-queue:active {
+      transform: scale(0.96);
+    }
+
+    .btn-delete {
+      background: transparent;
+      border: 2px solid #3d2a5c;
+      color: #6b4d8a;
+      width: 36px;
+      height: 36px;
+      border-radius: 6px;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: border-color 0.15s, color 0.15s, transform 0.1s;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .btn-delete:hover {
+      border-color: #9f4a4a;
+      color: #9f4a4a;
+      transform: scale(1.05);
+    }
+
+    .btn-delete:active {
+      transform: scale(0.95);
+    }
+
+    /* Shortcuts */
+    .shortcuts {
+      background: #1a1030;
+      border: 2px solid #3d2a5c;
+      border-radius: 8px;
+      padding: 16px 20px;
+    }
+
+    .shortcuts h3 {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b4d8a;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 10px;
+    }
+
+    .shortcuts-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 24px;
+    }
+
+    .shortcut-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: #a08cc0;
+    }
+
+    .shortcut-item kbd {
+      background: #2a1d42;
+      border: 1px solid #6b4d8a;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 11px;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      color: #e0b060;
+      min-width: 28px;
+      text-align: center;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: #2a1d42;
+      border: 2px solid #6b4d8a;
+      border-radius: 8px;
+      padding: 12px 24px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #e0b060;
+      opacity: 0;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
+      pointer-events: none;
+      z-index: 100;
+    }
+
+    .toast.visible {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: #6b4d8a;
+      font-size: 14px;
+    }
+
+    /* Tiltify section */
+    .tiltify-section {
+      background: #1a1030;
+      border: 2px solid #6b4d8a;
+      border-radius: 8px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      display: none;
+    }
+
+    .tiltify-section.active {
+      display: block;
+    }
+
+    .tiltify-section h3 {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b4d8a;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .tiltify-campaign-summary {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .tiltify-campaign-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #e0b060;
+      flex: 1;
+    }
+
+    .tiltify-raised {
+      font-size: 14px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .tiltify-raised .of-goal {
+      font-weight: 400;
+      color: #a08cc0;
+      font-size: 12px;
+    }
+
+    .tiltify-mini-bar {
+      height: 4px;
+      background: #2a1d42;
+      border-radius: 2px;
+      overflow: hidden;
+      margin-bottom: 4px;
+    }
+
+    .tiltify-mini-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f0a030 0%, #e0c060 100%);
+      border-radius: 2px;
+      transition: width 0.5s ease;
+    }
+
+    .tiltify-updated {
+      font-size: 11px;
+      color: #6b4d8a;
+      margin-bottom: 12px;
+    }
+
+    .tiltify-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .tiltify-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      transition: transform 0.1s;
+      border: 2px solid #6b4d8a;
+      background: linear-gradient(135deg, #3d2a5c 0%, #2d1b4e 100%);
+      color: #fff;
+    }
+
+    .tiltify-btn:hover {
+      transform: scale(1.04);
+    }
+
+    .tiltify-btn:active {
+      transform: scale(0.96);
+    }
+
+    .tiltify-btn.active {
+      border-color: #e0b060;
+      background: linear-gradient(135deg, #e0b060 0%, #c0903a 100%);
+      color: #1a1030;
+    }
+
+    .tiltify-btn.hide-btn {
+      border-color: #9f4a4a;
+      background: linear-gradient(135deg, #9f4a4a 0%, #7a3a3a 100%);
+      color: #fff;
+    }
+
+    .tiltify-donations-list {
+      max-height: 260px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .tiltify-donation-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #2a1d42;
+      border-radius: 6px;
+      padding: 8px 12px;
+    }
+
+    .tiltify-donation-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tiltify-donation-top {
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .tiltify-donor-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .tiltify-donor-amount {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e0b060;
+    }
+
+    .tiltify-donor-comment {
+      font-size: 11px;
+      color: #a08cc0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 400px;
+    }
+
+    .tiltify-donor-incentive {
+      font-size: 10px;
+      font-weight: 600;
+      color: #e0b060;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tiltify-donation-show {
+      padding: 4px 12px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      border: 1px solid #6b4d8a;
+      background: #1a1030;
+      color: #a08cc0;
+      flex-shrink: 0;
+      transition: transform 0.1s, border-color 0.15s;
+    }
+
+    .tiltify-donation-show:hover {
+      border-color: #e0b060;
+      color: #e0b060;
+      transform: scale(1.04);
+    }
+
+    .tiltify-donation-show:active {
+      transform: scale(0.96);
+    }
+
+    .tiltify-sub-header {
+      font-size: 10px;
+      font-weight: 600;
+      color: #6b4d8a;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 10px;
+      margin-bottom: 6px;
+    }
+
+    .tiltify-sub-header:first-of-type {
+      margin-top: 0;
+    }
+
+    .tiltify-item-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #2a1d42;
+      border-radius: 6px;
+      padding: 8px 12px;
+      margin-bottom: 4px;
+    }
+
+    .tiltify-item-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .tiltify-item-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .tiltify-item-name {
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .tiltify-item-amounts {
+      font-size: 11px;
+      color: #a08cc0;
+    }
+
+    .tiltify-item-amounts .gold {
+      color: #e0b060;
+      font-weight: 600;
+    }
+
+    .tiltify-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 10px;
+      border-bottom: 2px solid #3d2a5c;
+      flex-wrap: wrap;
+    }
+
+    .tiltify-tab {
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      font-family: 'Inter', sans-serif;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #6b4d8a;
+      background: transparent;
+      border: none;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -2px;
+      cursor: pointer;
+      transition: color 0.15s, border-color 0.15s;
+    }
+
+    .tiltify-tab:hover {
+      color: #a08cc0;
+    }
+
+    .tiltify-tab.active {
+      color: #e0b060;
+      border-bottom-color: #e0b060;
+    }
+
+    .tiltify-tab .tab-count {
+      font-size: 10px;
+      font-weight: 400;
+      color: #6b4d8a;
+      margin-left: 4px;
+    }
+
+    .tiltify-tab.active .tab-count {
+      color: #a08cc0;
+    }
+
+    .tiltify-tab-panel {
+      display: none;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+
+    .tiltify-tab-panel.active {
+      display: block;
+    }
+
+    .schedule-time {
+      font-size: 11px;
+      font-weight: 600;
+      color: #e0b060;
+      white-space: nowrap;
+      min-width: 52px;
+    }
+
+    .schedule-next-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: #1a1030;
+      background: #4a9f4a;
+      border-radius: 3px;
+      padding: 1px 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .schedule-done-badge {
+      font-size: 10px;
+      font-weight: 700;
+      color: #1a1030;
+      background: #6b4d8a;
+      border-radius: 3px;
+      padding: 1px 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .schedule-done-row {
+      opacity: 0.5;
+    }
+
+    .schedule-estimate {
+      font-size: 10px;
+      color: #6b4d8a;
+      white-space: nowrap;
+    }
+
+    .tab-filter {
+      width: 100%;
+      padding: 7px 12px;
+      margin-bottom: 8px;
+      border: 2px solid #3d2a5c;
+      border-radius: 6px;
+      background: #2a1d42;
+      color: #fff;
+      font-size: 13px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .tab-filter:focus {
+      outline: none;
+      border-color: #e0b060;
+    }
+
+    .tab-filter::placeholder {
+      color: #6b4d8a;
+    }
+
+    textarea.tab-filter {
+      font-family: 'Inter', sans-serif;
+    }
+
+    input[type="datetime-local"].tab-filter {
+      color-scheme: dark;
+    }
+
+    /* Advanced mode scene selector */
+    .scene-selector {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+
+    .scene-btn {
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      border: 2px solid #3d2a5c;
+      background: #2a1d42;
+      color: #a08cc0;
+      transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .scene-btn:hover {
+      border-color: #6b4d8a;
+      transform: scale(1.02);
+    }
+
+    .scene-btn.active {
+      border-color: #e0b060;
+      background: #2a2010;
+      color: #e0b060;
+    }
+
+    .scene-btn .scene-count {
+      font-size: 10px;
+      font-weight: 700;
+      background: #3d2a5c;
+      color: #a08cc0;
+      border-radius: 3px;
+      padding: 1px 5px;
+      min-width: 18px;
+      text-align: center;
+    }
+
+    .scene-btn.active .scene-count {
+      background: #e0b060;
+      color: #1a1030;
+    }
+
+    .scene-btn .scene-live-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: transparent;
+      flex-shrink: 0;
+    }
+
+    .scene-btn .scene-live-dot.live {
+      background: #4a9f4a;
+      box-shadow: 0 0 6px rgba(74, 159, 74, 0.5);
+    }
+
+    /* Scene overview strip */
+    .scene-overview {
+      display: flex;
+      gap: 8px;
+      margin-top: 8px;
+      flex-wrap: wrap;
+    }
+
+    .scene-overview-item {
+      font-size: 10px;
+      font-weight: 500;
+      color: #6b4d8a;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .scene-overview-item .scene-overview-dot {
+      width: 5px;
+      height: 5px;
+      border-radius: 50%;
+      background: #3d2a5c;
+    }
+
+    .scene-overview-item .scene-overview-dot.live {
+      background: #4a9f4a;
+    }
+
+    .scene-overview-item.active-scene {
+      color: #e0b060;
+    }
+
+    /* Image preset/queue */
+    .image-queue-thumb {
+      width: 60px;
+      height: 45px;
+      object-fit: cover;
+      border-radius: 4px;
+      border: 2px solid #6b4d8a;
+      background: #2a1d42;
+      cursor: pointer;
+      transition: border-color 0.15s;
+    }
+
+    .image-queue-thumb:hover {
+      border-color: #e0b060;
+    }
+
+    .image-preset-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #2a1d42;
+      border-radius: 6px;
+      padding: 8px 10px;
+    }
+
+    .image-preset-row .preset-fields {
+      flex: 1;
+      display: flex;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .image-preset-thumb {
+      width: 44px;
+      height: 34px;
+      object-fit: cover;
+      border-radius: 3px;
+      background: #1a1030;
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>ESA Lower Third Control</h1>
+    <div style="display: flex; align-items: center; gap: 16px;">
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="modeBasic" onclick="setAdvancedMode(false)">One Scene</button>
+        <button class="mode-btn" id="modeAdvanced" onclick="setAdvancedMode(true)">Multi-Scene</button>
+      </div>
+      <div class="connection-status">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Waiting for source...</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+    <!-- Queue preview -->
+    <div class="queue-section">
+      <div class="queue-header">
+        <h3>Queue</h3>
+        <div class="mode-toggle">
+          <button class="mode-btn" id="modeTogether" onclick="setMode('together')">Together</button>
+          <button class="mode-btn active" id="modeSeparate" onclick="setMode('separate')">Separate</button>
+        </div>
+      </div>
+      <div class="scene-selector" id="sceneSelector" style="display: none;"></div>
+      <div class="queue-preview" id="queuePreview">
+        <span class="queue-empty">Press 1-9 or click Queue to add names</span>
+      </div>
+      <div class="scene-overview" id="sceneOverview" style="display: none;"></div>
+    </div>
+
+    <!-- Action buttons -->
+    <div class="action-buttons">
+      <button class="btn-go-live" id="btnGoLive" onclick="goLive()" disabled>
+        Go Live<br>
+        <span class="shortcut">Enter</span>
+      </button>
+      <button class="btn-hide-global" id="btnHide" onclick="handleHideClick()">
+        Hide<br>
+        <span class="shortcut">Escape</span>
+      </button>
+    </div>
+
+    <div class="columns">
+      <!-- Left: Presets -->
+      <div class="col-presets">
+        <div class="presets-header">
+          <h2>Presets</h2>
+          <button class="btn-add" onclick="addPreset()">+ Add Preset</button>
+        </div>
+        <div class="preset-list" id="presetList"></div>
+        <div class="shortcuts">
+          <h3>Keyboard Shortcuts</h3>
+          <div class="shortcuts-grid">
+            <div class="shortcut-item"><kbd>1</kbd><span>-</span><kbd>9</kbd> Toggle preset in queue</div>
+            <div class="shortcut-item"><kbd>Enter</kbd> Go Live</div>
+            <div class="shortcut-item"><kbd>Esc</kbd> Hide all lower thirds</div>
+            <div class="shortcut-item"><kbd>0</kbd> Clear queue</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right: Tiltify -->
+      <div class="col-tiltify">
+        <div class="tiltify-section" id="tiltifySection">
+          <h3>Tiltify Donations</h3>
+          <div class="tiltify-campaign-summary">
+            <span class="tiltify-campaign-name" id="tiltifyCampaignName">--</span>
+            <span class="tiltify-raised" id="tiltifyRaised">--</span>
+          </div>
+          <div class="tiltify-mini-bar">
+            <div class="tiltify-mini-fill" id="tiltifyMiniFill" style="width: 0%"></div>
+          </div>
+          <div class="tiltify-updated" id="tiltifyUpdated">Waiting for data...</div>
+          <div class="tiltify-buttons">
+            <button class="tiltify-btn" onclick="tiltifyShowDisplay('totalizer')">Totalizer</button>
+            <button class="tiltify-btn" onclick="tiltifyShowDisplay('total')">Total Only</button>
+            <button class="tiltify-btn" onclick="tiltifyShowDisplay('matching')">Matching</button>
+            <button class="tiltify-btn" id="btnAutoCycle" onclick="toggleAutoCycle()">Auto-Cycle</button>
+            <button class="tiltify-btn" onclick="tiltifyShowDisplay('shame_clock')">Shame</button>
+            <button class="tiltify-btn" onclick="tiltifyShowDisplay('hype_meter')">Hype</button>
+            <button class="tiltify-btn" onclick="tiltifyShowDisplay('donation_train')">Train</button>
+            <button class="tiltify-btn hide-btn" onclick="tiltifyHide()">Hide</button>
+          </div>
+          <div class="tiltify-tabs" id="tiltifyTabs"></div>
+          <div class="tiltify-tab-panel active" id="tiltifyPanelDonations">
+            <input class="tab-filter" type="text" placeholder="Filter donations..." oninput="onFilterInput('donations', this.value)" onkeydown="event.stopPropagation()">
+            <div id="listDonations"></div>
+          </div>
+          <div class="tiltify-tab-panel" id="tiltifyPanelTargets">
+            <input class="tab-filter" type="text" placeholder="Filter targets..." oninput="onFilterInput('targets', this.value)" onkeydown="event.stopPropagation()">
+            <div id="listTargets"></div>
+          </div>
+          <div class="tiltify-tab-panel" id="tiltifyPanelPolls">
+            <input class="tab-filter" type="text" placeholder="Filter polls..." oninput="onFilterInput('polls', this.value)" onkeydown="event.stopPropagation()">
+            <div id="listPolls"></div>
+          </div>
+          <div class="tiltify-tab-panel" id="tiltifyPanelMilestones">
+            <input class="tab-filter" type="text" placeholder="Filter milestones..." oninput="onFilterInput('milestones', this.value)" onkeydown="event.stopPropagation()">
+            <div id="listMilestones"></div>
+          </div>
+          <div class="tiltify-tab-panel" id="tiltifyPanelSchedule">
+            <input class="tab-filter" type="text" placeholder="Filter runs..." oninput="onFilterInput('schedule', this.value)" onkeydown="event.stopPropagation()">
+            <div id="listSchedule"></div>
+          </div>
+          <div class="tiltify-tab-panel" id="tiltifyPanelMatches">
+            <div id="listMatches"></div>
+          </div>
+        </div>
+
+        <div class="tiltify-section active" id="funToolsSection">
+          <h3>Fun Tools</h3>
+          <div class="tiltify-tabs" id="funToolsTabs">
+            <button class="tiltify-tab active" data-tab="ft-counter" onclick="switchFunTab('counter')">Counter</button>
+            <button class="tiltify-tab" data-tab="ft-quote" onclick="switchFunTab('quote')">Quote</button>
+            <button class="tiltify-tab" data-tab="ft-sleep" onclick="switchFunTab('sleep')">Sleep</button>
+            <button class="tiltify-tab" data-tab="ft-stat" onclick="switchFunTab('stat')">Stat Card</button>
+            <button class="tiltify-tab" data-tab="ft-wheel" onclick="switchFunTab('wheel')">Wheel</button>
+            <button class="tiltify-tab" data-tab="ft-images" onclick="switchFunTab('images')">Images</button>
+          </div>
+
+          <!-- Counter tab -->
+          <div class="tiltify-tab-panel active" id="ftPanelCounter">
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+              <input type="text" id="counterLabel" placeholder="Counter label (e.g. DEATHS)" class="tab-filter" onkeydown="event.stopPropagation()">
+              <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="tiltify-btn" onclick="counterDecrement()" style="font-size: 18px; padding: 8px 14px;">&minus;</button>
+                <span style="font-size: 32px; font-weight: 700; color: #fff; min-width: 60px; text-align: center;" id="counterDisplay">0</span>
+                <button class="tiltify-btn" onclick="counterIncrement()" style="font-size: 18px; padding: 8px 14px;">+</button>
+                <button class="tiltify-btn" onclick="counterReset()" style="font-size: 12px;">Reset</button>
+              </div>
+            </div>
+            <div class="tiltify-buttons">
+              <button class="tiltify-btn" onclick="counterShow()">Show</button>
+              <button class="tiltify-btn hide-btn" onclick="counterHide()">Hide</button>
+            </div>
+          </div>
+
+          <!-- Quote tab -->
+          <div class="tiltify-tab-panel" id="ftPanelQuote">
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+              <input type="text" id="quoteText" placeholder="Quote text" class="tab-filter" onkeydown="event.stopPropagation()">
+              <input type="text" id="quoteAttribution" placeholder="Attribution (optional)" class="tab-filter" onkeydown="event.stopPropagation()">
+            </div>
+            <div class="tiltify-buttons">
+              <button class="tiltify-btn" onclick="showQuote()">Quote It!</button>
+              <button class="tiltify-btn hide-btn" onclick="tiltifyHide()">Hide</button>
+            </div>
+            <div class="tiltify-sub-header" style="margin-top: 12px;">Quote Log</div>
+            <div id="quoteLog" style="max-height: 200px; overflow-y: auto;"></div>
+          </div>
+
+          <!-- Sleep tab -->
+          <div class="tiltify-tab-panel" id="ftPanelSleep">
+            <div id="sleepList" style="margin-bottom: 8px;"></div>
+            <div style="display: flex; gap: 8px; align-items: center; margin-bottom: 12px;">
+              <input type="text" id="sleepName" placeholder="Name" class="tab-filter" style="flex: 1;" onkeydown="event.stopPropagation()">
+              <input type="datetime-local" id="sleepWakeTime" class="tab-filter" style="flex: 1;" onkeydown="event.stopPropagation()">
+              <button class="tiltify-btn" onclick="addSleepPerson()">Add</button>
+            </div>
+            <div class="tiltify-buttons">
+              <button class="tiltify-btn" onclick="sleepShow()">Show</button>
+              <button class="tiltify-btn hide-btn" onclick="sleepHide()">Hide</button>
+            </div>
+          </div>
+
+          <!-- Stat Card tab -->
+          <div class="tiltify-tab-panel" id="ftPanelStat">
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+              <select id="statPresetSelect" class="tab-filter" onchange="loadStatCardPreset()" onkeydown="event.stopPropagation()">
+                <option value="">-- Select preset --</option>
+              </select>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="statSrcUsername" placeholder="SRC Username" class="tab-filter" style="flex: 1;" onkeydown="event.stopPropagation()">
+                <button class="tiltify-btn" onclick="fetchSrcStats()" style="white-space: nowrap;">Fetch SRC</button>
+              </div>
+              <div style="display: flex; gap: 8px;">
+                <input type="text" id="statTwitchUsername" placeholder="Twitch Username" class="tab-filter" style="flex: 1;" onkeydown="event.stopPropagation()">
+                <button class="tiltify-btn" onclick="fetchTwitchStats()" style="white-space: nowrap;">Fetch Twitch</button>
+              </div>
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                <input type="text" id="statGamesRun" placeholder="Games Run" class="tab-filter" onkeydown="event.stopPropagation()">
+                <input type="text" id="statWorldRecords" placeholder="World Records" class="tab-filter" onkeydown="event.stopPropagation()">
+                <input type="text" id="statTotalPBs" placeholder="Total PBs" class="tab-filter" onkeydown="event.stopPropagation()">
+                <input type="text" id="statTwitchFollowers" placeholder="Twitch Followers" class="tab-filter" onkeydown="event.stopPropagation()">
+              </div>
+              <input type="text" id="statESACount" placeholder="ESA Appearances" class="tab-filter" onkeydown="event.stopPropagation()">
+              <input type="text" id="statFunFact" placeholder="Fun Fact" class="tab-filter" onkeydown="event.stopPropagation()">
+              <div id="statFetchStatus" style="font-size: 12px; color: #a08cc0; min-height: 16px;"></div>
+            </div>
+            <div class="tiltify-buttons">
+              <button class="tiltify-btn" onclick="showStatCard()">Show</button>
+              <button class="tiltify-btn hide-btn" onclick="tiltifyHide()">Hide</button>
+            </div>
+          </div>
+
+          <!-- Wheel tab -->
+          <div class="tiltify-tab-panel" id="ftPanelWheel">
+            <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+              <textarea id="wheelOptions" class="tab-filter" rows="5" placeholder="Options (one per line)" style="resize: vertical;" onkeydown="event.stopPropagation()"></textarea>
+            </div>
+            <div class="tiltify-buttons">
+              <button class="tiltify-btn" onclick="spinWheel()">Spin!</button>
+              <button class="tiltify-btn hide-btn" onclick="hideWheelControl()">Hide</button>
+            </div>
+            <div class="tiltify-sub-header" style="margin-top: 12px;">History</div>
+            <div id="wheelHistory" style="max-height: 200px; overflow-y: auto;"></div>
+          </div>
+
+          <!-- Images tab -->
+          <div class="tiltify-tab-panel" id="ftPanelImages">
+            <div class="tiltify-sub-header">Queue</div>
+            <div id="imageQueuePreview" style="display: flex; gap: 8px; flex-wrap: wrap; min-height: 40px; margin-bottom: 12px;">
+              <span style="color: #3d2a5c; font-size: 13px; font-style: italic;">No images queued</span>
+            </div>
+            <div class="tiltify-buttons" style="margin-bottom: 12px;">
+              <button class="tiltify-btn" onclick="imageShowNext()">Show Next</button>
+              <button class="tiltify-btn hide-btn" onclick="imageHide()">Hide</button>
+              <button class="tiltify-btn" onclick="clearImageQueue()" style="font-size: 12px;">Clear Queue</button>
+            </div>
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+              <div class="tiltify-sub-header" style="margin: 0;">Presets</div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 11px; color: #6b4d8a;">Default:</span>
+                <div class="mode-toggle">
+                  <button class="mode-btn active" id="imgPosLeft" onclick="setImageDefaultPos('left')" style="padding: 3px 10px; font-size: 11px;">Left</button>
+                  <button class="mode-btn" id="imgPosRight" onclick="setImageDefaultPos('right')" style="padding: 3px 10px; font-size: 11px;">Right</button>
+                </div>
+                <button class="tiltify-btn" onclick="addImagePreset()" style="font-size: 12px; padding: 4px 12px;">+ Add</button>
+              </div>
+            </div>
+            <div id="imagePresetList" style="display: flex; flex-direction: column; gap: 6px; max-height: 400px; overflow-y: auto;"></div>
+          </div>
+        </div>
+
+        <div class="tiltify-section active" id="customSection">
+          <h3>Custom Message</h3>
+          <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
+            <input type="text" id="customHeading" placeholder="Heading (optional)" class="tab-filter" onkeydown="event.stopPropagation()">
+            <input type="text" id="customMessage" placeholder="Message text" class="tab-filter" onkeydown="event.stopPropagation()">
+            <input type="text" id="customImageUrl" placeholder="Image URL (optional)" class="tab-filter" onkeydown="event.stopPropagation()">
+          </div>
+          <div class="tiltify-buttons">
+            <button class="tiltify-btn" onclick="showCustomMessage()">Show</button>
+            <button class="tiltify-btn hide-btn" onclick="tiltifyHide()">Hide</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+    let ws;
+    let presets = [];
+    let queue = [];  // ordered array of preset IDs
+    let connected = false;
+    let isLive = false;
+    let displayMode = 'separate';  // 'together' or 'separate'
+
+    // Advanced mode state
+    const SCENES = ['hosts', 'guests', 'wide', 'obsbot1', 'obsbot2', 'misc'];
+    const SCENE_LABELS = { hosts: 'Hosts', guests: 'Guests', wide: 'Wide', obsbot1: 'OBSBOT 1', obsbot2: 'OBSBOT 2', misc: 'Misc' };
+    let advancedMode = false;
+    let advancedQueues = { hosts: [], guests: [], wide: [], obsbot1: [], obsbot2: [], misc: [] };
+    let selectedScene = 'hosts';
+    let sceneLiveStatus = {};
+
+    function connectWs() {
+      ws = new WebSocket(wsUrl);
+      ws.onopen = () => {
+        setConnectionStatus(true);
+        ws.send(JSON.stringify({ type: 'ping' }));
+      };
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.type === 'pong') {
+          setConnectionStatus(true);
+        } else if (data.type === 'status') {
+          if (data.scene) {
+            sceneLiveStatus[data.scene] = data.visible;
+            if (advancedMode) render();
+          } else {
+            isLive = data.visible;
+          }
+        } else if (data.type === 'clients') {
+          setConnectionStatus(data.count >= 2);
+        } else if (data.type === 'tiltify_data') {
+          handleTiltifyData(data);
+        } else if (data.type === 'schedule_data') {
+          handleScheduleData(data);
+        } else if (data.type === 'src_result') {
+          handleSrcResult(data);
+        } else if (data.type === 'twitch_result') {
+          handleTwitchResult(data);
+        }
+      };
+      ws.onclose = () => {
+        setConnectionStatus(false);
+        setTimeout(connectWs, 2000);
+      };
+    }
+
+    function wsSend(obj) {
+      if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
+    }
+
+    // --- Persistence ---
+
+    function loadPresets() {
+      try {
+        const saved = localStorage.getItem('esa-lt-presets');
+        if (saved) presets = JSON.parse(saved);
+      } catch (e) {}
+
+      if (presets.length === 0) {
+        presets = [
+          { id: genId(), name: 'Player 1', title: 'Runner' },
+          { id: genId(), name: 'Player 2', title: 'Runner' },
+          { id: genId(), name: 'Commentator', title: 'Commentary' },
+        ];
+        savePresets();
+      }
+    }
+
+    function savePresets() {
+      localStorage.setItem('esa-lt-presets', JSON.stringify(presets));
+    }
+
+    function genId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    }
+
+    function loadAdvancedState() {
+      try {
+        const mode = localStorage.getItem('esa-lt-advancedMode');
+        if (mode !== null) advancedMode = mode === 'true';
+        const queues = localStorage.getItem('esa-lt-advancedQueues');
+        if (queues) {
+          const parsed = JSON.parse(queues);
+          for (const s of SCENES) {
+            if (Array.isArray(parsed[s])) advancedQueues[s] = parsed[s];
+          }
+        }
+        const scene = localStorage.getItem('esa-lt-selectedScene');
+        if (scene && SCENES.includes(scene)) selectedScene = scene;
+      } catch (e) {}
+    }
+
+    function saveAdvancedState() {
+      localStorage.setItem('esa-lt-advancedMode', advancedMode);
+      localStorage.setItem('esa-lt-advancedQueues', JSON.stringify(advancedQueues));
+      localStorage.setItem('esa-lt-selectedScene', selectedScene);
+    }
+
+    // --- Rendering ---
+
+    function render() {
+      renderQueue();
+      renderPresets();
+      const anyQueued = advancedMode
+        ? SCENES.some(s => advancedQueues[s].length > 0)
+        : queue.length > 0;
+      document.getElementById('btnGoLive').disabled = !anyQueued;
+
+      // Update Go Live button label
+      const btnGoLive = document.getElementById('btnGoLive');
+      if (advancedMode) {
+        btnGoLive.innerHTML = `Go Live: All Scenes<br><span class="shortcut">Enter</span>`;
+      } else {
+        btnGoLive.innerHTML = `Go Live<br><span class="shortcut">Enter</span>`;
+      }
+
+      // Update Hide button label
+      const btnHide = document.getElementById('btnHide');
+      btnHide.innerHTML = `Hide All<br><span class="shortcut">Escape</span>`;
+
+      // Show/hide scene selector and overview
+      document.getElementById('sceneSelector').style.display = advancedMode ? 'flex' : 'none';
+      document.getElementById('sceneOverview').style.display = advancedMode ? 'flex' : 'none';
+
+      // Update mode toggle
+      document.getElementById('modeBasic').classList.toggle('active', !advancedMode);
+      document.getElementById('modeAdvanced').classList.toggle('active', advancedMode);
+
+      if (advancedMode) {
+        renderSceneSelector();
+        renderSceneOverview();
+      }
+
+      renderStatCardDropdown();
+    }
+
+    function renderQueue() {
+      const el = document.getElementById('queuePreview');
+      const activeQueue = advancedMode ? advancedQueues[selectedScene] : queue;
+      if (activeQueue.length === 0) {
+        el.innerHTML = '<span class="queue-empty">Press 1-9 or click Queue to add names</span>';
+        return;
+      }
+
+      const chips = activeQueue.map((id, i) => {
+        const preset = presets.find(p => p.id === id);
+        if (!preset) return '';
+        const name = preset.name || 'Name';
+        return `<div class="queue-chip">` +
+          `<span class="queue-pos">#${i + 1}</span>` +
+          `<span class="queue-name">${escHtml(name)}</span>` +
+          `</div>`;
+      });
+
+      // Interleave arrows between chips
+      const parts = [];
+      chips.forEach((chip, i) => {
+        parts.push(chip);
+        if (i < chips.length - 1) {
+          parts.push('<span class="queue-arrow">&rarr;</span>');
+        }
+      });
+      el.innerHTML = parts.join('');
+    }
+
+    function renderPresets() {
+      const list = document.getElementById('presetList');
+
+      if (presets.length === 0) {
+        list.innerHTML = '<div class="empty-state">No presets yet. Add one to get started.</div>';
+        return;
+      }
+
+      list.innerHTML = presets.map((preset, index) => {
+        const num = index + 1;
+        const activeQueue = advancedMode ? advancedQueues[selectedScene] : queue;
+        const queuePos = activeQueue.indexOf(preset.id);
+        const isQueued = queuePos !== -1;
+        return `
+          <div class="preset-card ${isQueued ? 'queued' : ''}" data-id="${preset.id}" data-index="${index}"
+               draggable="true"
+               ondragstart="onDragStart(event)" ondragend="onDragEnd(event)"
+               ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+            <div class="preset-key">${num <= 9 ? num : ''}</div>
+            <div class="preset-fields">
+              <input type="text" value="${escHtml(preset.name)}" placeholder="Name"
+                     data-field="name" data-id="${preset.id}"
+                     onchange="updatePresetField('${preset.id}', 'name', this.value)"
+                     onkeydown="handlePresetKey(event)">
+              <input type="text" value="${escHtml(preset.pronouns)}" placeholder="Pronouns"
+                     class="input-pronouns"
+                     data-field="pronouns" data-id="${preset.id}"
+                     onchange="updatePresetField('${preset.id}', 'pronouns', this.value)"
+                     onkeydown="handlePresetKey(event)">
+              <input type="text" value="${escHtml(preset.title)}" placeholder="Title(s) — pipe-separated"
+                     data-field="title" data-id="${preset.id}"
+                     onchange="updatePresetField('${preset.id}', 'title', this.value)"
+                     onkeydown="handlePresetKey(event)">
+            </div>
+            <div class="preset-actions">
+              ${isQueued ? `<div class="queue-badge">${queuePos + 1}</div>` : ''}
+              <button class="btn-queue ${isQueued ? 'remove' : 'add'}" onclick="toggleQueue('${preset.id}')">
+                ${isQueued ? 'Remove' : 'Queue'}
+              </button>
+              <button class="btn-delete" onclick="deletePreset('${preset.id}')" title="Delete preset">&times;</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function escHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str || '';
+      return div.innerHTML;
+    }
+
+    // --- Actions ---
+
+    function addPreset() {
+      presets.push({ id: genId(), name: '', title: '' });
+      savePresets();
+      render();
+      const inputs = document.querySelectorAll('.preset-card:last-child input[data-field="name"]');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    }
+
+    function updatePresetField(id, field, value) {
+      const preset = presets.find(p => p.id === id);
+      if (preset) {
+        preset[field] = value;
+        savePresets();
+        renderQueue();
+        if (advancedMode) renderSceneOverview();
+      }
+    }
+
+    function deletePreset(id) {
+      presets = presets.filter(p => p.id !== id);
+      queue = queue.filter(qid => qid !== id);
+      for (const s of SCENES) {
+        advancedQueues[s] = advancedQueues[s].filter(qid => qid !== id);
+      }
+      savePresets();
+      saveAdvancedState();
+      render();
+      showToast('Preset deleted');
+    }
+
+    function toggleQueue(id) {
+      if (advancedMode) {
+        const q = advancedQueues[selectedScene];
+        const idx = q.indexOf(id);
+        if (idx !== -1) {
+          q.splice(idx, 1);
+        } else {
+          q.push(id);
+        }
+        saveAdvancedState();
+      } else {
+        const idx = queue.indexOf(id);
+        if (idx !== -1) {
+          queue.splice(idx, 1);
+        } else {
+          queue.push(id);
+        }
+      }
+      render();
+    }
+
+    function toggleQueueByIndex(index) {
+      if (index >= 0 && index < presets.length) {
+        toggleQueue(presets[index].id);
+      }
+    }
+
+    function clearQueue() {
+      if (advancedMode) {
+        advancedQueues[selectedScene] = [];
+        saveAdvancedState();
+        render();
+        showToast(`${SCENE_LABELS[selectedScene]} queue cleared`);
+      } else {
+        queue = [];
+        render();
+        showToast('Queue cleared');
+      }
+    }
+
+    function goLive() {
+      if (advancedMode) {
+        let totalSent = 0;
+        for (const scene of SCENES) {
+          const q = advancedQueues[scene];
+          if (q.length === 0) continue;
+          const items = q.map(id => {
+            const p = presets.find(pr => pr.id === id);
+            return p ? buildPresetItem(p) : null;
+          }).filter(Boolean);
+          if (items.length === 0) continue;
+          wsSend({ type: 'update', scene, items, mode: displayMode });
+          sceneLiveStatus[scene] = true;
+          totalSent += items.length;
+        }
+        if (totalSent === 0) return;
+        render();
+        showToast(`All scenes live`);
+      } else {
+        if (queue.length === 0) return;
+        const items = queue.map(id => {
+          const p = presets.find(pr => pr.id === id);
+          return p ? buildPresetItem(p) : null;
+        }).filter(Boolean);
+        wsSend({ type: 'update', items, mode: displayMode });
+        isLive = true;
+        const names = items.map(i => i.name).join(', ');
+        showToast(`Live: ${names}`);
+      }
+    }
+
+    function buildPresetItem(p) {
+      const titles = (p.title || '').split('|').map(t => t.trim()).filter(Boolean);
+      return {
+        name: p.name || 'Name',
+        pronouns: p.pronouns || '',
+        title: titles[0] || '',
+        titles: titles.length > 1 ? titles : undefined,
+      };
+    }
+
+    function hideAll() {
+      wsSend({ type: 'hide' });
+      wsSend({ type: 'tiltify_hide' });
+      wsSend({ type: 'schedule_hide' });
+      wsSend({ type: 'wheel_hide' });
+      wsSend({ type: 'image_hide' });
+      stopAutoCycle();
+      isLive = false;
+      for (const s of SCENES) sceneLiveStatus[s] = false;
+      render();
+      showToast('All lower thirds hidden');
+    }
+
+    function handleHideClick() {
+      hideAll();
+    }
+
+    function hideScene(scene) {
+      wsSend({ type: 'hide', scene });
+      sceneLiveStatus[scene] = false;
+      render();
+      showToast(`${SCENE_LABELS[scene]} hidden`);
+    }
+
+    // --- Advanced Mode ---
+
+    function setAdvancedMode(enabled) {
+      advancedMode = enabled;
+      saveAdvancedState();
+      render();
+    }
+
+    function selectScene(scene) {
+      selectedScene = scene;
+      saveAdvancedState();
+      render();
+    }
+
+    function renderSceneSelector() {
+      const el = document.getElementById('sceneSelector');
+      el.innerHTML = SCENES.map(scene => {
+        const q = advancedQueues[scene];
+        const count = q.length;
+        const isActive = scene === selectedScene;
+        const isLive = sceneLiveStatus[scene];
+        return `<button class="scene-btn ${isActive ? 'active' : ''}" onclick="selectScene('${scene}')">` +
+          `<span class="scene-live-dot ${isLive ? 'live' : ''}"></span>` +
+          `${escHtml(SCENE_LABELS[scene])}` +
+          `<span class="scene-count">${count}</span>` +
+        `</button>`;
+      }).join('');
+    }
+
+    function renderSceneOverview() {
+      const el = document.getElementById('sceneOverview');
+      el.innerHTML = SCENES.map(scene => {
+        const q = advancedQueues[scene];
+        const isLive = sceneLiveStatus[scene];
+        const names = q.map(id => {
+          const p = presets.find(pr => pr.id === id);
+          return p ? (p.name || 'Name') : '?';
+        });
+        const summary = names.length ? names.join(', ') : 'empty';
+        return `<div class="scene-overview-item ${scene === selectedScene ? 'active-scene' : ''}">` +
+          `<span class="scene-overview-dot ${isLive ? 'live' : ''}"></span>` +
+          `${escHtml(SCENE_LABELS[scene])}: ${escHtml(summary)}` +
+        `</div>`;
+      }).join('');
+    }
+
+    function handlePresetKey(event) {
+      if (event.code === 'Enter') {
+        event.target.blur();
+      }
+      event.stopPropagation();
+    }
+
+    // --- Mode ---
+
+    function setMode(mode) {
+      displayMode = mode;
+      document.getElementById('modeTogether').classList.toggle('active', mode === 'together');
+      document.getElementById('modeSeparate').classList.toggle('active', mode === 'separate');
+    }
+
+    // --- Connection ---
+
+    function setConnectionStatus(isConnected) {
+      connected = isConnected;
+      document.getElementById('statusDot').classList.toggle('connected', isConnected);
+      document.getElementById('statusText').textContent = isConnected ? 'Source connected' : 'Waiting for source...';
+    }
+
+    // --- Toast ---
+
+    let toastTimeout = null;
+    function showToast(message) {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.classList.add('visible');
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => toast.classList.remove('visible'), 2000);
+    }
+
+    // --- Keyboard Shortcuts ---
+
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+
+      // 1-9: Toggle queue
+      if (e.code >= 'Digit1' && e.code <= 'Digit9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        toggleQueueByIndex(parseInt(e.code.replace('Digit', '')) - 1);
+        return;
+      }
+
+      // 0: Clear queue
+      if (e.code === 'Digit0' && !e.ctrlKey && !e.altKey && !e.metaKey) {
+        e.preventDefault();
+        clearQueue();
+        return;
+      }
+
+      // Enter: Go Live
+      if (e.code === 'Enter') {
+        e.preventDefault();
+        goLive();
+        return;
+      }
+
+      // Escape / Delete: Hide
+      if (e.code === 'Escape' || e.code === 'Delete') {
+        e.preventDefault();
+        hideAll();
+        return;
+      }
+    });
+
+    // --- Tiltify ---
+
+    let tiltifyData = { campaign: null, donations: [], targets: [], milestones: [], donationMatches: [], incentives: {}, lastUpdated: 0 };
+    let autoCycleInterval = null;
+    let autoCycleIndex = 0;
+
+    function handleTiltifyData(data) {
+      // Sort donations newest first by completed_at
+      const donations = (data.donations || []).slice();
+      donations.sort((a, b) => {
+        const ta = new Date(a.completed_at || a.created_at || 0).getTime();
+        const tb = new Date(b.completed_at || b.created_at || 0).getTime();
+        return tb - ta;
+      });
+
+      tiltifyData = {
+        campaign: data.campaign,
+        donations,
+        targets: data.targets || [],
+        polls: data.polls || [],
+        milestones: data.milestones || [],
+        donationMatches: data.donationMatches || [],
+        incentives: data.incentives || {},
+        lastUpdated: data.lastUpdated || Date.now(),
+      };
+      renderTiltify();
+    }
+
+    function getDonationIncentive(d) {
+      const inc = tiltifyData.incentives || {};
+      if (d.target_id && inc.targets?.[d.target_id]) {
+        return inc.targets[d.target_id].name;
+      }
+      if (d.poll_id && inc.polls?.[d.poll_id]) {
+        const poll = inc.polls[d.poll_id];
+        const optionName = d.poll_option_id && poll.options?.[d.poll_option_id]
+          ? poll.options[d.poll_option_id].name : null;
+        return optionName ? `${poll.name}: ${optionName}` : poll.name;
+      }
+      return null;
+    }
+
+    function formatCurrency(val) {
+      const num = parseFloat(val) || 0;
+      return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function renderTiltify() {
+      const section = document.getElementById('tiltifySection');
+      const c = tiltifyData.campaign;
+      if (!c) return;
+
+      section.classList.add('active');
+
+      const name = c.name || 'Campaign';
+      const raised = parseFloat(c.total_amount_raised?.value || c.amount_raised?.value || 0);
+      const goal = parseFloat(c.goal?.value || c.fundraiser_goal_amount?.value || 0);
+      const pct = goal > 0 ? Math.min(100, (raised / goal) * 100) : 0;
+
+      document.getElementById('tiltifyCampaignName').textContent = name;
+      document.getElementById('tiltifyRaised').innerHTML =
+        `${formatCurrency(raised)} <span class="of-goal">/ ${formatCurrency(goal)}</span>`;
+      document.getElementById('tiltifyMiniFill').style.width = pct + '%';
+
+      const ago = Math.round((Date.now() - tiltifyData.lastUpdated) / 1000);
+      document.getElementById('tiltifyUpdated').textContent =
+        ago < 5 ? 'Updated just now' : `Updated ${ago}s ago`;
+
+      renderTiltifyLists();
+      renderScheduleTab();
+    }
+
+    let activeTab = 'donations';
+    const tabFilters = {};
+
+    function switchTab(tab) {
+      activeTab = tab;
+      document.querySelectorAll('.tiltify-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+      document.querySelectorAll('.tiltify-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tiltifyPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)));
+      // Focus filter input on tab switch
+      const filterInput = document.querySelector('.tiltify-tab-panel.active .tab-filter');
+      if (filterInput) filterInput.focus();
+    }
+
+    function onFilterInput(tab, value) {
+      tabFilters[tab] = value.toLowerCase();
+      if (tab === 'schedule') {
+        renderScheduleTab();
+      } else {
+        renderTiltifyLists();
+      }
+    }
+
+    function formatDuration(seconds) {
+      const h = Math.floor(seconds / 3600);
+      const m = Math.floor((seconds % 3600) / 60);
+      if (h > 0 && m > 0) return `${h}h ${m}m`;
+      if (h > 0) return `${h}h`;
+      return `${m}m`;
+    }
+
+    function renderTiltifyLists() {
+      const donations = tiltifyData.donations;
+      const targets = tiltifyData.targets || [];
+      const polls = tiltifyData.polls || [];
+      let milestones = [...(tiltifyData.milestones || [])];
+      milestones.sort((a, b) => parseFloat(a.amount?.value || 0) - parseFloat(b.amount?.value || 0));
+      const campaignRaised = tiltifyData.campaign
+        ? parseFloat(tiltifyData.campaign.total_amount_raised?.value || tiltifyData.campaign.amount_raised?.value || 0)
+        : 0;
+
+      // Tabs
+      const scheduleCount = (scheduleDataCache.upcoming || []).length;
+      const tabsEl = document.getElementById('tiltifyTabs');
+      const donationMatches = tiltifyData.donationMatches || [];
+      tabsEl.innerHTML =
+        `<button class="tiltify-tab ${activeTab === 'donations' ? 'active' : ''}" data-tab="donations" onclick="switchTab('donations')">Donations<span class="tab-count">${donations.length}</span></button>` +
+        `<button class="tiltify-tab ${activeTab === 'targets' ? 'active' : ''}" data-tab="targets" onclick="switchTab('targets')">Targets<span class="tab-count">${targets.length}</span></button>` +
+        `<button class="tiltify-tab ${activeTab === 'polls' ? 'active' : ''}" data-tab="polls" onclick="switchTab('polls')">Polls<span class="tab-count">${polls.length}</span></button>` +
+        `<button class="tiltify-tab ${activeTab === 'milestones' ? 'active' : ''}" data-tab="milestones" onclick="switchTab('milestones')">Milestones<span class="tab-count">${milestones.length}</span></button>` +
+        `<button class="tiltify-tab ${activeTab === 'matches' ? 'active' : ''}" data-tab="matches" onclick="switchTab('matches')">Matches<span class="tab-count">${donationMatches.length}</span></button>` +
+        `<button class="tiltify-tab ${activeTab === 'schedule' ? 'active' : ''}" data-tab="schedule" onclick="switchTab('schedule')">Schedule<span class="tab-count">${scheduleCount}</span></button>`;
+
+      const donFilter = (tabFilters.donations || '').toLowerCase();
+      const tgtFilter = (tabFilters.targets || '').toLowerCase();
+      const pollFilter = (tabFilters.polls || '').toLowerCase();
+      const msFilter = (tabFilters.milestones || '').toLowerCase();
+
+      // Donations list
+      const filteredDonations = donFilter
+        ? donations.filter(d => {
+            const text = [d.donor_name, d.name, d.donor_comment, d.comment, getDonationIncentive(d)].filter(Boolean).join(' ').toLowerCase();
+            return text.includes(donFilter);
+          })
+        : donations;
+      const donList = document.getElementById('listDonations');
+      if (filteredDonations.length === 0) {
+        donList.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">' + (donations.length ? 'No matches' : 'No donations yet') + '</div>';
+      } else {
+        donList.innerHTML = filteredDonations.map((d) => {
+          const origIndex = donations.indexOf(d);
+          const name = escHtml(d.donor_name || d.name || 'Anonymous');
+          const amount = formatCurrency(d.amount?.value || d.amount || 0);
+          const comment = escHtml(d.donor_comment || d.comment || '');
+          const incentive = getDonationIncentive(d);
+          return `<div class="tiltify-donation-row">` +
+            `<div class="tiltify-donation-info">` +
+              `<div class="tiltify-donation-top">` +
+                `<span class="tiltify-donor-name">${name}</span>` +
+                `<span class="tiltify-donor-amount">${amount}</span>` +
+              `</div>` +
+              (comment ? `<div class="tiltify-donor-comment">${comment}</div>` : '') +
+              (incentive ? `<div class="tiltify-donor-incentive">&rarr; ${escHtml(incentive)}</div>` : '') +
+            `</div>` +
+            `<button class="tiltify-donation-show" onclick="tiltifyShowDonation(${origIndex})">Show</button>` +
+          `</div>`;
+        }).join('');
+      }
+
+      // Targets list
+      const filteredTargets = tgtFilter
+        ? targets.filter(t => (t.name || '').toLowerCase().includes(tgtFilter))
+        : targets;
+      const tgtList = document.getElementById('listTargets');
+      if (filteredTargets.length === 0) {
+        tgtList.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">' + (targets.length ? 'No matches' : 'No targets') + '</div>';
+      } else {
+        tgtList.innerHTML = filteredTargets.map((t) => {
+          const origIndex = targets.indexOf(t);
+          const raised = parseFloat(t.amount_raised?.value || t.current_amount?.value || 0);
+          const goal = parseFloat(t.amount?.value || t.goal?.value || 1);
+          const pct = Math.min(100, (raised / goal) * 100);
+          const remaining = Math.max(0, goal - raised);
+          return `<div class="tiltify-item-row">` +
+            `<div class="tiltify-item-info">` +
+              `<div class="tiltify-item-name">${escHtml(t.name || 'Target')}</div>` +
+              `<div class="tiltify-item-amounts">${formatCurrency(raised)} / <span class="gold">${formatCurrency(goal)}</span> &mdash; ${Math.round(pct)}%${raised >= goal ? '' : ` (${formatCurrency(remaining)} to go)`}</div>` +
+            `</div>` +
+            `<button class="tiltify-donation-show" onclick="tiltifyShowTarget(${origIndex})">Show</button>` +
+          `</div>`;
+        }).join('');
+      }
+
+      // Polls list
+      const filteredPolls = pollFilter
+        ? polls.filter(p => {
+            const text = [p.name, ...(p.options || []).map(o => o.name)].join(' ').toLowerCase();
+            return text.includes(pollFilter);
+          })
+        : polls;
+      const pollList = document.getElementById('listPolls');
+      if (filteredPolls.length === 0) {
+        pollList.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">' + (polls.length ? 'No matches' : 'No polls') + '</div>';
+      } else {
+        pollList.innerHTML = filteredPolls.map((p) => {
+          const origIndex = polls.indexOf(p);
+          const options = (p.options || []).map(o => {
+            const amt = parseFloat(o.total_amount_raised?.value || o.amount_raised?.value || 0);
+            return `${escHtml(o.name)} (${formatCurrency(amt)})`;
+          }).join(' / ');
+          return `<div class="tiltify-item-row">` +
+            `<div class="tiltify-item-info">` +
+              `<div class="tiltify-item-name">${escHtml(p.name || 'Poll')}</div>` +
+              `<div class="tiltify-item-amounts">${options}</div>` +
+            `</div>` +
+            `<button class="tiltify-donation-show" onclick="tiltifyShowPoll(${origIndex})">Show</button>` +
+          `</div>`;
+        }).join('');
+      }
+
+      // Milestones list
+      const filteredMs = msFilter
+        ? milestones.filter(m => (m.name || '').toLowerCase().includes(msFilter))
+        : milestones;
+      const msList = document.getElementById('listMilestones');
+      if (filteredMs.length === 0) {
+        msList.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">' + (milestones.length ? 'No matches' : 'No milestones') + '</div>';
+      } else {
+        msList.innerHTML = filteredMs.map((m) => {
+          const origIndex = milestones.indexOf(m);
+          const threshold = parseFloat(m.amount?.value || m.value || 0);
+          const isReached = campaignRaised >= threshold;
+          const pct = threshold > 0 ? Math.min(100, (campaignRaised / threshold) * 100) : 0;
+          const remaining = Math.max(0, threshold - campaignRaised);
+          return `<div class="tiltify-item-row">` +
+            `<div class="tiltify-item-info">` +
+              `<div class="tiltify-item-name">${isReached ? '&#10003; ' : ''}${escHtml(m.name || 'Milestone')}</div>` +
+              `<div class="tiltify-item-amounts">${formatCurrency(campaignRaised)} / <span class="gold">${formatCurrency(threshold)}</span> &mdash; ${Math.round(pct)}%${isReached ? '' : ` (${formatCurrency(remaining)} to go)`}</div>` +
+            `</div>` +
+            `<button class="tiltify-donation-show" onclick="tiltifyShowMilestone(${origIndex})">Show</button>` +
+          `</div>`;
+        }).join('');
+      }
+
+      // Donation matches list
+      const matchList = document.getElementById('listMatches');
+      if (donationMatches.length === 0) {
+        matchList.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">No donation matches</div>';
+      } else {
+        matchList.innerHTML = donationMatches.map((m, i) => {
+          const raised = parseFloat(m.total_amount_raised?.value || 0);
+          const pledged = parseFloat(m.pledged_amount?.value || 0);
+          const pct = pledged > 0 ? Math.min(100, (raised / pledged) * 100) : 0;
+          const isComplete = raised >= pledged && pledged > 0;
+          const status = isComplete ? '&#10003; ' : (m.active ? '' : '(inactive) ');
+          return `<div class="tiltify-item-row">` +
+            `<div class="tiltify-item-info">` +
+              `<div class="tiltify-item-name">${status}${escHtml(m.matched_by || 'Anonymous')}</div>` +
+              `<div class="tiltify-item-amounts">${formatCurrency(raised)} / <span class="gold">${formatCurrency(pledged)}</span> &mdash; ${Math.round(pct)}%</div>` +
+            `</div>` +
+            `<button class="tiltify-donation-show" onclick="tiltifyShowMatch(${i})">Show</button>` +
+          `</div>`;
+        }).join('');
+      }
+    }
+
+    function tiltifyShowDisplay(displayType) {
+      wsSend({ type: 'tiltify_show', display: displayType });
+      showToast(`Tiltify: ${displayType}`);
+    }
+
+    function tiltifyShowDonation(index) {
+      wsSend({ type: 'tiltify_show', display: 'donation', donationIndex: index });
+      const d = tiltifyData.donations[index];
+      const name = d ? (d.donor_name || d.name || 'Anonymous') : 'Donation';
+      showToast(`Showing donation from ${name}`);
+    }
+
+    function tiltifyShowTarget(index) {
+      wsSend({ type: 'tiltify_show', display: 'target', targetIndex: index });
+      const t = tiltifyData.targets[index];
+      showToast(`Showing target: ${t ? t.name : 'Target'}`);
+    }
+
+    function tiltifyShowMilestone(index) {
+      // milestones are sorted in renderTiltifyLists, sort the same way here
+      let milestones = [...(tiltifyData.milestones || [])];
+      milestones.sort((a, b) => parseFloat(a.amount?.value || 0) - parseFloat(b.amount?.value || 0));
+      wsSend({ type: 'tiltify_show', display: 'milestone', milestoneIndex: index });
+      const m = milestones[index];
+      showToast(`Showing milestone: ${m ? m.name : 'Milestone'}`);
+    }
+
+    function tiltifyShowPoll(index) {
+      wsSend({ type: 'tiltify_show', display: 'poll', pollIndex: index });
+      const p = tiltifyData.polls[index];
+      showToast(`Showing poll: ${p ? p.name : 'Poll'}`);
+    }
+
+    function tiltifyShowMatch(index) {
+      wsSend({ type: 'tiltify_show', display: 'matching', matchIndex: index });
+      const m = tiltifyData.donationMatches[index];
+      showToast(`Showing match: ${m ? m.matched_by : 'Match'}`);
+    }
+
+    function tiltifyHide() {
+      wsSend({ type: 'tiltify_hide' });
+      stopAutoCycle();
+      showToast('Tiltify display hidden');
+    }
+
+    function toggleAutoCycle() {
+      if (autoCycleInterval) {
+        stopAutoCycle();
+        showToast('Auto-cycle stopped');
+      } else {
+        startAutoCycle();
+        showToast('Auto-cycling donations');
+      }
+    }
+
+    function startAutoCycle() {
+      const btn = document.getElementById('btnAutoCycle');
+      btn.classList.add('active');
+      autoCycleIndex = 0;
+
+      // Show first donation immediately
+      tiltifyShowDonation(autoCycleIndex);
+
+      autoCycleInterval = setInterval(() => {
+        const maxDonations = Math.min(tiltifyData.donations.length, 10);
+        if (maxDonations === 0) return;
+        autoCycleIndex = (autoCycleIndex + 1) % maxDonations;
+        wsSend({ type: 'tiltify_show', display: 'donation', donationIndex: autoCycleIndex });
+      }, 8000);
+    }
+
+    function stopAutoCycle() {
+      const btn = document.getElementById('btnAutoCycle');
+      btn.classList.remove('active');
+      clearInterval(autoCycleInterval);
+      autoCycleInterval = null;
+    }
+
+    // Update the "Xs ago" text periodically
+    setInterval(() => {
+      if (tiltifyData.lastUpdated > 0) {
+        const ago = Math.round((Date.now() - tiltifyData.lastUpdated) / 1000);
+        document.getElementById('tiltifyUpdated').textContent =
+          ago < 5 ? 'Updated just now' : `Updated ${ago}s ago`;
+      }
+    }, 5000);
+
+    // --- Schedule ---
+
+    let scheduleDataCache = { schedule: null, upcoming: [], previous: [], lastUpdated: 0 };
+
+    function handleScheduleData(data) {
+      scheduleDataCache = {
+        schedule: data.schedule,
+        upcoming: data.upcoming || [],
+        previous: data.previous || [],
+        lastUpdated: data.lastUpdated || Date.now(),
+      };
+      // Show the section if not yet visible (schedule can arrive before tiltify)
+      document.getElementById('tiltifySection').classList.add('active');
+      renderTiltifyLists();
+      renderScheduleTab();
+    }
+
+    function formatRunTime(scheduled) {
+      const d = new Date(scheduled);
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      return `${days[d.getDay()]} ${d.getHours().toString().padStart(2, '0')}:${d.getMinutes().toString().padStart(2, '0')}`;
+    }
+
+    function renderScheduleTab() {
+      const previous = scheduleDataCache.previous || [];
+      const upcoming = scheduleDataCache.upcoming || [];
+      const totalCount = previous.length + upcoming.length;
+
+      // Update tab count
+      const tabBtn = document.querySelector('.tiltify-tab[data-tab="schedule"]');
+      if (tabBtn) {
+        const countEl = tabBtn.querySelector('.tab-count');
+        if (countEl) countEl.textContent = totalCount;
+      }
+
+      const schFilter = (tabFilters.schedule || '').toLowerCase();
+      const filterFn = r => [r.game, r.players, r.category, r.platform].filter(Boolean).join(' ').toLowerCase().includes(schFilter);
+      const filteredPrev = schFilter ? previous.filter(filterFn) : previous;
+      const filteredUp = schFilter ? upcoming.filter(filterFn) : upcoming;
+
+      const listEl = document.getElementById('listSchedule');
+      if (filteredPrev.length === 0 && filteredUp.length === 0) {
+        listEl.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">' + (totalCount ? 'No matches' : 'No runs') + '</div>';
+      } else {
+        const prevHtml = filteredPrev.map((run) => {
+          const origIndex = previous.indexOf(run);
+          const time = formatRunTime(run.scheduled);
+          const estimate = run.length_t ? formatDuration(run.length_t) : '';
+          const details = [run.players, run.category].filter(Boolean).join(' — ');
+          return `<div class="tiltify-item-row schedule-done-row">` +
+            `<div style="display: flex; flex-direction: column; align-items: center; min-width: 52px; gap: 2px;">` +
+              `<span class="schedule-done-badge">Done</span>` +
+              (estimate ? `<span class="schedule-estimate">${estimate}</span>` : '') +
+            `</div>` +
+            `<div class="tiltify-item-info">` +
+              `<div class="tiltify-item-name">${escHtml(run.game || 'TBD')}</div>` +
+              `<div class="tiltify-item-amounts">${escHtml(details)}${run.platform ? ` <span class="gold">${escHtml(run.platform)}</span>` : ''}</div>` +
+            `</div>` +
+            `<div style="display: flex; gap: 4px; flex-shrink: 0;">` +
+              `<button class="tiltify-donation-show" onclick="scheduleShowRun(${origIndex},'next','prev')" style="font-size: 10px; padding: 4px 8px;">Up Next</button>` +
+              `<button class="tiltify-donation-show" onclick="scheduleShowRun(${origIndex},'coming','prev')" style="font-size: 10px; padding: 4px 8px;">Coming Up</button>` +
+            `</div>` +
+          `</div>`;
+        }).join('');
+
+        const upHtml = filteredUp.map((run) => {
+          const origIndex = upcoming.indexOf(run);
+          const isNext = origIndex === 0;
+          const time = formatRunTime(run.scheduled);
+          const estimate = run.length_t ? formatDuration(run.length_t) : '';
+          const details = [run.players, run.category].filter(Boolean).join(' — ');
+          return `<div class="tiltify-item-row">` +
+            `<div style="display: flex; flex-direction: column; align-items: center; min-width: 52px; gap: 2px;">` +
+              (isNext ? `<span class="schedule-next-badge">Next</span>` : `<span class="schedule-time">${time}</span>`) +
+              (estimate ? `<span class="schedule-estimate">${estimate}</span>` : '') +
+            `</div>` +
+            `<div class="tiltify-item-info">` +
+              `<div class="tiltify-item-name">${escHtml(run.game || 'TBD')}</div>` +
+              `<div class="tiltify-item-amounts">${escHtml(details)}${run.platform ? ` <span class="gold">${escHtml(run.platform)}</span>` : ''}</div>` +
+            `</div>` +
+            `<div style="display: flex; gap: 4px; flex-shrink: 0;">` +
+              `<button class="tiltify-donation-show" onclick="scheduleShowRun(${origIndex},'next','up')" style="font-size: 10px; padding: 4px 8px;">Up Next</button>` +
+              `<button class="tiltify-donation-show" onclick="scheduleShowRun(${origIndex},'coming','up')" style="font-size: 10px; padding: 4px 8px;">Coming Up</button>` +
+            `</div>` +
+          `</div>`;
+        }).join('');
+
+        listEl.innerHTML = prevHtml + upHtml;
+      }
+    }
+
+    function scheduleShowRun(index, mode, list) {
+      wsSend({ type: 'schedule_show', runIndex: index, mode: mode, list: list });
+      const runs = list === 'prev' ? scheduleDataCache.previous : scheduleDataCache.upcoming;
+      const run = runs[index];
+      const label = mode === 'next' ? 'Up Next' : 'Coming Up';
+      showToast(`${label}: ${run ? run.game : 'Run'}`);
+    }
+
+    // --- Drag and Drop ---
+
+    let dragSourceIndex = null;
+
+    function onDragStart(e) {
+      const card = e.target.closest('.preset-card');
+      dragSourceIndex = parseInt(card.dataset.index);
+      card.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', dragSourceIndex);
+    }
+
+    function onDragEnd(e) {
+      const card = e.target.closest('.preset-card');
+      if (card) card.classList.remove('dragging');
+      document.querySelectorAll('.preset-card.drag-over').forEach(el => el.classList.remove('drag-over'));
+      dragSourceIndex = null;
+    }
+
+    function onDragOver(e) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const card = e.target.closest('.preset-card');
+      if (card && parseInt(card.dataset.index) !== dragSourceIndex) {
+        card.classList.add('drag-over');
+      }
+    }
+
+    function onDragLeave(e) {
+      const card = e.target.closest('.preset-card');
+      if (card) card.classList.remove('drag-over');
+    }
+
+    function onDrop(e) {
+      e.preventDefault();
+      const card = e.target.closest('.preset-card');
+      if (!card) return;
+      const targetIndex = parseInt(card.dataset.index);
+      if (dragSourceIndex === null || dragSourceIndex === targetIndex) return;
+
+      // Reorder presets array
+      const [moved] = presets.splice(dragSourceIndex, 1);
+      presets.splice(targetIndex, 0, moved);
+      savePresets();
+      render();
+    }
+
+    // --- Custom Message ---
+
+    function showCustomMessage() {
+      const heading = document.getElementById('customHeading').value;
+      const message = document.getElementById('customMessage').value;
+      const imageUrl = document.getElementById('customImageUrl').value;
+      if (!heading && !message) {
+        showToast('Enter a heading or message');
+        return;
+      }
+      wsSend({ type: 'custom_show', heading, message, imageUrl });
+      showToast('Showing custom message');
+    }
+
+    // --- Fun Tools ---
+
+    let activeFunTab = 'counter';
+    let counterState = { label: 'COUNTER', value: 0 };
+    let counterVisible = false;
+    let quoteLog = [];
+    let sleepPeopleList = [];
+    let wheelOptionsText = '';
+    let wheelHistory = [];
+    let statCards = {};
+
+    function switchFunTab(tab) {
+      activeFunTab = tab;
+      const tabs = document.querySelectorAll('#funToolsTabs .tiltify-tab');
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'ft-' + tab));
+      const panels = document.querySelectorAll('#funToolsSection > .tiltify-tab-panel');
+      const panelMap = { counter: 'ftPanelCounter', quote: 'ftPanelQuote', sleep: 'ftPanelSleep', stat: 'ftPanelStat', wheel: 'ftPanelWheel', images: 'ftPanelImages' };
+      panels.forEach(p => p.classList.toggle('active', p.id === panelMap[tab]));
+    }
+
+    // --- Counter ---
+
+    function renderCounterDisplay() {
+      const el = document.getElementById('counterDisplay');
+      if (el) el.textContent = counterState.value;
+    }
+
+    function counterIncrement() {
+      counterState.value++;
+      renderCounterDisplay();
+      saveFunToolsState('counter');
+      if (counterVisible) counterSendUpdate();
+    }
+
+    function counterDecrement() {
+      counterState.value--;
+      renderCounterDisplay();
+      saveFunToolsState('counter');
+      if (counterVisible) counterSendUpdate();
+    }
+
+    function counterReset() {
+      counterState.value = 0;
+      renderCounterDisplay();
+      saveFunToolsState('counter');
+      if (counterVisible) counterSendUpdate();
+    }
+
+    function counterShow() {
+      counterState.label = document.getElementById('counterLabel').value || 'COUNTER';
+      saveFunToolsState('counter');
+      wsSend({ type: 'counter_show', label: counterState.label, value: counterState.value });
+      counterVisible = true;
+      showToast('Counter shown');
+    }
+
+    function counterSendUpdate() {
+      wsSend({ type: 'counter_update', value: counterState.value });
+    }
+
+    function counterHide() {
+      wsSend({ type: 'counter_hide' });
+      counterVisible = false;
+      showToast('Counter hidden');
+    }
+
+    // --- Quote ---
+
+    function showQuote() {
+      const quote = document.getElementById('quoteText').value;
+      const attribution = document.getElementById('quoteAttribution').value;
+      if (!quote) { showToast('Enter a quote'); return; }
+      wsSend({ type: 'quote_show', quote, attribution });
+      quoteLog.push({ quote, attribution, time: Date.now() });
+      saveFunToolsState('quotes');
+      renderQuoteLog();
+      document.getElementById('quoteText').value = '';
+      document.getElementById('quoteAttribution').value = '';
+      showToast('Quote shown');
+    }
+
+    function reShowQuote(index) {
+      const entry = quoteLog[index];
+      if (!entry) return;
+      wsSend({ type: 'quote_show', quote: entry.quote, attribution: entry.attribution });
+      showToast('Re-showing quote');
+    }
+
+    function renderQuoteLog() {
+      const el = document.getElementById('quoteLog');
+      if (!el) return;
+      if (quoteLog.length === 0) {
+        el.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 4px;">No quotes yet</div>';
+        return;
+      }
+      el.innerHTML = quoteLog.slice().reverse().map((q, ri) => {
+        const i = quoteLog.length - 1 - ri;
+        return `<div class="tiltify-item-row" style="cursor: pointer;" onclick="reShowQuote(${i})">` +
+          `<div class="tiltify-item-info">` +
+            `<div class="tiltify-item-name" style="white-space: normal;">\u201C${escHtml(q.quote)}\u201D</div>` +
+            (q.attribution ? `<div class="tiltify-item-amounts">\u2014 ${escHtml(q.attribution)}</div>` : '') +
+          `</div>` +
+        `</div>`;
+      }).join('');
+    }
+
+    // --- Sleep Tracker ---
+
+    function addSleepPerson() {
+      const name = document.getElementById('sleepName').value.trim();
+      const wakeTime = document.getElementById('sleepWakeTime').value;
+      if (!name) { showToast('Enter a name'); return; }
+      if (!wakeTime) { showToast('Enter a wake time'); return; }
+      sleepPeopleList.push({ name, wakeTime: new Date(wakeTime).toISOString() });
+      saveFunToolsState('sleep');
+      renderSleepList();
+      document.getElementById('sleepName').value = '';
+      document.getElementById('sleepWakeTime').value = '';
+      showToast(`Added ${name}`);
+    }
+
+    function removeSleepPerson(index) {
+      sleepPeopleList.splice(index, 1);
+      saveFunToolsState('sleep');
+      renderSleepList();
+    }
+
+    function renderSleepList() {
+      const el = document.getElementById('sleepList');
+      if (!el) return;
+      if (sleepPeopleList.length === 0) {
+        el.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 4px;">No people added</div>';
+        return;
+      }
+      el.innerHTML = sleepPeopleList.map((p, i) => {
+        const d = new Date(p.wakeTime);
+        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `<div class="tiltify-item-row">` +
+          `<div class="tiltify-item-info">` +
+            `<div class="tiltify-item-name">${escHtml(p.name)}</div>` +
+            `<div class="tiltify-item-amounts">Woke at ${timeStr}</div>` +
+          `</div>` +
+          `<button class="tiltify-donation-show" onclick="removeSleepPerson(${i})" style="color: #9f4a4a; border-color: #9f4a4a;">&times;</button>` +
+        `</div>`;
+      }).join('');
+    }
+
+    function sleepShow() {
+      if (sleepPeopleList.length === 0) { showToast('Add people first'); return; }
+      wsSend({ type: 'sleep_show', people: sleepPeopleList });
+      showToast('Sleep tracker shown');
+    }
+
+    function sleepHide() {
+      wsSend({ type: 'sleep_hide' });
+      showToast('Sleep tracker hidden');
+    }
+
+    // --- Stat Card ---
+
+    function renderStatCardDropdown() {
+      const sel = document.getElementById('statPresetSelect');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Select preset --</option>' +
+        presets.map(p => `<option value="${p.id}">${escHtml(p.name || 'Unnamed')}</option>`).join('');
+    }
+
+    function loadStatCardPreset() {
+      const sel = document.getElementById('statPresetSelect');
+      const id = sel.value;
+      if (!id) return;
+      const saved = statCards[id] || {};
+      document.getElementById('statSrcUsername').value = saved.srcUsername || '';
+      document.getElementById('statTwitchUsername').value = saved.twitchUsername || '';
+      document.getElementById('statGamesRun').value = saved.gamesRun || '';
+      document.getElementById('statWorldRecords').value = saved.worldRecords || '';
+      document.getElementById('statTotalPBs').value = saved.totalPBs || '';
+      document.getElementById('statTwitchFollowers').value = saved.twitchFollowers || '';
+      document.getElementById('statESACount').value = saved.esaCount || '';
+      document.getElementById('statFunFact').value = saved.funFact || '';
+      document.getElementById('statFetchStatus').textContent = '';
+    }
+
+    function showStatCard() {
+      const selId = document.getElementById('statPresetSelect').value;
+      const preset = selId ? presets.find(p => p.id === selId) : null;
+      const name = preset ? (preset.name || 'Player') : 'Player';
+      const pronouns = preset ? (preset.pronouns || '') : '';
+      const srcUsername = document.getElementById('statSrcUsername').value;
+      const twitchUsername = document.getElementById('statTwitchUsername').value;
+      const gamesRun = document.getElementById('statGamesRun').value;
+      const worldRecords = document.getElementById('statWorldRecords').value;
+      const totalPBs = document.getElementById('statTotalPBs').value;
+      const twitchFollowers = document.getElementById('statTwitchFollowers').value;
+      const esaCount = document.getElementById('statESACount').value;
+      const funFact = document.getElementById('statFunFact').value;
+
+      if (selId) {
+        statCards[selId] = { srcUsername, twitchUsername, gamesRun, worldRecords, totalPBs, twitchFollowers, esaCount, funFact };
+        saveFunToolsState('statcards');
+      }
+
+      wsSend({ type: 'stat_card_show', name, pronouns, gamesRun, worldRecords, totalPBs, twitchFollowers, esaCount, funFact });
+      showToast(`Showing stat card: ${name}`);
+    }
+
+    function fetchSrcStats() {
+      const username = document.getElementById('statSrcUsername').value.trim();
+      if (!username) { showToast('Enter a SRC username'); return; }
+      document.getElementById('statFetchStatus').textContent = 'SRC: Looking up...';
+      wsSend({ type: 'src_lookup', username });
+    }
+
+    function fetchTwitchStats() {
+      const username = document.getElementById('statTwitchUsername').value.trim();
+      if (!username) { showToast('Enter a Twitch username'); return; }
+      document.getElementById('statFetchStatus').textContent = 'Twitch: Looking up...';
+      wsSend({ type: 'twitch_lookup', username });
+    }
+
+    function handleSrcResult(data) {
+      const statusEl = document.getElementById('statFetchStatus');
+      if (data.error) {
+        statusEl.textContent = 'SRC: ' + data.error;
+        statusEl.style.color = '#9f4a4a';
+        setTimeout(() => { statusEl.style.color = '#a08cc0'; }, 5000);
+        return;
+      }
+      document.getElementById('statGamesRun').value = data.gamesRun || '';
+      document.getElementById('statTotalPBs').value = data.totalPBs || '';
+      document.getElementById('statWorldRecords').value = data.worldRecords || '';
+      statusEl.textContent = `SRC: Found ${data.username} (${data.totalPBs} PBs across ${data.gamesRun} games)`;
+      statusEl.style.color = '#4a9f4a';
+      setTimeout(() => { statusEl.style.color = '#a08cc0'; }, 5000);
+    }
+
+    function handleTwitchResult(data) {
+      const statusEl = document.getElementById('statFetchStatus');
+      if (data.error) {
+        statusEl.textContent = 'Twitch: ' + data.error;
+        statusEl.style.color = '#9f4a4a';
+        setTimeout(() => { statusEl.style.color = '#a08cc0'; }, 5000);
+        return;
+      }
+      document.getElementById('statTwitchFollowers').value = formatFollowers(data.followers);
+      statusEl.textContent = `Twitch: Found ${data.username} (${data.followers.toLocaleString()} followers)`;
+      statusEl.style.color = '#4a9f4a';
+      setTimeout(() => { statusEl.style.color = '#a08cc0'; }, 5000);
+    }
+
+    function formatFollowers(n) {
+      if (n >= 1_000_000) return (n / 1_000_000).toFixed(1).replace(/\.0$/, '') + 'M';
+      if (n >= 1_000) return (n / 1_000).toFixed(1).replace(/\.0$/, '') + 'K';
+      return String(n);
+    }
+
+    // --- Wheel ---
+
+    function spinWheel() {
+      const text = document.getElementById('wheelOptions').value.trim();
+      if (!text) { showToast('Enter options'); return; }
+      const options = text.split('\n').map(s => s.trim()).filter(Boolean);
+      if (options.length < 2) { showToast('Need at least 2 options'); return; }
+      const resultIndex = Math.floor(Math.random() * options.length);
+      const result = options[resultIndex];
+
+      wheelOptionsText = text;
+      wheelHistory.push({ result, time: Date.now() });
+      saveFunToolsState('wheel');
+      renderWheelHistory();
+
+      wsSend({ type: 'wheel_show', options, resultIndex, result });
+      showToast(`Spinning! Result: ${result}`);
+    }
+
+    function hideWheelControl() {
+      wsSend({ type: 'wheel_hide' });
+      showToast('Wheel hidden');
+    }
+
+    function renderWheelHistory() {
+      const el = document.getElementById('wheelHistory');
+      if (!el) return;
+      if (wheelHistory.length === 0) {
+        el.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 4px;">No spins yet</div>';
+        return;
+      }
+      el.innerHTML = wheelHistory.slice().reverse().map(h => {
+        const d = new Date(h.time);
+        const timeStr = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        return `<div class="tiltify-item-row">` +
+          `<div class="tiltify-item-info">` +
+            `<div class="tiltify-item-name">${escHtml(h.result)}</div>` +
+            `<div class="tiltify-item-amounts">${timeStr}</div>` +
+          `</div>` +
+        `</div>`;
+      }).join('');
+    }
+
+    // --- Images ---
+
+    let imagePresets = [];
+    let imageQueue = [];
+    let imageDefaultPos = 'left';
+
+    function loadImagePresets() {
+      try {
+        const saved = localStorage.getItem('esa-lt-image-presets');
+        if (saved) imagePresets = JSON.parse(saved);
+      } catch (e) {}
+      try {
+        const saved = localStorage.getItem('esa-lt-image-queue');
+        if (saved) imageQueue = JSON.parse(saved);
+      } catch (e) {}
+      try {
+        const saved = localStorage.getItem('esa-lt-image-default-pos');
+        if (saved) imageDefaultPos = saved;
+      } catch (e) {}
+    }
+
+    function saveImagePresets() {
+      localStorage.setItem('esa-lt-image-presets', JSON.stringify(imagePresets));
+    }
+
+    function saveImageQueue() {
+      localStorage.setItem('esa-lt-image-queue', JSON.stringify(imageQueue));
+    }
+
+    function saveImageDefaultPos() {
+      localStorage.setItem('esa-lt-image-default-pos', imageDefaultPos);
+    }
+
+    function setImageDefaultPos(pos) {
+      imageDefaultPos = pos;
+      saveImageDefaultPos();
+      document.getElementById('imgPosLeft').classList.toggle('active', pos === 'left');
+      document.getElementById('imgPosRight').classList.toggle('active', pos === 'right');
+    }
+
+    function addImagePreset() {
+      imagePresets.push({ id: genId(), url: '', title: '', position: imageDefaultPos });
+      saveImagePresets();
+      renderImagePresets();
+      const inputs = document.querySelectorAll('#imagePresetList .image-preset-row:last-child input[data-field="url"]');
+      if (inputs.length) inputs[inputs.length - 1].focus();
+    }
+
+    function updateImagePreset(id, field, value) {
+      const preset = imagePresets.find(p => p.id === id);
+      if (preset) {
+        preset[field] = value;
+        saveImagePresets();
+        renderImageQueuePreview();
+      }
+    }
+
+    function deleteImagePreset(id) {
+      imagePresets = imagePresets.filter(p => p.id !== id);
+      imageQueue = imageQueue.filter(qid => qid !== id);
+      saveImagePresets();
+      saveImageQueue();
+      renderImagePresets();
+      renderImageQueuePreview();
+      showToast('Image preset deleted');
+    }
+
+    function toggleImagePosition(id) {
+      const preset = imagePresets.find(p => p.id === id);
+      if (preset) {
+        preset.position = preset.position === 'left' ? 'right' : 'left';
+        saveImagePresets();
+        renderImagePresets();
+      }
+    }
+
+    function queueImage(id) {
+      if (imageQueue.includes(id)) return;
+      imageQueue.push(id);
+      saveImageQueue();
+      renderImagePresets();
+      renderImageQueuePreview();
+    }
+
+    function unqueueImage(id) {
+      imageQueue = imageQueue.filter(qid => qid !== id);
+      saveImageQueue();
+      renderImagePresets();
+      renderImageQueuePreview();
+    }
+
+    function clearImageQueue() {
+      imageQueue = [];
+      saveImageQueue();
+      renderImagePresets();
+      renderImageQueuePreview();
+      showToast('Image queue cleared');
+    }
+
+    function imageShowNext() {
+      if (imageQueue.length === 0) { showToast('Queue is empty'); return; }
+      const id = imageQueue.shift();
+      saveImageQueue();
+      const preset = imagePresets.find(p => p.id === id);
+      if (!preset || !preset.url) { showToast('Invalid preset'); renderImagePresets(); renderImageQueuePreview(); return; }
+      wsSend({ type: 'image_show', url: preset.url, title: preset.title || '', position: preset.position || imageDefaultPos });
+      renderImagePresets();
+      renderImageQueuePreview();
+      showToast('Showing image');
+    }
+
+    function imageShowDirect(id) {
+      const preset = imagePresets.find(p => p.id === id);
+      if (!preset || !preset.url) { showToast('Enter an image URL'); return; }
+      wsSend({ type: 'image_show', url: preset.url, title: preset.title || '', position: preset.position || imageDefaultPos });
+      showToast('Showing image');
+    }
+
+    function imageHide() {
+      wsSend({ type: 'image_hide' });
+      showToast('Image hidden');
+    }
+
+    function renderImagePresets() {
+      const el = document.getElementById('imagePresetList');
+      if (!el) return;
+      if (imagePresets.length === 0) {
+        el.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">No image presets. Click + Add to create one.</div>';
+        return;
+      }
+      el.innerHTML = imagePresets.map(preset => {
+        const isQueued = imageQueue.includes(preset.id);
+        const posLabel = (preset.position || imageDefaultPos) === 'left' ? 'L' : 'R';
+        const thumbSrc = preset.url || '';
+        return `<div class="image-preset-row">` +
+          (thumbSrc ? `<img class="image-preset-thumb" src="${escHtml(thumbSrc)}" alt="" onerror="this.style.display='none'">` : `<div class="image-preset-thumb" style="display:flex;align-items:center;justify-content:center;color:#6b4d8a;font-size:10px;">IMG</div>`) +
+          `<div class="preset-fields">` +
+            `<input type="text" value="${escHtml(preset.url)}" placeholder="Image URL" class="tab-filter" style="flex: 2; padding: 6px 8px; font-size: 12px;" data-field="url" onchange="updateImagePreset('${preset.id}', 'url', this.value)" onkeydown="event.stopPropagation()">` +
+            `<input type="text" value="${escHtml(preset.title)}" placeholder="Title (optional)" class="tab-filter" style="flex: 1; padding: 6px 8px; font-size: 12px;" data-field="title" onchange="updateImagePreset('${preset.id}', 'title', this.value)" onkeydown="event.stopPropagation()">` +
+          `</div>` +
+          `<button class="tiltify-donation-show" onclick="toggleImagePosition('${preset.id}')" title="Position: ${posLabel === 'L' ? 'Left' : 'Right'}" style="min-width: 28px; padding: 4px 6px; font-size: 11px; font-weight: 700;">${posLabel}</button>` +
+          `<button class="tiltify-donation-show" onclick="${isQueued ? `unqueueImage('${preset.id}')` : `queueImage('${preset.id}')`}" style="font-size: 11px; padding: 4px 8px;${isQueued ? ' border-color: #e0b060; color: #e0b060;' : ''}">${isQueued ? 'Queued' : 'Queue'}</button>` +
+          `<button class="tiltify-donation-show" onclick="imageShowDirect('${preset.id}')" style="font-size: 11px; padding: 4px 8px;">Show</button>` +
+          `<button class="tiltify-donation-show" onclick="deleteImagePreset('${preset.id}')" style="color: #9f4a4a; border-color: #9f4a4a; font-size: 14px; padding: 4px 6px;">&times;</button>` +
+        `</div>`;
+      }).join('');
+    }
+
+    function renderImageQueuePreview() {
+      const el = document.getElementById('imageQueuePreview');
+      if (!el) return;
+      // Filter out invalid queue entries
+      const validQueue = imageQueue.filter(id => imagePresets.find(p => p.id === id));
+      if (validQueue.length !== imageQueue.length) {
+        imageQueue = validQueue;
+        saveImageQueue();
+      }
+      if (imageQueue.length === 0) {
+        el.innerHTML = '<span style="color: #3d2a5c; font-size: 13px; font-style: italic;">No images queued</span>';
+        return;
+      }
+      el.innerHTML = imageQueue.map((id, i) => {
+        const preset = imagePresets.find(p => p.id === id);
+        if (!preset) return '';
+        const thumbSrc = preset.url || '';
+        const title = preset.title || `#${i + 1}`;
+        return `<div style="display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;" onclick="unqueueImage('${id}')" title="Click to remove from queue">` +
+          (thumbSrc ? `<img class="image-queue-thumb" src="${escHtml(thumbSrc)}" alt="" onerror="this.style.display='none'">` : `<div class="image-queue-thumb" style="display:flex;align-items:center;justify-content:center;color:#6b4d8a;font-size:10px;">IMG</div>`) +
+          `<span style="font-size: 10px; color: #a08cc0; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escHtml(title)}</span>` +
+        `</div>`;
+      }).join('');
+    }
+
+    // --- Fun Tools Persistence ---
+
+    function loadFunToolsState() {
+      try {
+        const c = localStorage.getItem('esa-lt-counter');
+        if (c) {
+          counterState = JSON.parse(c);
+          document.getElementById('counterLabel').value = counterState.label || '';
+          renderCounterDisplay();
+        }
+      } catch (e) {}
+      try {
+        const q = localStorage.getItem('esa-lt-quotes');
+        if (q) { quoteLog = JSON.parse(q); renderQuoteLog(); }
+      } catch (e) {}
+      try {
+        const s = localStorage.getItem('esa-lt-sleep');
+        if (s) { sleepPeopleList = JSON.parse(s); renderSleepList(); }
+      } catch (e) {}
+      try {
+        const w = localStorage.getItem('esa-lt-wheel');
+        if (w) {
+          const parsed = JSON.parse(w);
+          wheelOptionsText = parsed.options || '';
+          wheelHistory = parsed.history || [];
+          document.getElementById('wheelOptions').value = wheelOptionsText;
+          renderWheelHistory();
+        }
+      } catch (e) {}
+      try {
+        const sc = localStorage.getItem('esa-lt-statcards');
+        if (sc) { statCards = JSON.parse(sc); }
+      } catch (e) {}
+    }
+
+    function saveFunToolsState(type) {
+      switch (type) {
+        case 'counter':
+          localStorage.setItem('esa-lt-counter', JSON.stringify(counterState));
+          break;
+        case 'quotes':
+          localStorage.setItem('esa-lt-quotes', JSON.stringify(quoteLog));
+          break;
+        case 'sleep':
+          localStorage.setItem('esa-lt-sleep', JSON.stringify(sleepPeopleList));
+          break;
+        case 'wheel':
+          localStorage.setItem('esa-lt-wheel', JSON.stringify({ options: document.getElementById('wheelOptions').value, history: wheelHistory }));
+          break;
+        case 'statcards':
+          localStorage.setItem('esa-lt-statcards', JSON.stringify(statCards));
+          break;
+      }
+    }
+
+    // --- Init ---
+
+    loadPresets();
+    loadAdvancedState();
+    loadFunToolsState();
+    loadImagePresets();
+    render();
+    renderQuoteLog();
+    renderSleepList();
+    renderWheelHistory();
+    renderImagePresets();
+    renderImageQueuePreview();
+    setImageDefaultPos(imageDefaultPos);
+    connectWs();
+  </script>
+</body>
+</html>

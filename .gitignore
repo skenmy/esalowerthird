@@ -1,0 +1,5 @@
+node_modules/
+.DS_Store
+# Old systemd unit file — contains live Tiltify/Twitch credentials, never commit.
+esalowerthird.service
+*.bak

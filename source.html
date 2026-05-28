@@ -1,0 +1,2127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESA Lower Third - Source</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+    }
+
+    body.chroma {
+      background: #00ff00;
+    }
+
+    body.luma {
+      background: #000000;
+    }
+
+    /* ===== Together mode ===== */
+
+    .together {
+      position: fixed;
+      bottom: 200px;
+      left: 50%;
+      transform: translateX(-50%) translateY(calc(100% + 220px));
+      display: flex;
+      align-items: stretch;
+      opacity: 0;
+    }
+
+    .together.show {
+      animation: togetherIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .together.hide {
+      animation: togetherOut 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    }
+
+    @keyframes togetherIn {
+      0% { opacity: 0; transform: translateX(-50%) translateY(calc(100% + 220px)); }
+      100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+    }
+
+    @keyframes togetherOut {
+      0% { opacity: 1; transform: translateX(-50%) translateY(0); }
+      100% { opacity: 0; transform: translateX(-50%) translateY(calc(100% + 220px)); }
+    }
+
+    .together .names-container {
+      display: flex;
+      flex-direction: row;
+      align-items: stretch;
+    }
+
+    .together .name-section {
+      padding: 12px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 160px;
+    }
+
+    .together .name-section + .name-section {
+      border-left: 1px solid rgba(107, 77, 138, 0.5);
+    }
+
+    /* ===== Separate mode ===== */
+
+    .separate-group {
+      position: fixed;
+      bottom: 200px;
+      left: 0;
+      right: 0;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      padding: 0 60px;
+    }
+
+    .separate-item {
+      display: flex;
+      align-items: stretch;
+      opacity: 0;
+      transform: translateY(calc(100% + 220px));
+    }
+
+    .separate-item.show {
+      animation: separateIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation-delay: calc(var(--item-index) * 0.1s);
+    }
+
+    .separate-item.hide {
+      animation: separateOut 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    }
+
+    @keyframes separateIn {
+      0% { opacity: 0; transform: translateY(calc(100% + 220px)); }
+      100% { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes separateOut {
+      0% { opacity: 1; transform: translateY(0); }
+      100% { opacity: 0; transform: translateY(calc(100% + 220px)); }
+    }
+
+    .separate-item .text-single {
+      padding: 12px 28px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-width: 160px;
+    }
+
+    /* ===== Shared styles ===== */
+
+    .logo-container {
+      background: linear-gradient(135deg, #2d1b4e 0%, #1a1030 100%);
+      padding: 14px 22px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px 0 0 8px;
+      border: 2px solid #6b4d8a;
+      border-right: none;
+      flex-shrink: 0;
+    }
+
+    .logo-container img {
+      height: 54px;
+      width: auto;
+    }
+
+    .names-container,
+    .text-single {
+      background: linear-gradient(135deg, #3d2a5c 0%, #2a1d42 100%);
+      border-radius: 0 8px 8px 0;
+      border: 2px solid #6b4d8a;
+      border-left: none;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .names-container::before,
+    .text-single::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #f0a030 0%, #d4841f 100%);
+      z-index: 1;
+    }
+
+    .name-line {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .name {
+      font-size: 32px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      line-height: 1.2;
+    }
+
+    .pronouns {
+      font-size: 16px;
+      font-weight: 500;
+      color: #a08cc0;
+      line-height: 1.2;
+    }
+
+    .title {
+      font-size: 15px;
+      font-weight: 500;
+      color: #e0b060;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 2px;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    /* Together text animations */
+    .together.show .name-line {
+      animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation-delay: calc(0.15s + var(--col-index) * 0.1s);
+    }
+    .together.hide .name-line {
+      animation: textHide 0.2s ease-in forwards;
+    }
+    .together.show .title {
+      animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation-delay: calc(0.22s + var(--col-index) * 0.1s);
+    }
+    .together.hide .title {
+      animation: textHide 0.15s ease-in forwards;
+    }
+
+    /* Separate text animations */
+    .separate-item.show .name-line {
+      animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation-delay: calc(0.15s + var(--item-index) * 0.1s);
+    }
+    .separate-item.hide .name-line {
+      animation: textHide 0.2s ease-in forwards;
+    }
+    .separate-item.show .title {
+      animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation-delay: calc(0.22s + var(--item-index) * 0.1s);
+    }
+    .separate-item.hide .title {
+      animation: textHide 0.15s ease-in forwards;
+    }
+
+    @keyframes textReveal {
+      0% { opacity: 0; transform: translateX(-20px); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes textHide {
+      0% { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0; transform: translateX(-10px); }
+    }
+
+    /* ===== Tiltify displays ===== */
+
+    .tiltify-bar {
+      position: fixed;
+      bottom: 200px;
+      left: 50%;
+      transform: translateX(-50%) translateY(calc(100% + 220px));
+      display: flex;
+      align-items: stretch;
+      opacity: 0;
+    }
+
+    .tiltify-bar.show {
+      animation: togetherIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .tiltify-bar.hide {
+      animation: togetherOut 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    }
+
+    .tiltify-content {
+      background: linear-gradient(135deg, #3d2a5c 0%, #2a1d42 100%);
+      border-radius: 0 8px 8px 0;
+      border: 2px solid #6b4d8a;
+      border-left: none;
+      position: relative;
+      overflow: hidden;
+      padding: 14px 28px;
+      min-width: 300px;
+    }
+
+    .tiltify-content::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #f0a030 0%, #d4841f 100%);
+      z-index: 1;
+    }
+
+    /* Tiltify text animations — use --delay custom property to avoid inline specificity issues on hide */
+
+    /* --- Totalizer --- */
+
+    .totalizer-label {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e0b060;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .totalizer-amount {
+      font-size: 36px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      line-height: 1.2;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .totalizer-amount .goal {
+      font-size: 22px;
+      color: #a08cc0;
+      font-weight: 500;
+    }
+
+    .totalizer-fill-track {
+      margin-top: 8px;
+      height: 8px;
+      background: #1a1030;
+      border-radius: 4px;
+      overflow: hidden;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .totalizer-fill-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #f0a030 0%, #e0c060 100%);
+      border-radius: 4px;
+      width: 0%;
+      transition: width 1s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* --- Donation --- */
+
+    .donation-header {
+      display: flex;
+      align-items: baseline;
+      gap: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .donation-name {
+      font-size: 32px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      line-height: 1.2;
+    }
+
+    .donation-amount {
+      font-size: 32px;
+      font-weight: 700;
+      color: #e0b060;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      line-height: 1.2;
+    }
+
+    .donation-comment {
+      font-size: 16px;
+      font-weight: 500;
+      color: #a08cc0;
+      margin-top: 4px;
+      line-height: 1.4;
+      max-width: 600px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .donation-incentive {
+      font-size: 13px;
+      font-weight: 600;
+      color: #e0b060;
+      margin-top: 6px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    /* --- Polls --- */
+
+    .poll-option-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 6px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .poll-option-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .poll-option-name {
+      font-size: 18px;
+      font-weight: 600;
+      color: #ffffff;
+      min-width: 140px;
+      white-space: nowrap;
+    }
+
+    .poll-option-bar-track {
+      flex: 1;
+      height: 8px;
+      background: #1a1030;
+      border-radius: 4px;
+      overflow: hidden;
+      min-width: 100px;
+    }
+
+    .poll-option-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #f0a030 0%, #e0c060 100%);
+      border-radius: 4px;
+      width: 0%;
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .poll-option-amount {
+      font-size: 16px;
+      font-weight: 700;
+      color: #e0b060;
+      white-space: nowrap;
+      min-width: 70px;
+      text-align: right;
+    }
+
+    /* --- Targets --- */
+
+    .targets-header {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e0b060;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .target-row {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      margin-bottom: 8px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .target-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .target-info {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .target-name {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffffff;
+      white-space: nowrap;
+    }
+
+    .target-amounts {
+      font-size: 16px;
+      font-weight: 500;
+      color: #a08cc0;
+      white-space: nowrap;
+    }
+
+    .target-fill-track {
+      height: 6px;
+      background: #1a1030;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .target-fill-bar {
+      height: 100%;
+      background: linear-gradient(90deg, #f0a030 0%, #e0c060 100%);
+      border-radius: 3px;
+      width: 0%;
+      transition: width 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    /* --- Milestones --- */
+
+    .milestones-header {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e0b060;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .milestone-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 6px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .milestone-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .milestone-check {
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      border: 2px solid #6b4d8a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 12px;
+    }
+
+    .milestone-check.reached {
+      background: #4a9f4a;
+      border-color: #4a9f4a;
+      color: #fff;
+    }
+
+    .milestone-name {
+      font-size: 18px;
+      font-weight: 500;
+      color: #ffffff;
+      flex: 1;
+    }
+
+    .milestone-name.reached {
+      text-decoration: line-through;
+      color: #a08cc0;
+    }
+
+    .milestone-amount {
+      font-size: 16px;
+      font-weight: 700;
+      color: #e0b060;
+      white-space: nowrap;
+    }
+
+    .milestone-amount.reached {
+      color: #4a9f4a;
+    }
+
+    /* --- Schedule runs --- */
+
+    .run-game {
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      line-height: 1.2;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .run-details {
+      font-size: 16px;
+      font-weight: 500;
+      color: #a08cc0;
+      margin-top: 4px;
+      line-height: 1.3;
+      white-space: nowrap;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .run-details .run-category {
+      color: #c0a0e0;
+    }
+
+    .run-details .run-platform {
+      color: #6b4d8a;
+    }
+
+    /* --- Custom message --- */
+
+    .custom-body {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .custom-image {
+      max-height: 64px;
+      max-width: 120px;
+      object-fit: contain;
+      flex-shrink: 0;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .custom-heading {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e0b060;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 4px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .custom-text {
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      line-height: 1.3;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    /* --- Shame Clock --- */
+    .shame-time { font-size: 42px; font-weight: 700; color: #fff; transition: color 0.5s; }
+    .shame-time.warning { color: #e0b060; }
+    .shame-time.urgent { color: #ff6b6b; text-shadow: 0 0 20px rgba(255,107,107,0.3); }
+
+    /* --- Hype Meter --- */
+    .hype-stats { display: flex; gap: 24px; align-items: baseline; }
+    .hype-big { font-size: 36px; font-weight: 700; color: #fff; }
+    .hype-unit { font-size: 16px; color: #a08cc0; }
+
+    /* --- Donation Train --- */
+    .train-count { font-size: 48px; font-weight: 700; color: #fff; transition: color 0.3s, text-shadow 0.3s; }
+    .train-count.hot { color: #f0a030; }
+    .train-count.fire { color: #ff6b6b; text-shadow: 0 0 20px rgba(255,107,107,0.4); }
+    .train-count.epic { color: #ff4444; text-shadow: 0 0 30px rgba(255,68,68,0.6); }
+
+    /* --- Counter --- */
+    .counter-value { font-size: 48px; font-weight: 700; color: #fff; transition: transform 0.15s; }
+    .counter-value.bump { transform: scale(1.15); }
+
+    /* --- Quote --- */
+    .quote-text { font-size: 22px; font-weight: 500; color: #fff; font-style: italic; line-height: 1.4; max-width: 600px; }
+    .quote-attribution { font-size: 16px; color: #e0b060; margin-top: 6px; }
+
+    /* --- Sleep Tracker --- */
+    .sleep-row { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+    .sleep-name { font-size: 20px; font-weight: 600; color: #fff; }
+    .sleep-time { font-size: 20px; font-weight: 700; color: #a08cc0; transition: color 0.5s; }
+    .sleep-time.groggy { color: #e0b060; }
+    .sleep-time.zombie { color: #ff6b6b; }
+
+    /* --- Stat Card --- */
+    .stat-card-name { font-size: 32px; font-weight: 700; color: #fff; }
+    .stat-card-pronouns { font-size: 16px; color: #a08cc0; margin-left: 10px; }
+    .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 24px; margin-top: 8px; }
+    .stat-item-label { font-size: 11px; font-weight: 700; color: #e0b060; text-transform: uppercase; letter-spacing: 1px; }
+    .stat-item-value { font-size: 18px; font-weight: 600; color: #fff; }
+
+    /* --- Wheel (full-screen overlay) --- */
+    .wheel-overlay { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 24px; z-index: 50; opacity: 0; }
+    .wheel-overlay.show { animation: fadeIn 0.4s ease forwards; }
+    .wheel-overlay.hide { animation: fadeOut 0.4s ease forwards; }
+    .wheel-canvas-wrap { position: relative; }
+    .wheel-canvas-wrap canvas { transition: transform 4s cubic-bezier(0.2, 0.8, 0.3, 1); }
+    .wheel-pointer { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 14px solid transparent; border-right: 14px solid transparent; border-top: 24px solid #e0b060; z-index: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5)); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
+
+    /* --- Image Display --- */
+    .image-display {
+      position: fixed;
+      bottom: 200px;
+      max-width: 500px;
+      opacity: 0;
+    }
+
+    .image-display.left {
+      left: 80px;
+      transform: translateX(-120%);
+    }
+
+    .image-display.right {
+      right: 80px;
+      transform: translateX(120%);
+    }
+
+    .image-display.show.left {
+      animation: imageInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .image-display.show.right {
+      animation: imageInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .image-display.hide.left {
+      animation: imageOutLeft 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    }
+
+    .image-display.hide.right {
+      animation: imageOutRight 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    }
+
+    @keyframes imageInLeft {
+      0% { opacity: 0; transform: translateX(-120%); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes imageOutLeft {
+      0% { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0; transform: translateX(-120%); }
+    }
+
+    @keyframes imageInRight {
+      0% { opacity: 0; transform: translateX(120%); }
+      100% { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes imageOutRight {
+      0% { opacity: 1; transform: translateX(0); }
+      100% { opacity: 0; transform: translateX(120%); }
+    }
+
+    .image-display-inner {
+      background: linear-gradient(135deg, #3d2a5c 0%, #2a1d42 100%);
+      border: 2px solid #6b4d8a;
+      border-radius: 8px;
+      padding: 12px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .image-display.left .image-display-inner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #f0a030 0%, #d4841f 100%);
+      z-index: 1;
+    }
+
+    .image-display.right .image-display-inner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #f0a030 0%, #d4841f 100%);
+      z-index: 1;
+    }
+
+    .image-display-img {
+      max-width: 100%;
+      max-height: 400px;
+      object-fit: contain;
+      display: block;
+      border-radius: 4px;
+    }
+
+    .image-display-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: #e0b060;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 8px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .image-display.show .image-display-title {
+      animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation-delay: 0.3s;
+    }
+
+    .image-display.hide .image-display-title {
+      animation: textHide 0.15s ease-in forwards;
+    }
+
+    /* --- Title rotation --- */
+    .title-rotate { transition: opacity 0.3s, transform 0.3s; }
+    .title-rotate.fade-out { opacity: 0; transform: translateY(8px); }
+
+    /* Staggered animations for all tiltify inner elements */
+    .tiltify-bar.show .tiltify-stagger {
+      animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation-delay: var(--delay, 0s);
+    }
+    .tiltify-bar.hide .tiltify-stagger {
+      animation: textHide 0.2s ease-in forwards;
+      /* no animation-delay here — starts immediately, no flicker */
+    }
+  </style>
+</head>
+<body>
+  <div id="display"></div>
+  <div id="tiltifyDisplay"></div>
+  <div id="scheduleDisplay"></div>
+  <div id="wheelDisplay"></div>
+  <div id="imageDisplay"></div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const myScene = urlParams.get('scene') || '';
+
+    if (urlParams.has('chroma')) document.body.classList.add('chroma');
+    if (urlParams.has('luma')) document.body.classList.add('luma');
+
+    const display = document.getElementById('display');
+    const tiltifyDisplay = document.getElementById('tiltifyDisplay');
+    const scheduleDisplay = document.getElementById('scheduleDisplay');
+    const logoUrl = 'https://esamarathon.com/wp-content/uploads/2020/11/esa-big-logo-2-winter-300px.png';
+    let isVisible = false;
+    let currentMode = 'together';
+
+    // Tiltify state
+    let tiltifyData = { campaign: null, donations: [], targets: [], polls: [], milestones: [], donationMatches: [], incentives: {}, lastUpdated: 0 };
+
+    // Schedule state
+    let scheduleData = { schedule: null, upcoming: [], previous: [], lastUpdated: 0 };
+    let scheduleVisible = false;
+    let tiltifyVisible = false;
+    let tiltifyCurrentDisplay = null; // 'totalizer', 'donation', 'targets', 'milestones', 'matching'
+    let tiltifyCurrentMatchIndex = 0;
+    let shameClockInterval = null;
+    let hypeInterval = null;
+    let trainInterval = null;
+    let sleepInterval = null;
+    let sleepPeople = [];
+    let titleRotationIntervals = [];
+
+    const wheelDisplay = document.getElementById('wheelDisplay');
+    const imageDisplayEl = document.getElementById('imageDisplay');
+    let imageVisible = false;
+
+    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+    let ws;
+
+    function connect() {
+      ws = new WebSocket(wsUrl);
+      ws.onopen = () => ws.send(JSON.stringify({ type: 'pong' }));
+      ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        switch (data.type) {
+          case 'update':
+            if (data.scene && myScene && data.scene !== myScene) break;
+            handleUpdate(data.items || [], data.mode || 'together');
+            break;
+          case 'hide':
+            if (data.scene && myScene && data.scene !== myScene) break;
+            hideBar();
+            if (!data.scene) { hideTiltify(); hideSchedule(); hideImage(); }
+            break;
+          case 'tiltify_data':
+            handleTiltifyData(data);
+            break;
+          case 'tiltify_show':
+            handleTiltifyShow(data);
+            break;
+          case 'tiltify_hide':
+            hideTiltify();
+            break;
+          case 'schedule_data':
+            scheduleData = {
+              schedule: data.schedule,
+              upcoming: data.upcoming || [],
+              previous: data.previous || [],
+              lastUpdated: data.lastUpdated || Date.now(),
+            };
+            break;
+          case 'schedule_show':
+            handleScheduleShow(data);
+            break;
+          case 'schedule_hide':
+            hideSchedule();
+            break;
+          case 'custom_show':
+            handleCustomShow(data);
+            break;
+          case 'counter_show':
+            handleCounterShow(data);
+            break;
+          case 'counter_update':
+            handleCounterUpdate(data);
+            break;
+          case 'counter_hide':
+            hideTiltify();
+            break;
+          case 'quote_show':
+            handleQuoteShow(data);
+            break;
+          case 'sleep_show':
+            handleSleepShow(data);
+            break;
+          case 'sleep_hide':
+            hideTiltify();
+            break;
+          case 'stat_card_show':
+            handleStatCardShow(data);
+            break;
+          case 'wheel_show':
+            handleWheelShow(data);
+            break;
+          case 'wheel_hide':
+            hideWheel();
+            break;
+          case 'image_show':
+            handleImageShow(data);
+            break;
+          case 'image_hide':
+            hideImage();
+            break;
+          case 'ping':
+            ws.send(JSON.stringify({ type: 'pong' }));
+            break;
+        }
+      };
+      ws.onclose = () => setTimeout(connect, 2000);
+    }
+    connect();
+
+    function send(obj) {
+      if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
+    }
+
+    function escHtml(str) {
+      const d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
+    }
+
+    function formatCurrency(val) {
+      const num = parseFloat(val) || 0;
+      return '$' + num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    // ===== Name display (unchanged) =====
+
+    function nameLineHtml(item) {
+      return `<div class="name-line">` +
+        `<span class="name">${escHtml(item.name || 'Name')}</span>` +
+        (item.pronouns ? `<span class="pronouns">${escHtml(item.pronouns)}</span>` : '') +
+      `</div>` +
+      (item.title ? `<div class="title">${escHtml(item.title)}</div>` : '');
+    }
+
+    function logoHtml() {
+      return `<div class="logo-container"><img src="${logoUrl}" alt="ESA Winter"></div>`;
+    }
+
+    function buildTogether(items) {
+      const sections = items.map((item, i) =>
+        `<div class="name-section" style="--col-index: ${i}">${nameLineHtml(item)}</div>`
+      ).join('');
+      display.innerHTML =
+        `<div class="together" id="bar">` +
+          logoHtml() +
+          `<div class="names-container">${sections}</div>` +
+        `</div>`;
+    }
+
+    function buildSeparate(items) {
+      const bars = items.map((item, i) =>
+        `<div class="separate-item" style="--item-index: ${i}">` +
+          logoHtml() +
+          `<div class="text-single">${nameLineHtml(item)}</div>` +
+        `</div>`
+      ).join('');
+      display.innerHTML = `<div class="separate-group" id="bar">${bars}</div>`;
+    }
+
+    function handleUpdate(items, mode) {
+      if (items.length === 0) {
+        hideBar();
+        return;
+      }
+
+      currentMode = mode;
+
+      if (isVisible) {
+        triggerHide();
+        setTimeout(() => {
+          buildAndShow(items, mode);
+        }, 450);
+      } else {
+        buildAndShow(items, mode);
+      }
+    }
+
+    function buildAndShow(items, mode) {
+      titleRotationIntervals.forEach(id => clearInterval(id));
+      titleRotationIntervals = [];
+
+      if (mode === 'separate') {
+        buildSeparate(items);
+        void display.offsetWidth;
+        display.querySelectorAll('.separate-item').forEach(el => el.classList.add('show'));
+      } else {
+        buildTogether(items);
+        void display.offsetWidth;
+        display.querySelector('.together').classList.add('show');
+      }
+      isVisible = true;
+      send({ type: 'status', visible: true, scene: myScene || undefined });
+
+      // Start title rotation after show animation
+      const hasRotation = items.some(i => i.titles && i.titles.length > 1);
+      if (hasRotation) {
+        setTimeout(() => startTitleRotation(items), 600);
+      }
+    }
+
+    function triggerHide() {
+      if (currentMode === 'separate') {
+        display.querySelectorAll('.separate-item').forEach(el => {
+          el.classList.remove('show');
+          el.classList.add('hide');
+        });
+      } else {
+        const bar = display.querySelector('.together');
+        if (bar) {
+          bar.classList.remove('show');
+          bar.classList.add('hide');
+        }
+      }
+    }
+
+    function hideBar() {
+      if (!isVisible) return;
+      triggerHide();
+      isVisible = false;
+      titleRotationIntervals.forEach(id => clearInterval(id));
+      titleRotationIntervals = [];
+      send({ type: 'status', visible: false, scene: myScene || undefined });
+    }
+
+    // ===== Tiltify displays =====
+
+    function handleTiltifyData(data) {
+      tiltifyData = {
+        campaign: data.campaign,
+        donations: data.donations || [],
+        targets: data.targets || [],
+        polls: data.polls || [],
+        milestones: data.milestones || [],
+        donationMatches: data.donationMatches || [],
+        incentives: data.incentives || {},
+        lastUpdated: data.lastUpdated || Date.now(),
+      };
+
+      // Live-update totalizer/total if currently showing
+      if (tiltifyVisible && (tiltifyCurrentDisplay === 'totalizer' || tiltifyCurrentDisplay === 'total')) {
+        updateTotalizerInPlace();
+      }
+
+      // Live-update matching display if currently showing
+      if (tiltifyVisible && tiltifyCurrentDisplay === 'matching') {
+        updateMatchingInPlace();
+      }
+
+      // Live-update automated displays
+      if (tiltifyVisible && tiltifyCurrentDisplay === 'shame_clock') updateShameClockInPlace();
+      if (tiltifyVisible && tiltifyCurrentDisplay === 'hype_meter') updateHypeMeterInPlace();
+      if (tiltifyVisible && tiltifyCurrentDisplay === 'donation_train') updateDonationTrainInPlace();
+    }
+
+    function handleTiltifyShow(data) {
+      const displayType = data.display;
+      const index = data.donationIndex ?? data.targetIndex ?? data.milestoneIndex ?? data.pollIndex ?? data.matchIndex ?? 0;
+
+      if (tiltifyVisible) {
+        triggerTiltifyHide();
+        setTimeout(() => {
+          buildAndShowTiltify(displayType, index);
+        }, 450);
+      } else {
+        buildAndShowTiltify(displayType, index);
+      }
+    }
+
+    function buildAndShowTiltify(displayType, index) {
+      tiltifyCurrentDisplay = displayType;
+
+      switch (displayType) {
+        case 'totalizer':
+          buildTotalizer();
+          break;
+        case 'total':
+          buildTotal();
+          break;
+        case 'donation':
+          buildDonation(index);
+          break;
+        case 'target':
+          buildTarget(index);
+          break;
+        case 'milestone':
+          buildMilestone(index);
+          break;
+        case 'poll':
+          buildPoll(index);
+          break;
+        case 'matching':
+          buildMatching(index);
+          break;
+        case 'shame_clock':
+          buildShameClock();
+          break;
+        case 'hype_meter':
+          buildHypeMeter();
+          break;
+        case 'donation_train':
+          buildDonationTrain();
+          break;
+        default:
+          return;
+      }
+
+      void tiltifyDisplay.offsetWidth;
+      const bar = tiltifyDisplay.querySelector('.tiltify-bar');
+      if (bar) {
+        bar.classList.add('show');
+
+        // Trigger fill bar animations after slide-in completes
+        setTimeout(() => {
+          bar.querySelectorAll('.totalizer-fill-bar, .target-fill-bar').forEach(fill => {
+            fill.style.width = fill.dataset.percent + '%';
+          });
+        }, 500);
+      }
+
+      tiltifyVisible = true;
+    }
+
+    function buildTotalizer() {
+      const c = tiltifyData.campaign;
+      if (!c) {
+        tiltifyDisplay.innerHTML = '';
+        return;
+      }
+
+      const name = c.name || 'Campaign';
+      const raised = parseFloat(c.total_amount_raised?.value || c.amount_raised?.value || 0);
+      const goal = parseFloat(c.goal?.value || c.fundraiser_goal_amount?.value || 0);
+      const pct = goal > 0 ? Math.min(100, (raised / goal) * 100) : 0;
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">${escHtml(name)}</div>` +
+            `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.22s" id="totalizerAmount">` +
+              `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(goal)}</span>` +
+            `</div>` +
+            `<div class="totalizer-fill-track tiltify-stagger" style="--delay: 0.3s">` +
+              `<div class="totalizer-fill-bar" id="totalizerFill" data-percent="${pct}"></div>` +
+            `</div>` +
+          `</div>` +
+        `</div>`;
+    }
+
+    function buildTotal() {
+      const c = tiltifyData.campaign;
+      if (!c) {
+        tiltifyDisplay.innerHTML = '';
+        return;
+      }
+
+      const name = c.name || 'Campaign';
+      const raised = parseFloat(c.total_amount_raised?.value || c.amount_raised?.value || 0);
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">${escHtml(name)}</div>` +
+            `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.22s" id="totalizerAmount">` +
+              `${formatCurrency(raised)}` +
+            `</div>` +
+          `</div>` +
+        `</div>`;
+    }
+
+    function updateTotalizerInPlace() {
+      const c = tiltifyData.campaign;
+      if (!c) return;
+
+      const raised = parseFloat(c.total_amount_raised?.value || c.amount_raised?.value || 0);
+      const goal = parseFloat(c.goal?.value || c.fundraiser_goal_amount?.value || 0);
+
+      const amountEl = document.getElementById('totalizerAmount');
+      if (amountEl) {
+        if (tiltifyCurrentDisplay === 'total') {
+          amountEl.innerHTML = `${formatCurrency(raised)}`;
+        } else {
+          amountEl.innerHTML = `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(goal)}</span>`;
+        }
+      }
+
+      const fillEl = document.getElementById('totalizerFill');
+      if (fillEl && goal > 0) {
+        fillEl.style.width = Math.min(100, (raised / goal) * 100) + '%';
+      }
+    }
+
+    function getDonationIncentive(d) {
+      const inc = tiltifyData.incentives || {};
+      if (d.target_id && inc.targets?.[d.target_id]) {
+        return inc.targets[d.target_id].name;
+      }
+      if (d.poll_id && inc.polls?.[d.poll_id]) {
+        const poll = inc.polls[d.poll_id];
+        const optionName = d.poll_option_id && poll.options?.[d.poll_option_id]
+          ? poll.options[d.poll_option_id].name : null;
+        return optionName ? `${poll.name}: ${optionName}` : poll.name;
+      }
+      return null;
+    }
+
+    function buildDonation(index) {
+      const donations = tiltifyData.donations;
+      if (!donations.length) {
+        tiltifyDisplay.innerHTML = '';
+        return;
+      }
+
+      const d = donations[Math.min(index, donations.length - 1)];
+      const name = d.donor_name || d.name || 'Anonymous';
+      const amount = d.amount?.value || d.amount || 0;
+      const comment = d.donor_comment || d.comment || '';
+      const incentive = getDonationIncentive(d);
+
+      let delayIdx = 0.15;
+      let html = `<div class="donation-header tiltify-stagger" style="--delay: ${delayIdx}s">` +
+        `<span class="donation-name">${escHtml(name)}</span>` +
+        `<span class="donation-amount">${formatCurrency(amount)}</span>` +
+      `</div>`;
+
+      if (comment) {
+        delayIdx += 0.07;
+        html += `<div class="donation-comment tiltify-stagger" style="--delay: ${delayIdx}s">${escHtml(comment)}</div>`;
+      }
+
+      if (incentive) {
+        delayIdx += 0.07;
+        html += `<div class="donation-incentive tiltify-stagger" style="--delay: ${delayIdx}s">&rarr; ${escHtml(incentive)}</div>`;
+      }
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">${html}</div>` +
+        `</div>`;
+    }
+
+    function buildTarget(index) {
+      const targets = tiltifyData.targets;
+      if (!targets.length) {
+        tiltifyDisplay.innerHTML = '';
+        return;
+      }
+
+      const t = targets[Math.min(index, targets.length - 1)];
+      const raised = parseFloat(t.amount_raised?.value || t.current_amount?.value || 0);
+      const goal = parseFloat(t.amount?.value || t.goal?.value || 1);
+      const pct = Math.min(100, (raised / goal) * 100);
+      const remaining = Math.max(0, goal - raised);
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">Donation Target</div>` +
+            `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.22s">` +
+              `${escHtml(t.name || 'Target')}` +
+            `</div>` +
+            `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.28s">` +
+              `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(goal)}</span>` +
+              `<span class="goal" style="margin-left: 12px">${Math.round(pct)}% &mdash; ${formatCurrency(remaining)} to go</span>` +
+            `</div>` +
+            `<div class="totalizer-fill-track tiltify-stagger" style="--delay: 0.35s">` +
+              `<div class="target-fill-bar" data-percent="${pct}"></div>` +
+            `</div>` +
+          `</div>` +
+        `</div>`;
+    }
+
+    function buildMilestone(index) {
+      let milestones = [...(tiltifyData.milestones || [])];
+      milestones.sort((a, b) => {
+        const aVal = parseFloat(a.amount?.value || a.value || 0);
+        const bVal = parseFloat(b.amount?.value || b.value || 0);
+        return aVal - bVal;
+      });
+
+      if (!milestones.length) {
+        tiltifyDisplay.innerHTML = '';
+        return;
+      }
+
+      const m = milestones[Math.min(index, milestones.length - 1)];
+      const threshold = parseFloat(m.amount?.value || m.value || 0);
+      const raised = tiltifyData.campaign
+        ? parseFloat(tiltifyData.campaign.total_amount_raised?.value || tiltifyData.campaign.amount_raised?.value || 0)
+        : 0;
+      const pct = threshold > 0 ? Math.min(100, (raised / threshold) * 100) : 0;
+      const isReached = raised >= threshold;
+      const remaining = Math.max(0, threshold - raised);
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">${isReached ? 'Milestone Reached!' : 'Milestone'}</div>` +
+            `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.22s">` +
+              `${escHtml(m.name || 'Milestone')}` +
+            `</div>` +
+            `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.28s">` +
+              `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(threshold)}</span>` +
+              (isReached
+                ? `<span class="goal" style="margin-left: 12px">100% &mdash; Reached!</span>`
+                : `<span class="goal" style="margin-left: 12px">${Math.round(pct)}% &mdash; ${formatCurrency(remaining)} to go</span>`) +
+            `</div>` +
+            `<div class="totalizer-fill-track tiltify-stagger" style="--delay: 0.35s">` +
+              `<div class="target-fill-bar" data-percent="${pct}"></div>` +
+            `</div>` +
+          `</div>` +
+        `</div>`;
+    }
+
+    function buildPoll(index) {
+      const polls = tiltifyData.polls || [];
+      if (!polls.length) {
+        tiltifyDisplay.innerHTML = '';
+        return;
+      }
+
+      const p = polls[Math.min(index, polls.length - 1)];
+      const options = p.options || [];
+      const maxAmount = Math.max(...options.map(o => parseFloat(o.total_amount_raised?.value || o.amount_raised?.value || 0)), 1);
+
+      let optionsHtml = '';
+      options.forEach((o, i) => {
+        const amt = parseFloat(o.total_amount_raised?.value || o.amount_raised?.value || 0);
+        const pct = maxAmount > 0 ? (amt / maxAmount) * 100 : 0;
+        const delay = 0.22 + i * 0.07;
+        optionsHtml +=
+          `<div class="poll-option-row tiltify-stagger" style="--delay: ${delay}s">` +
+            `<span class="poll-option-name">${escHtml(o.name)}</span>` +
+            `<div class="poll-option-bar-track">` +
+              `<div class="poll-option-bar-fill target-fill-bar" data-percent="${pct}"></div>` +
+            `</div>` +
+            `<span class="poll-option-amount">${formatCurrency(amt)}</span>` +
+          `</div>`;
+      });
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">${escHtml(p.name || 'Poll')}</div>` +
+            optionsHtml +
+          `</div>` +
+        `</div>`;
+    }
+
+    function buildMatching(index) {
+      const matches = tiltifyData.donationMatches || [];
+      // Filter to active matches, fall back to all if none active
+      const active = matches.filter(m => m.active);
+      const list = active.length > 0 ? active : matches;
+      if (!list.length) {
+        tiltifyDisplay.innerHTML = '';
+        return;
+      }
+
+      const idx = Math.min(index, list.length - 1);
+      tiltifyCurrentMatchIndex = idx;
+      const m = list[idx];
+      const raised = parseFloat(m.total_amount_raised?.value || 0);
+      const pledged = parseFloat(m.pledged_amount?.value || 0);
+      const pct = pledged > 0 ? Math.min(100, (raised / pledged) * 100) : 0;
+      const isComplete = raised >= pledged && pledged > 0;
+      const label = isComplete ? 'Donation Match Complete' : 'Donation Match Active';
+      const matchedBy = m.matched_by || 'Anonymous';
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">${label}</div>` +
+            `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.22s; font-size: 22px;" id="matchingName">` +
+              `Matched by ${escHtml(matchedBy)}` +
+            `</div>` +
+            `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.28s" id="matchingAmount">` +
+              `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(pledged)}</span>` +
+            `</div>` +
+            `<div class="totalizer-fill-track tiltify-stagger" style="--delay: 0.35s">` +
+              `<div class="totalizer-fill-bar" id="matchingFill" data-percent="${pct}"></div>` +
+            `</div>` +
+          `</div>` +
+        `</div>`;
+    }
+
+    function updateMatchingInPlace() {
+      const matches = tiltifyData.donationMatches || [];
+      const active = matches.filter(m => m.active);
+      const list = active.length > 0 ? active : matches;
+      if (!list.length) return;
+
+      const m = list[Math.min(tiltifyCurrentMatchIndex, list.length - 1)];
+      const raised = parseFloat(m.total_amount_raised?.value || 0);
+      const pledged = parseFloat(m.pledged_amount?.value || 0);
+      const pct = pledged > 0 ? Math.min(100, (raised / pledged) * 100) : 0;
+
+      const amountEl = document.getElementById('matchingAmount');
+      if (amountEl) {
+        amountEl.innerHTML = `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(pledged)}</span>`;
+      }
+
+      const fillEl = document.getElementById('matchingFill');
+      if (fillEl) {
+        fillEl.style.width = pct + '%';
+      }
+    }
+
+    function triggerTiltifyHide() {
+      const bar = tiltifyDisplay.querySelector('.tiltify-bar');
+      if (bar) {
+        bar.classList.add('hide');
+      }
+    }
+
+    function hideTiltify() {
+      if (!tiltifyVisible) return;
+      triggerTiltifyHide();
+      tiltifyVisible = false;
+      tiltifyCurrentDisplay = null;
+      clearInterval(shameClockInterval); shameClockInterval = null;
+      clearInterval(hypeInterval); hypeInterval = null;
+      clearInterval(trainInterval); trainInterval = null;
+      clearInterval(sleepInterval); sleepInterval = null;
+    }
+
+    // ===== Schedule displays =====
+
+    function formatRunTime(scheduled) {
+      const d = new Date(scheduled);
+      const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+      const day = days[d.getDay()];
+      const h = d.getHours().toString().padStart(2, '0');
+      const m = d.getMinutes().toString().padStart(2, '0');
+      return `${day} ${h}:${m}`;
+    }
+
+    function handleScheduleShow(data) {
+      const runIndex = data.runIndex ?? 0;
+      const mode = data.mode || 'next';
+      const list = data.list || 'up';
+
+      if (scheduleVisible) {
+        const bar = scheduleDisplay.querySelector('.tiltify-bar');
+        if (bar) bar.classList.add('hide');
+        setTimeout(() => buildAndShowSchedule(runIndex, mode, list), 450);
+      } else {
+        buildAndShowSchedule(runIndex, mode, list);
+      }
+    }
+
+    function buildAndShowSchedule(runIndex, mode, list) {
+      const runs = list === 'prev' ? (scheduleData.previous || []) : (scheduleData.upcoming || []);
+      if (!runs.length) {
+        scheduleDisplay.innerHTML = '';
+        return;
+      }
+
+      const run = runs[Math.min(runIndex, runs.length - 1)];
+      const label = mode === 'coming'
+        ? `Coming Up &mdash; ${formatRunTime(run.scheduled)}`
+        : 'Up Next';
+
+      const detailParts = [];
+      if (run.players) detailParts.push(escHtml(run.players));
+      if (run.category) detailParts.push(`<span class="run-category">${escHtml(run.category)}</span>`);
+      if (run.platform) detailParts.push(`<span class="run-platform">${escHtml(run.platform)}</span>`);
+      if (run.length_t) {
+        const h = Math.floor(run.length_t / 3600);
+        const m = Math.floor((run.length_t % 3600) / 60);
+        const est = h > 0 && m > 0 ? `${h}h ${m}m` : h > 0 ? `${h}h` : `${m}m`;
+        detailParts.push(`<span class="run-platform">${est}</span>`);
+      }
+      const details = detailParts.join(' &mdash; ');
+
+      scheduleDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">${label}</div>` +
+            `<div class="run-game tiltify-stagger" style="--delay: 0.22s">${escHtml(run.game || 'TBD')}</div>` +
+            (details ? `<div class="run-details tiltify-stagger" style="--delay: 0.29s">${details}</div>` : '') +
+          `</div>` +
+        `</div>`;
+
+      void scheduleDisplay.offsetWidth;
+      const bar = scheduleDisplay.querySelector('.tiltify-bar');
+      if (bar) bar.classList.add('show');
+      scheduleVisible = true;
+    }
+
+    function hideSchedule() {
+      if (!scheduleVisible) return;
+      const bar = scheduleDisplay.querySelector('.tiltify-bar');
+      if (bar) bar.classList.add('hide');
+      scheduleVisible = false;
+    }
+
+    // ===== Custom message =====
+
+    function handleCustomShow(data) {
+      const heading = data.heading || '';
+      const message = data.message || '';
+      const imageUrl = data.imageUrl || '';
+
+      if (tiltifyVisible) {
+        triggerTiltifyHide();
+        setTimeout(() => {
+          buildAndShowCustom(heading, message, imageUrl);
+        }, 450);
+      } else {
+        buildAndShowCustom(heading, message, imageUrl);
+      }
+    }
+
+    function buildAndShowCustom(heading, message, imageUrl) {
+      tiltifyCurrentDisplay = 'custom';
+
+      let delay = 0.15;
+      let contentHtml = '';
+
+      if (imageUrl) {
+        contentHtml += `<div class="custom-body">`;
+        contentHtml += `<img class="custom-image tiltify-stagger" style="--delay: ${delay}s" src="${escHtml(imageUrl)}" alt="">`;
+        delay += 0.07;
+        contentHtml += `<div>`;
+      }
+
+      if (heading) {
+        contentHtml += `<div class="custom-heading tiltify-stagger" style="--delay: ${delay}s">${escHtml(heading)}</div>`;
+        delay += 0.07;
+      }
+
+      if (message) {
+        contentHtml += `<div class="custom-text tiltify-stagger" style="--delay: ${delay}s">${escHtml(message)}</div>`;
+      }
+
+      if (imageUrl) {
+        contentHtml += `</div></div>`;
+      }
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">${contentHtml}</div>` +
+        `</div>`;
+
+      void tiltifyDisplay.offsetWidth;
+      const bar = tiltifyDisplay.querySelector('.tiltify-bar');
+      if (bar) bar.classList.add('show');
+      tiltifyVisible = true;
+    }
+    // ===== Shame Clock =====
+
+    function buildShameClock() {
+      clearInterval(shameClockInterval);
+      const elapsed = getShameDuration();
+      const cls = shameClass(elapsed);
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">Time Since Last Donation</div>` +
+            `<div class="shame-time tiltify-stagger ${cls}" style="--delay: 0.22s" id="shameTimer">${formatElapsed(elapsed)}</div>` +
+          `</div>` +
+        `</div>`;
+
+      shameClockInterval = setInterval(() => {
+        const el = document.getElementById('shameTimer');
+        if (!el) return;
+        const dur = getShameDuration();
+        el.textContent = formatElapsed(dur);
+        el.className = 'shame-time tiltify-stagger ' + shameClass(dur);
+      }, 1000);
+    }
+
+    function getShameDuration() {
+      const d = tiltifyData.donations[0];
+      if (!d) return 0;
+      const t = new Date(d.completed_at || d.created_at || 0).getTime();
+      return Math.max(0, Math.floor((Date.now() - t) / 1000));
+    }
+
+    function shameClass(secs) {
+      if (secs > 300) return 'urgent';
+      if (secs > 120) return 'warning';
+      return '';
+    }
+
+    function formatElapsed(secs) {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = secs % 60;
+      if (h > 0) return `${h}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`;
+      return `${m}:${s.toString().padStart(2,'0')}`;
+    }
+
+    function updateShameClockInPlace() {
+      const el = document.getElementById('shameTimer');
+      if (!el) return;
+      const dur = getShameDuration();
+      el.textContent = formatElapsed(dur);
+      el.className = 'shame-time tiltify-stagger ' + shameClass(dur);
+    }
+
+    // ===== Hype Meter =====
+
+    function buildHypeMeter() {
+      clearInterval(hypeInterval);
+      const stats = getHypeStats();
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">Hype Meter — Last 5 Minutes</div>` +
+            `<div class="hype-stats tiltify-stagger" style="--delay: 0.22s" id="hypeStats">` +
+              `<div><span class="hype-big" id="hypeCount">${stats.count}</span> <span class="hype-unit">donations</span></div>` +
+              `<div><span class="hype-big" id="hypeTotal">${formatCurrency(stats.total)}</span></div>` +
+              `<div><span class="hype-big" id="hypeRate">${formatCurrency(stats.perMin)}</span> <span class="hype-unit">/min</span></div>` +
+            `</div>` +
+            `<div class="totalizer-fill-track tiltify-stagger" style="--delay: 0.3s">` +
+              `<div class="totalizer-fill-bar" id="hypeFill" data-percent="${Math.min(100, stats.count * 10)}"></div>` +
+            `</div>` +
+          `</div>` +
+        `</div>`;
+
+      hypeInterval = setInterval(updateHypeMeterInPlace, 5000);
+    }
+
+    function getHypeStats() {
+      const now = Date.now();
+      const window = 5 * 60 * 1000;
+      const recent = tiltifyData.donations.filter(d => {
+        const t = new Date(d.completed_at || d.created_at || 0).getTime();
+        return (now - t) < window;
+      });
+      const total = recent.reduce((sum, d) => sum + (parseFloat(d.amount?.value || d.amount || 0)), 0);
+      return {
+        count: recent.length,
+        total,
+        perMin: recent.length > 0 ? total / 5 : 0,
+      };
+    }
+
+    function updateHypeMeterInPlace() {
+      const stats = getHypeStats();
+      const countEl = document.getElementById('hypeCount');
+      const totalEl = document.getElementById('hypeTotal');
+      const rateEl = document.getElementById('hypeRate');
+      const fillEl = document.getElementById('hypeFill');
+      if (countEl) countEl.textContent = stats.count;
+      if (totalEl) totalEl.textContent = formatCurrency(stats.total);
+      if (rateEl) rateEl.textContent = formatCurrency(stats.perMin);
+      if (fillEl) fillEl.style.width = Math.min(100, stats.count * 10) + '%';
+    }
+
+    // ===== Donation Train =====
+
+    function buildDonationTrain() {
+      clearInterval(trainInterval);
+      const count = getTrainCount();
+      const cls = trainClass(count);
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">Donation Train</div>` +
+            `<div class="train-count tiltify-stagger ${cls}" style="--delay: 0.22s" id="trainCounter">x${count}</div>` +
+          `</div>` +
+        `</div>`;
+
+      trainInterval = setInterval(updateDonationTrainInPlace, 5000);
+    }
+
+    function getTrainCount() {
+      const donations = tiltifyData.donations;
+      if (donations.length === 0) return 0;
+      let count = 1;
+      for (let i = 0; i < donations.length - 1; i++) {
+        const t1 = new Date(donations[i].completed_at || donations[i].created_at || 0).getTime();
+        const t2 = new Date(donations[i + 1].completed_at || donations[i + 1].created_at || 0).getTime();
+        if (t1 - t2 <= 60000) {
+          count++;
+        } else {
+          break;
+        }
+      }
+      return count;
+    }
+
+    function trainClass(count) {
+      if (count >= 20) return 'epic';
+      if (count >= 10) return 'fire';
+      if (count >= 5) return 'hot';
+      return '';
+    }
+
+    function updateDonationTrainInPlace() {
+      const el = document.getElementById('trainCounter');
+      if (!el) return;
+      const count = getTrainCount();
+      el.textContent = 'x' + count;
+      el.className = 'train-count tiltify-stagger ' + trainClass(count);
+    }
+
+    // ===== Counter =====
+
+    function handleCounterShow(data) {
+      if (tiltifyVisible) {
+        triggerTiltifyHide();
+        setTimeout(() => buildAndShowCounter(data.label, data.value), 450);
+      } else {
+        buildAndShowCounter(data.label, data.value);
+      }
+    }
+
+    function buildAndShowCounter(label, value) {
+      tiltifyCurrentDisplay = 'counter';
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s" id="counterLabel">${escHtml(label || 'Counter')}</div>` +
+            `<div class="counter-value tiltify-stagger" style="--delay: 0.22s" id="counterValue">${parseInt(value) || 0}</div>` +
+          `</div>` +
+        `</div>`;
+
+      void tiltifyDisplay.offsetWidth;
+      const bar = tiltifyDisplay.querySelector('.tiltify-bar');
+      if (bar) bar.classList.add('show');
+      tiltifyVisible = true;
+    }
+
+    function handleCounterUpdate(data) {
+      if (!tiltifyVisible || tiltifyCurrentDisplay !== 'counter') return;
+      const el = document.getElementById('counterValue');
+      if (!el) return;
+      el.textContent = parseInt(data.value) || 0;
+      el.classList.add('bump');
+      setTimeout(() => el.classList.remove('bump'), 150);
+    }
+
+    // ===== Quote =====
+
+    function handleQuoteShow(data) {
+      if (tiltifyVisible) {
+        triggerTiltifyHide();
+        setTimeout(() => buildAndShowQuote(data.quote, data.attribution), 450);
+      } else {
+        buildAndShowQuote(data.quote, data.attribution);
+      }
+    }
+
+    function buildAndShowQuote(quote, attribution) {
+      tiltifyCurrentDisplay = 'quote';
+
+      let delay = 0.15;
+      let html = `<div class="quote-text tiltify-stagger" style="--delay: ${delay}s">\u201C${escHtml(quote || '')}\u201D</div>`;
+      if (attribution) {
+        delay += 0.07;
+        html += `<div class="quote-attribution tiltify-stagger" style="--delay: ${delay}s">\u2014 ${escHtml(attribution)}</div>`;
+      }
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">${html}</div>` +
+        `</div>`;
+
+      void tiltifyDisplay.offsetWidth;
+      const bar = tiltifyDisplay.querySelector('.tiltify-bar');
+      if (bar) bar.classList.add('show');
+      tiltifyVisible = true;
+    }
+
+    // ===== Sleep Tracker =====
+
+    function handleSleepShow(data) {
+      sleepPeople = data.people || [];
+      if (tiltifyVisible) {
+        triggerTiltifyHide();
+        setTimeout(() => buildAndShowSleep(), 450);
+      } else {
+        buildAndShowSleep();
+      }
+    }
+
+    function buildAndShowSleep() {
+      clearInterval(sleepInterval);
+      tiltifyCurrentDisplay = 'sleep';
+
+      const rowsHtml = sleepPeople.map((p, i) => {
+        const elapsed = getAwakeDuration(p.wakeTime);
+        const cls = sleepClass(elapsed);
+        return `<div class="sleep-row tiltify-stagger" style="--delay: ${0.22 + i * 0.07}s">` +
+          `<span class="sleep-name">${escHtml(p.name)}</span>` +
+          `<span class="sleep-time ${cls}" data-wake="${escHtml(p.wakeTime)}">${formatElapsedLong(elapsed)}</span>` +
+        `</div>`;
+      }).join('');
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">Awake For</div>` +
+            `<div id="sleepRows">${rowsHtml}</div>` +
+          `</div>` +
+        `</div>`;
+
+      void tiltifyDisplay.offsetWidth;
+      const bar = tiltifyDisplay.querySelector('.tiltify-bar');
+      if (bar) bar.classList.add('show');
+      tiltifyVisible = true;
+
+      sleepInterval = setInterval(() => {
+        document.querySelectorAll('#sleepRows .sleep-time').forEach(el => {
+          const wake = el.dataset.wake;
+          if (!wake) return;
+          const elapsed = getAwakeDuration(wake);
+          el.textContent = formatElapsedLong(elapsed);
+          el.className = 'sleep-time ' + sleepClass(elapsed);
+        });
+      }, 1000);
+    }
+
+    function getAwakeDuration(wakeTime) {
+      const t = new Date(wakeTime).getTime();
+      return Math.max(0, Math.floor((Date.now() - t) / 1000));
+    }
+
+    function sleepClass(secs) {
+      if (secs > 86400) return 'zombie';
+      if (secs > 57600) return 'groggy';
+      return '';
+    }
+
+    function formatElapsedLong(secs) {
+      const h = Math.floor(secs / 3600);
+      const m = Math.floor((secs % 3600) / 60);
+      const s = secs % 60;
+      return `${h}h ${m.toString().padStart(2,'0')}m ${s.toString().padStart(2,'0')}s`;
+    }
+
+    // ===== Stat Card =====
+
+    function handleStatCardShow(data) {
+      if (tiltifyVisible) {
+        triggerTiltifyHide();
+        setTimeout(() => buildAndShowStatCard(data), 450);
+      } else {
+        buildAndShowStatCard(data);
+      }
+    }
+
+    function buildAndShowStatCard(data) {
+      tiltifyCurrentDisplay = 'stat_card';
+
+      let delay = 0.15;
+      let headerHtml = `<div class="tiltify-stagger" style="--delay: ${delay}s">` +
+        `<span class="stat-card-name">${escHtml(data.name || 'Player')}</span>` +
+        (data.pronouns ? `<span class="stat-card-pronouns">${escHtml(data.pronouns)}</span>` : '') +
+      `</div>`;
+      delay += 0.07;
+
+      const fields = [
+        { label: 'Games Run', value: data.gamesRun },
+        { label: 'World Records', value: data.worldRecords },
+        { label: 'Total PBs', value: data.totalPBs },
+        { label: 'Twitch Followers', value: data.twitchFollowers },
+        { label: 'ESA Appearances', value: data.esaCount },
+        { label: 'Fun Fact', value: data.funFact, fullWidth: true },
+      ].filter(f => f.value);
+
+      let gridHtml = '';
+      if (fields.length > 0) {
+        gridHtml = `<div class="stat-grid tiltify-stagger" style="--delay: ${delay}s">` +
+          fields.map(f =>
+            `<div${f.fullWidth ? ' style="grid-column: 1 / -1"' : ''}><div class="stat-item-label">${escHtml(f.label)}</div><div class="stat-item-value">${escHtml(f.value)}</div></div>`
+          ).join('') +
+        `</div>`;
+      }
+
+      tiltifyDisplay.innerHTML =
+        `<div class="tiltify-bar">` +
+          logoHtml() +
+          `<div class="tiltify-content">${headerHtml}${gridHtml}</div>` +
+        `</div>`;
+
+      void tiltifyDisplay.offsetWidth;
+      const bar = tiltifyDisplay.querySelector('.tiltify-bar');
+      if (bar) bar.classList.add('show');
+      tiltifyVisible = true;
+    }
+
+    // ===== Wheel of Challenges =====
+
+    function handleWheelShow(data) {
+      const options = data.options || [];
+      const resultIndex = data.resultIndex ?? 0;
+      const result = data.result || options[resultIndex] || '';
+      if (options.length === 0) return;
+
+      hideWheel(); // clear any existing
+
+      const overlay = document.createElement('div');
+      overlay.className = 'wheel-overlay';
+      overlay.id = 'wheelOverlay';
+
+      const wrap = document.createElement('div');
+      wrap.className = 'wheel-canvas-wrap';
+
+      const canvas = document.createElement('canvas');
+      const size = 400;
+      canvas.width = size;
+      canvas.height = size;
+      drawWheel(canvas, options);
+
+      const pointer = document.createElement('div');
+      pointer.className = 'wheel-pointer';
+
+      wrap.appendChild(canvas);
+      wrap.appendChild(pointer);
+      overlay.appendChild(wrap);
+      wheelDisplay.appendChild(overlay);
+
+      void overlay.offsetWidth;
+      overlay.classList.add('show');
+
+      // Calculate spin: pointer is at top (12 o'clock)
+      // Each segment spans (360/n) degrees. Segment 0 starts at 0 degrees (3 o'clock position on canvas).
+      // Pointer is at top = 270 degrees. To land on resultIndex, the segment center must be at 270 degrees.
+      const n = options.length;
+      const segAngle = 360 / n;
+      const segCenter = resultIndex * segAngle + segAngle / 2;
+      // We need to rotate so segCenter ends up at 270 degrees (top)
+      const targetAngle = 270 - segCenter;
+      // Add extra full rotations for drama
+      const totalRotation = targetAngle + 360 * 8;
+
+      requestAnimationFrame(() => {
+        canvas.style.transform = `rotate(${totalRotation}deg)`;
+      });
+
+      // After spin completes (4s transition), show result bar
+      setTimeout(() => {
+        const resultBar = document.createElement('div');
+        resultBar.className = 'tiltify-bar';
+        resultBar.innerHTML =
+          logoHtml() +
+          `<div class="tiltify-content">` +
+            `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">The Wheel Has Spoken</div>` +
+            `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.22s">${escHtml(result)}</div>` +
+          `</div>`;
+        overlay.appendChild(resultBar);
+        void resultBar.offsetWidth;
+        resultBar.classList.add('show');
+      }, 4200);
+    }
+
+    function drawWheel(canvas, options) {
+      const ctx = canvas.getContext('2d');
+      const cx = canvas.width / 2;
+      const cy = canvas.height / 2;
+      const r = cx - 4;
+      const n = options.length;
+      const colors = ['#3d2a5c', '#2d1b4e', '#4a3570', '#1a1030', '#6b4d8a', '#2a1d42', '#553d75', '#3a2860'];
+
+      for (let i = 0; i < n; i++) {
+        const startAngle = (i * 2 * Math.PI) / n;
+        const endAngle = ((i + 1) * 2 * Math.PI) / n;
+
+        ctx.beginPath();
+        ctx.moveTo(cx, cy);
+        ctx.arc(cx, cy, r, startAngle, endAngle);
+        ctx.closePath();
+        ctx.fillStyle = colors[i % colors.length];
+        ctx.fill();
+        ctx.strokeStyle = '#6b4d8a';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Text
+        ctx.save();
+        ctx.translate(cx, cy);
+        ctx.rotate(startAngle + (endAngle - startAngle) / 2);
+        ctx.textAlign = 'right';
+        ctx.fillStyle = '#fff';
+        ctx.font = '600 14px Inter, sans-serif';
+        const label = options[i].length > 18 ? options[i].slice(0, 16) + '\u2026' : options[i];
+        ctx.fillText(label, r - 12, 5);
+        ctx.restore();
+      }
+
+      // Center circle
+      ctx.beginPath();
+      ctx.arc(cx, cy, 20, 0, Math.PI * 2);
+      ctx.fillStyle = '#e0b060';
+      ctx.fill();
+    }
+
+    function hideWheel() {
+      const overlay = document.getElementById('wheelOverlay');
+      if (overlay) {
+        overlay.classList.remove('show');
+        overlay.classList.add('hide');
+        setTimeout(() => overlay.remove(), 400);
+      }
+    }
+
+    // ===== Fun Title Rotation =====
+
+    // ===== Image Display =====
+
+    function handleImageShow(data) {
+      const { url, title, position } = data;
+      if (!url) return;
+
+      if (imageVisible) {
+        triggerImageHide();
+        setTimeout(() => {
+          buildAndShowImage(url, title, position || 'left');
+        }, 450);
+      } else {
+        buildAndShowImage(url, title, position || 'left');
+      }
+    }
+
+    function buildAndShowImage(url, title, position) {
+      const img = new Image();
+      img.onload = () => {
+        let html = `<div class="image-display ${escHtml(position)}">` +
+          `<div class="image-display-inner">` +
+            `<img class="image-display-img" src="${escHtml(url)}" alt="">` +
+            (title ? `<div class="image-display-title">${escHtml(title)}</div>` : '') +
+          `</div>` +
+        `</div>`;
+
+        imageDisplayEl.innerHTML = html;
+        void imageDisplayEl.offsetWidth;
+        const el = imageDisplayEl.querySelector('.image-display');
+        if (el) el.classList.add('show');
+        imageVisible = true;
+      };
+      img.onerror = () => {
+        console.warn('[Image] Failed to load:', url);
+      };
+      img.src = url;
+    }
+
+    function triggerImageHide() {
+      const el = imageDisplayEl.querySelector('.image-display');
+      if (el) {
+        el.classList.remove('show');
+        el.classList.add('hide');
+      }
+    }
+
+    function hideImage() {
+      if (!imageVisible) return;
+      triggerImageHide();
+      imageVisible = false;
+    }
+
+    // ===== Fun Title Rotation =====
+
+    function startTitleRotation(items) {
+      titleRotationIntervals.forEach(id => clearInterval(id));
+      titleRotationIntervals = [];
+
+      items.forEach((item, itemIdx) => {
+        if (!item.titles || item.titles.length <= 1) return;
+        let currentTitleIdx = 0;
+        const interval = setInterval(() => {
+          const titleEls = display.querySelectorAll('.title');
+          // In together mode, titles correspond to name-section order
+          // In separate mode, titles correspond to separate-item order
+          const el = titleEls[itemIdx];
+          if (!el) return;
+
+          el.classList.add('title-rotate', 'fade-out');
+          setTimeout(() => {
+            currentTitleIdx = (currentTitleIdx + 1) % item.titles.length;
+            el.textContent = item.titles[currentTitleIdx];
+            el.classList.remove('fade-out');
+          }, 300);
+        }, 4000);
+        titleRotationIntervals.push(interval);
+      });
+    }
+
+  </script>
+</body>
+</html>

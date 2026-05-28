@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESA Lower Third</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: transparent;
+      font-family: 'Inter', sans-serif;
+      overflow: hidden;
+    }
+
+    .lower-third {
+      position: fixed;
+      bottom: 80px;
+      left: 40px;
+      display: flex;
+      align-items: center;
+      gap: 0;
+      opacity: 0;
+      transform: translateX(-100%);
+    }
+
+    .lower-third.show {
+      animation: slideIn 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    .lower-third.hide {
+      animation: slideOut 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards;
+    }
+
+    @keyframes slideIn {
+      0% {
+        opacity: 0;
+        transform: translateX(-100%);
+      }
+      100% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes slideOut {
+      0% {
+        opacity: 1;
+        transform: translateX(0);
+      }
+      100% {
+        opacity: 0;
+        transform: translateX(-100%);
+      }
+    }
+
+    .logo-container {
+      background: linear-gradient(135deg, #2d1b4e 0%, #1a1030 100%);
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 8px 0 0 8px;
+      border: 2px solid #6b4d8a;
+      border-right: none;
+    }
+
+    .logo-container img {
+      height: 50px;
+      width: auto;
+    }
+
+    .text-container {
+      background: linear-gradient(135deg, #3d2a5c 0%, #2a1d42 100%);
+      padding: 12px 24px;
+      border-radius: 0 8px 8px 0;
+      border: 2px solid #6b4d8a;
+      border-left: none;
+      min-width: 200px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .text-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: linear-gradient(180deg, #f0a030 0%, #d4841f 100%);
+    }
+
+    .name {
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffffff;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+      line-height: 1.2;
+    }
+
+    .title {
+      font-size: 14px;
+      font-weight: 500;
+      color: #e0b060;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-top: 2px;
+    }
+
+    .title:empty {
+      display: none;
+    }
+
+    /* Control panel styles */
+    .control-panel {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      background: #1a1030;
+      border: 2px solid #6b4d8a;
+      border-radius: 12px;
+      padding: 20px;
+      font-family: 'Inter', sans-serif;
+      color: #fff;
+      z-index: 1000;
+      display: none;
+      min-width: 280px;
+    }
+
+    .control-panel.visible {
+      display: block;
+    }
+
+    .control-panel h3 {
+      margin-bottom: 16px;
+      color: #e0b060;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .control-panel label {
+      display: block;
+      font-size: 12px;
+      color: #a08cc0;
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .control-panel input {
+      width: 100%;
+      padding: 10px 12px;
+      margin-bottom: 12px;
+      border: 2px solid #6b4d8a;
+      border-radius: 6px;
+      background: #2a1d42;
+      color: #fff;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .control-panel input:focus {
+      outline: none;
+      border-color: #e0b060;
+    }
+
+    .control-panel button {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Inter', sans-serif;
+      margin-bottom: 8px;
+      transition: transform 0.1s, opacity 0.1s;
+    }
+
+    .control-panel button:hover {
+      transform: scale(1.02);
+    }
+
+    .control-panel button:active {
+      transform: scale(0.98);
+    }
+
+    .btn-show {
+      background: linear-gradient(135deg, #4a9f4a 0%, #3a7a3a 100%);
+      color: #fff;
+    }
+
+    .btn-hide {
+      background: linear-gradient(135deg, #9f4a4a 0%, #7a3a3a 100%);
+      color: #fff;
+    }
+
+    .btn-update {
+      background: linear-gradient(135deg, #e0b060 0%, #c0903a 100%);
+      color: #1a1030;
+    }
+
+    .hint {
+      font-size: 11px;
+      color: #6b4d8a;
+      margin-top: 12px;
+      line-height: 1.4;
+    }
+  </style>
+</head>
+<body>
+  <div class="lower-third" id="lowerThird">
+    <div class="logo-container">
+      <img src="https://esamarathon.com/wp-content/uploads/2020/11/esa-big-logo-2-winter-300px.png" alt="ESA Winter">
+    </div>
+    <div class="text-container">
+      <div class="name" id="nameText">Name</div>
+      <div class="title" id="titleText"></div>
+    </div>
+  </div>
+
+  <div class="control-panel" id="controlPanel">
+    <h3>🎬 Lower Third Control</h3>
+    <label for="inputName">Name</label>
+    <input type="text" id="inputName" placeholder="Enter name...">
+    <label for="inputTitle">Title (optional)</label>
+    <input type="text" id="inputTitle" placeholder="Enter title...">
+    <button class="btn-update" onclick="updateText()">Update Text</button>
+    <button class="btn-show" onclick="showLowerThird()">Show ▶</button>
+    <button class="btn-hide" onclick="hideLowerThird()">Hide ◀</button>
+    <div class="hint">
+      💡 Press <strong>C</strong> to toggle this panel<br>
+      💡 Press <strong>Space</strong> to toggle show/hide
+    </div>
+  </div>
+
+  <script>
+    const lowerThird = document.getElementById('lowerThird');
+    const nameText = document.getElementById('nameText');
+    const titleText = document.getElementById('titleText');
+    const controlPanel = document.getElementById('controlPanel');
+    const inputName = document.getElementById('inputName');
+    const inputTitle = document.getElementById('inputTitle');
+
+    let isVisible = false;
+
+    // Parse URL parameters
+    const params = new URLSearchParams(window.location.search);
+    const urlName = params.get('name');
+    const urlTitle = params.get('title');
+    const autoShow = params.get('show') === '1' || params.get('show') === 'true';
+    const hideControls = params.get('controls') === '0' || params.get('controls') === 'false';
+
+    // Initialize from URL params
+    if (urlName) {
+      nameText.textContent = urlName;
+      inputName.value = urlName;
+    }
+    if (urlTitle) {
+      titleText.textContent = urlTitle;
+      inputTitle.value = urlTitle;
+    }
+
+    // Show control panel by default (unless hidden via URL)
+    if (!hideControls) {
+      controlPanel.classList.add('visible');
+    }
+
+    // Auto-show if requested
+    if (autoShow) {
+      setTimeout(() => showLowerThird(), 500);
+    }
+
+    function showLowerThird() {
+      lowerThird.classList.remove('hide');
+      lowerThird.classList.add('show');
+      isVisible = true;
+    }
+
+    function hideLowerThird() {
+      lowerThird.classList.remove('show');
+      lowerThird.classList.add('hide');
+      isVisible = false;
+    }
+
+    function toggleLowerThird() {
+      if (isVisible) {
+        hideLowerThird();
+      } else {
+        showLowerThird();
+      }
+    }
+
+    function updateText() {
+      nameText.textContent = inputName.value || 'Name';
+      titleText.textContent = inputTitle.value || '';
+    }
+
+    function toggleControls() {
+      controlPanel.classList.toggle('visible');
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.target.tagName === 'INPUT') return;
+      
+      if (e.code === 'Space') {
+        e.preventDefault();
+        toggleLowerThird();
+      }
+      if (e.code === 'KeyC') {
+        toggleControls();
+      }
+    });
+
+    // Enter key in inputs triggers update
+    inputName.addEventListener('keydown', (e) => {
+      if (e.code === 'Enter') updateText();
+    });
+    inputTitle.addEventListener('keydown', (e) => {
+      if (e.code === 'Enter') updateText();
+    });
+  </script>
+</body>
+</html>

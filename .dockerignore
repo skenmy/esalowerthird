@@ -1,0 +1,7 @@
+node_modules
+.git
+.github
+.DS_Store
+*.service
+serve.sh
+CLAUDE.md
