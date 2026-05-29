@@ -1,58 +1,121 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Guidance for Claude Code when working in this repo. README.md covers
+user-facing setup, protocol table, and env vars — don't duplicate it
+here. This file is for things that aren't obvious from the README.
 
-## Project Overview
+## Shape of the codebase
 
-ESA Lower Third is a browser-based overlay system for speedrunning marathon streams (ESA - European Speedrunner Assembly). It consists of three main files with no build step, framework, or bundler.
+Four hand-written files. No build step, no bundler, no framework.
 
-## Architecture
+- `relay.js` (~630 lines) — Node WebSocket relay. Also serves the three
+  HTML files over plain HTTP (so the same port hosts `/ws`, the static
+  files, `/healthz`, `/api/send`, `/api/hide`). Polls Tiltify (15s) and
+  Horaro (5m); handles `src_lookup` / `twitch_lookup` itself rather
+  than broadcasting.
+- `source.html` (~2.1k lines) — OBS browser source. Listens only,
+  never sends commands (except status pings). Dispatches incoming WS
+  messages via a `switch` on `data.type` around line 855.
+- `control.html` (~2.8k lines) — operator panel. Single-file app with
+  presets, queues, Tiltify browser, fun-tools tabs. Heavy.
+- `index.html` (~330 lines) — standalone keyboard-driven demo, no
+  WebSocket. Lives on for designing overlay states without a relay.
 
-- **`source.html`** — OBS browser source overlay. Transparent background, receives WebSocket messages and renders animated lower thirds (runner names, Tiltify donation data, schedule info, fun tools like wheels/counters/quotes). This is the display layer only — it never sends commands, only listens.
-- **`control.html`** — Control panel UI. Sends WebSocket commands to show/hide overlays, manage presets, queue items, browse Tiltify data, and trigger fun tools. Heavy single-file app (~99KB).
-- **`relay.js`** — Node.js WebSocket relay server. Broadcasts messages between control and source clients. Also polls Tiltify API (donations, targets, polls, milestones, matches), Horaro API (schedule), and handles Twitch/SRC user lookups.
-- **`index.html`** — Standalone single-page demo (no WebSocket, local keyboard controls only). Not used in production.
+## Key entry points when editing
 
-## Key Conventions
+- New WS message type → add a `case` in `source.html` around line
+  855 (the main dispatcher), then send it from `control.html`. Keep
+  the `{ type, scene?, ... }` shape.
+- New env var → top of `relay.js` (lines ~15-38). Pattern: read,
+  derive an `*Enabled` flag, log "enabled/disabled" at startup.
+- New Tiltify field → both `pollTiltify` (assembles the cache) and
+  `broadcastTiltifyData` already covers it; consumers in
+  `control.html` (around the `tiltify_data` handler) and `source.html`.
+- New fun tool → add tab button + `ftPanel<Name>` in `control.html`
+  (~line 1162), register in `panelMap` (~line 2298), wire WS message
+  type in `source.html` switch.
 
-- **No build step.** All files are vanilla HTML/CSS/JS. Edit and deploy directly.
-- **XSS safety:** Always use `escHtml()` for user-supplied strings interpolated into HTML.
-- **Animation pattern:** Show = 0.6s `cubic-bezier(0.16, 1, 0.3, 1)`, Hide = 0.4s `cubic-bezier(0.7, 0, 0.84, 0)`. Text elements use `textReveal`/`textHide` keyframes with `--delay` CSS custom property for stagger.
-- **Tiltify bar pattern:** `.tiltify-bar` > `.logo-container` + `.tiltify-content` > `.tiltify-stagger` elements with `--delay` for staggered reveals.
-- **localStorage keys** use `esa-lt-*` prefix.
-- **Fun tools** use tab pattern: `#funToolsSection` container, panel IDs `ftPanel*`, tab data attributes `ft-*`.
-- **WebSocket message protocol:** JSON objects with a `type` field. Control sends commands (`update`, `hide`, `tiltify_show`, `custom_show`, etc.), relay broadcasts to other clients. Source handles display.
-- **Scene filtering:** `source.html` accepts `?scene=NAME` query param. Messages with a `scene` field only affect matching source instances.
+## Conventions
 
-## Development
+- **No build step.** Vanilla HTML/CSS/JS. Edit, reload, deploy.
+- **XSS safety.** Always wrap user-supplied strings in `escHtml()`
+  before string-concatenating into HTML.
+- **Animation timings.** Show = `0.6s cubic-bezier(0.16, 1, 0.3, 1)`;
+  hide = `0.4s cubic-bezier(0.7, 0, 0.84, 0)`. Text reveals use
+  `textReveal`/`textHide` keyframes with `--delay` CSS custom property
+  for stagger.
+- **Tiltify bar markup.** `.tiltify-bar` > `.logo-container` +
+  `.tiltify-content` > `.tiltify-stagger` children with their own
+  `--delay`.
+- **localStorage prefix:** `esa-lt-*`. Used liberally in `control.html`
+  for presets, queues, counters, quotes, image presets, etc.
+- **Fun tools** live under `#funToolsSection`. Tab buttons use
+  `data-tab="ft-<name>"`, panels use `id="ftPanel<Name>"`, and
+  `panelMap` in `switchFunTab()` ties them together.
+- **Scene filtering.** `source.html?scene=<name>` makes an instance
+  only react to messages whose `scene` field matches. Used so multiple
+  OBS sources can show different content from one control panel.
+- **WebSocket URL.** Both clients derive it as
+  `(wss|ws)://<location.host>/ws` — relay must be reachable on the same
+  origin as the HTML (Caddy/nginx upstream in prod, relay's own static
+  serving in dev/Docker).
+
+## Message types (not in README)
+
+The README table covers the public/documented protocol. The full set
+dispatched by `source.html` also includes:
+
+`custom_show`, `counter_show`/`_update`/`_hide`, `quote_show`,
+`sleep_show`/`_hide`, `stat_card_show`, `wheel_show`/`_hide`,
+`image_show`/`_hide`, `status` (sent by source on visibility change).
+
+Tiltify cache exposes nested types via `tiltify_data` payloads —
+control.html has a sub-switch on item type around line 1097
+(`totalizer`, `total`, `donation`, `target`, `milestone`, `poll`,
+`matching`, `shame_clock`, `hype_meter`, `donation_train`).
+
+## Running locally
 
 ```bash
-# Local development (static file server only, no relay/Tiltify)
-./serve.sh  # python3 http.server on port 8080
+# Static-only (no relay, no Tiltify) — python http.server on 8080
+./serve.sh
 
-# Run relay server locally
+# Relay (also serves the HTML on the same port, default 8081)
 RELAY_PORT=8081 node relay.js
 ```
 
-Source URL for OBS: `http://localhost:8080/source.html`
-Control panel: `http://localhost:8080/control.html`
+When running the relay, hit `http://localhost:8081/control.html` —
+WebSocket connects to `/ws` on the same origin. `./serve.sh` is only
+useful for pure HTML/CSS iteration; nothing dynamic works.
 
 ## Deployment
 
-Static files rsync to `root@89.167.17.202:/var/www/esalowerthird/`. Relay runs as systemd service `esalowerthird.service` at `/opt/esalowerthird/relay.js` on port 8081. Nginx proxies `/ws` to the relay. Domain: `lowerthird.skenmy.com`.
+CI (`.github/workflows/ci.yml`) builds `ghcr.io/skenmy/esalowerthird`
+on every push to `main` (and tags) and then dispatches `deploy.yml`
+in the `skenmy-vps` repo with `service=esalowerthird, tag=sha-<short>`.
+That repo pulls the image and restarts the container. Caddy on the VPS
+terminates TLS at `lowerthird.skenmy.com` and proxies to the container.
 
-```bash
-# Deploy static files (no service restart needed)
-rsync -avz source.html control.html index.html root@89.167.17.202:/var/www/esalowerthird/
+- Image is `node:22-slim`, runs `node relay.js` on `8081`, serves the
+  HTML files from `__dirname` (set `STATIC_DIR=disabled` to opt out
+  when something else fronts the statics).
+- Secrets live in `/opt/skenmy-vps/.env`, never in this repo.
+  `esalowerthird.service` is the old systemd unit and is
+  `.gitignore`'d (it still contains live credentials on disk).
+- Control panel is gated behind Twitch sign-in at the edge (Caddy +
+  `tools.skenmy.com`); the relay itself has no auth.
 
-# Deploy relay changes (requires service restart)
-rsync -avz relay.js package.json root@89.167.17.202:/opt/esalowerthird/
-ssh root@89.167.17.202 'systemctl restart esalowerthird'
-```
+## Things easy to break
 
-## Environment Variables (relay.js)
-
-- `RELAY_PORT` (default 8081)
-- `TILTIFY_CLIENT_ID`, `TILTIFY_CLIENT_SECRET`, `TILTIFY_CAMPAIGN_ID`, `TILTIFY_CAMPAIGN_TYPE` (`campaigns` or `team_campaigns`)
-- `HORARO_SCHEDULE` (e.g. `esa/2026-winter1`)
-- `TWITCH_CLIENT_ID`, `TWITCH_CLIENT_SECRET`
+- Adding a non-`type` top-level field to a relayed message: the relay
+  forwards anything that isn't `ping`/`pong`/`src_lookup`/
+  `twitch_lookup` verbatim, but `source.html`'s switch only acts on
+  `type`. Don't put dispatch logic anywhere else.
+- Forgetting `escHtml()` on any new field used in a template string.
+- Changing the campaign type — `team_campaigns` walks
+  `supporting_campaigns` for incentives, `campaigns` reads them
+  directly from the root. The merging logic in `pollTiltify` /
+  `fetchIncentives` is the part to look at.
+- Adding new static files: only `source.html`, `control.html`,
+  `index.html` are in `STATIC_FILES` allowlist in `relay.js`; the
+  Dockerfile also `COPY`s exactly those three.
