@@ -1,0 +1,94 @@
+name: claude-fix-ci
+
+on:
+  workflow_run:
+    workflows: [ci]
+    types: [completed]
+
+jobs:
+  fix:
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.event != 'workflow_run' &&
+      !contains(github.event.workflow_run.head_commit.message, '[skip claude-fix]') &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: read
+      id-token: write
+    concurrency:
+      group: claude-fix-ci-${{ github.event.workflow_run.head_sha }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          fetch-depth: 0
+
+      - name: download failed run logs
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          mkdir -p .claude-fix-ci
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --log-failed \
+            > .claude-fix-ci/failed.log 2>&1 || true
+          gh run view "$RUN_ID" --repo "$GITHUB_REPOSITORY" --json \
+            name,displayTitle,event,headBranch,headSha,conclusion,url,jobs \
+            > .claude-fix-ci/run.json
+          # Trim very long logs so the prompt stays usable (~200 KB).
+          if [ "$(wc -c < .claude-fix-ci/failed.log)" -gt 204800 ]; then
+            tail -c 204800 .claude-fix-ci/failed.log > .claude-fix-ci/failed.log.trimmed
+            mv .claude-fix-ci/failed.log.trimmed .claude-fix-ci/failed.log
+          fi
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # The action's default agent mode denies arbitrary Bash/Edit/Write.
+          # This job needs to edit code, branch, commit, push, and open a PR,
+          # so grant the tool surface explicitly.
+          settings: |
+            {
+              "permissions": {
+                "allow": [
+                  "Edit", "Write", "Read", "Glob", "Grep",
+                  "Bash(git:*)", "Bash(gh:*)",
+                  "Bash(npm:*)", "Bash(npx:*)", "Bash(node:*)",
+                  "Bash(pnpm:*)", "Bash(yarn:*)",
+                  "Bash(mkdir:*)", "Bash(rm:*)", "Bash(mv:*)", "Bash(cp:*)",
+                  "Bash(cat:*)", "Bash(ls:*)", "Bash(grep:*)", "Bash(sed:*)",
+                  "Bash(awk:*)", "Bash(head:*)", "Bash(tail:*)", "Bash(wc:*)",
+                  "Bash(jq:*)"
+                ]
+              }
+            }
+          prompt: |
+            The `ci` workflow failed for commit ${{ github.event.workflow_run.head_sha }}
+            on branch `${{ github.event.workflow_run.head_branch }}` (event:
+            ${{ github.event.workflow_run.event }}). Failing run:
+            ${{ github.event.workflow_run.html_url }}.
+
+            Run metadata is in `.claude-fix-ci/run.json` and the failed step
+            logs are in `.claude-fix-ci/failed.log`. Read both, then:
+
+            1. Diagnose the root cause. If the failure is environmental
+               (transient network, runner flake, GHCR rate limit, a missing
+               secret you can't set) stop and post a single comment on the
+               head commit explaining what you saw — do not open a PR.
+            2. Otherwise, make the minimum change needed to fix CI. Do not
+               refactor surrounding code or expand scope.
+            3. Create a branch named `claude/fix-ci-${{ github.event.workflow_run.head_sha }}`
+               from the failing commit, commit your fix, push it, and open a
+               PR against `${{ github.event.workflow_run.head_branch }}` titled
+               `fix(ci): <one-line summary>`. The PR body should link the
+               failing run and explain the diagnosis in 2-3 sentences.
+            4. Never push directly to `${{ github.event.workflow_run.head_branch }}`.
+               Never disable, skip, or delete tests to make CI pass — if a
+               test is genuinely wrong, fix it; if it's flaky, say so in the
+               PR body and stop.
+
+            Repo conventions are in `CLAUDE.md`. Respect them.
