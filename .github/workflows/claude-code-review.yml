@@ -6,6 +6,7 @@ on:
 
 jobs:
   claude-review:
+    if: github.event.sender.login == 'skenmy'
     runs-on: ubuntu-latest
     permissions:
       contents: read
