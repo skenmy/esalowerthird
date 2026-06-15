@@ -123,15 +123,19 @@ async def probe(args):
         print()
 
         mac = args.mac
-        candidates = [
-            ("A  Infinity, MAC as-is, no-response",
-             [cmd_power(mac, True), cmd_hsi(mac, 0, 100, 100)], False),
-            ("B  Infinity, MAC reversed, no-response",
-             [cmd_power(mac, True, True), cmd_hsi(mac, 0, 100, 100, True)], False),
-            ("C  Infinity, MAC as-is, with-response",
-             [cmd_power(mac, True), cmd_hsi(mac, 0, 100, 100)], True),
-            ("D  Infinity, MAC reversed, with-response",
-             [cmd_power(mac, True, True), cmd_hsi(mac, 0, 100, 100, True)], True),
+        candidates = []
+        if mac:
+            candidates += [
+                ("A  Infinity, MAC as-is, no-response",
+                 [cmd_power(mac, True), cmd_hsi(mac, 0, 100, 100)], False),
+                ("B  Infinity, MAC reversed, no-response",
+                 [cmd_power(mac, True, True), cmd_hsi(mac, 0, 100, 100, True)], False),
+                ("C  Infinity, MAC as-is, with-response",
+                 [cmd_power(mac, True), cmd_hsi(mac, 0, 100, 100)], True),
+                ("D  Infinity, MAC reversed, with-response",
+                 [cmd_power(mac, True, True), cmd_hsi(mac, 0, 100, 100, True)], True),
+            ]
+        candidates += [
             ("E  Legacy (no MAC), no-response",
              [cmd_power_legacy(True), cmd_hsi_legacy(0, 100, 100)], False),
             ("F  Legacy (no MAC), with-response",
@@ -154,14 +158,20 @@ async def probe(args):
 
 async def apply_state(client, args, state):
     """Write the colour for `state` to the connected light."""
-    if state == "clear" or state not in STATE_HEX:
-        await client.write_gatt_char(WRITE_CHAR, cmd_power(args.mac, False, args.reverse_mac), response=False)
+    off = state == "clear" or state not in STATE_HEX
+    if off:
+        pkt = cmd_power(args.mac, False, args.reverse_mac) if args.infinity else cmd_power_legacy(False)
+        await client.write_gatt_char(WRITE_CHAR, pkt, response=args.response)
         print(f"[light] {state} -> off")
         return
     hue, sat, bri = hex_to_hsi(STATE_HEX[state], args.brightness)
-    await client.write_gatt_char(WRITE_CHAR, cmd_power(args.mac, True, args.reverse_mac), response=False)
+    if args.infinity:
+        on, color = cmd_power(args.mac, True, args.reverse_mac), cmd_hsi(args.mac, hue, sat, bri, args.reverse_mac)
+    else:
+        on, color = cmd_power_legacy(True), cmd_hsi_legacy(hue, sat, bri)
+    await client.write_gatt_char(WRITE_CHAR, on, response=args.response)
     await asyncio.sleep(0.05)
-    await client.write_gatt_char(WRITE_CHAR, cmd_hsi(args.mac, hue, sat, bri, args.reverse_mac), response=False)
+    await client.write_gatt_char(WRITE_CHAR, color, response=args.response)
     print(f"[light] {state} -> {STATE_HEX[state]} (H{hue} S{sat} B{bri})")
 
 
@@ -232,12 +242,16 @@ def main():
     p.add_argument("--connect", default=os.environ.get("LIGHT_CONNECT"),
                    help="address to connect to, if different from --mac. On macOS use the "
                         "CoreBluetooth UUID from --discover here; keep the real MAC in --mac.")
-    p.add_argument("--brightness", type=int, default=int(os.environ.get("LIGHT_BRIGHTNESS", "100")),
+    p.add_argument("--brightness", type=int, default=int(os.environ.get("LIGHT_BRIGHTNESS", "1")),
                    help="light brightness 0-100 (default: %(default)s)")
     p.add_argument("--scene", default=os.environ.get("LIGHT_SCENE", ""),
                    help="only react to confidence_state for this scene (default: any)")
+    p.add_argument("--infinity", action="store_true",
+                   help="use the MAC-embedded Infinity frames instead of legacy (needs --mac)")
+    p.add_argument("--response", action="store_true",
+                   help="use BLE write-with-response (probe candidates C/D/F)")
     p.add_argument("--reverse-mac", action="store_true",
-                   help="reverse MAC byte order in packets (try this if the light doesn't react)")
+                   help="(--infinity only) reverse MAC byte order in packets")
     p.add_argument("--discover", action="store_true", help="scan for NEEWER lights and exit")
     p.add_argument("--probe", action="store_true",
                    help="try candidate framings (watch the light) + dump its characteristics, then exit")
@@ -246,13 +260,13 @@ def main():
     if args.discover:
         asyncio.run(discover())
         return
+    if not (args.mac or args.connect):
+        p.error("need --mac (Linux/Win) or --connect (macOS UUID). Run --discover to find it.")
+    if args.infinity and not args.mac:
+        p.error("--infinity needs the real --mac to embed in packets.")
     if args.probe:
-        if not args.mac:
-            p.error("--probe needs --mac (and --connect on macOS).")
         asyncio.run(probe(args))
         return
-    if not args.mac:
-        p.error("--mac is required (or set LIGHT_MAC). Run with --discover to find it.")
 
     queue = asyncio.Queue()
 

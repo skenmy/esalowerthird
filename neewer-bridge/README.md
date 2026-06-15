@@ -51,6 +51,12 @@ python neewer_bridge.py --mac AA:BB:CC:DD:EE:FF
 
 (Next time, just `source .venv/bin/activate` before running.)
 
+**Defaults:** the bridge uses the **legacy** frames (confirmed working on the
+RGB1 firmware tested) and **brightness 1** (very dim — these bars are bright;
+raise with `--brightness 0-100`). Use `--probe` to find the right framing on a
+different unit; pass `--infinity` (+`--mac`, maybe `--reverse-mac`) or
+`--response` if your light needs them.
+
 ### On macOS
 
 CoreBluetooth doesn't expose the real MAC — `--discover` shows a **UUID**
