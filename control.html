@@ -1242,8 +1242,8 @@
     .sc-div { width: 1px; height: 26px; background: rgba(255,255,255,.1); flex-shrink: 0; }
     .sc-route-label { font: 700 10px 'Barlow Semi Condensed', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #6c7488; }
 
-    .sc-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 360px minmax(0,1fr) 408px; gap: 12px; padding: 12px; }
-    @media (max-width: 1320px) { .sc-grid { grid-template-columns: 320px minmax(0,1fr) 364px; } }
+    .sc-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 320px minmax(0,1fr) 408px; gap: 12px; padding: 12px; }
+    @media (max-width: 1320px) { .sc-grid { grid-template-columns: 280px minmax(0,1fr) 360px; } }
     .sc-rail, .sc-col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 
     .sc-panel { background: #101218; border: 1px solid rgba(255,255,255,.07); border-radius: 13px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
@@ -1270,11 +1270,9 @@
     .mode-toggle.sm .mode-btn { padding: 4px 9px; font-size: 10px; }
     .btn-add.sm { padding: 4px 9px; font-size: 11px; }
     #funToolsSection .sc-panel-body { padding-top: 4px; }
-    /* stack the editable preset fields so they're usable in the rail */
-    .sc-rail .preset-card { align-items: flex-start; }
-    .sc-rail .preset-fields { flex-direction: column; }
-    .sc-rail .preset-fields input.input-pronouns { flex: 1 1 auto; min-width: 0; width: 100%; }
-    .sc-rail .preset-actions { flex-direction: column; align-items: stretch; }
+    /* Confidence controls live in the left rail (compact) */
+    .sc-rail .state-row { flex-wrap: wrap; }
+    .sc-rail .state-btn { flex: 1 1 30%; min-width: 0; padding: 11px 4px; font-size: 12px; }
   </style>
   <script src="https://tools.skenmy.com/embed.js" data-app="lowerthird" data-role="admin"></script>
 </head>
@@ -1320,32 +1318,32 @@
       <!-- ============ LEFT RAIL ============ -->
       <div class="sc-rail">
 
-        <!-- QUEUE -->
-        <div class="sc-panel" style="flex:1.15;">
+        <!-- CONFIDENCE -->
+        <div class="sc-panel" id="confidenceSection" style="flex:1;">
           <div class="sc-panel-head">
-            <span class="sc-panel-title">Queue</span>
-            <div class="mode-toggle sm">
-              <button class="mode-btn" id="modeTogether" onclick="setMode('together')">Together</button>
-              <button class="mode-btn active" id="modeSeparate" onclick="setMode('separate')">Separate</button>
-            </div>
+            <span class="sc-panel-title">Confidence</span>
+            <span class="sc-panel-note">→ Host Monitor</span>
           </div>
           <div class="sc-panel-body">
-            <div class="scene-selector" id="sceneSelector" style="display: none;"></div>
-            <div class="queue-preview" id="queuePreview">
-              <span class="queue-empty">Press 1-9 or click Queue to add names</span>
+            <div class="sc-conf-label">Studio State</div>
+            <div class="state-row">
+              <button class="state-btn clear active" data-state="clear" onclick="setStudioState('clear')">Clear</button>
+              <button class="state-btn standby" data-state="standby" onclick="setStudioState('standby')">Standby</button>
+              <button class="state-btn air" data-state="air" onclick="setStudioState('air')">On Air</button>
+              <button class="state-btn recording" data-state="recording" onclick="setStudioState('recording')">Recording</button>
+              <button class="state-btn wrap" data-state="wrap" onclick="setStudioState('wrap')">Wrap Up</button>
             </div>
-            <div class="scene-overview" id="sceneOverview" style="display: none;"></div>
-          </div>
-        </div>
-
-        <!-- PRESETS -->
-        <div class="sc-panel" style="flex:1;">
-          <div class="sc-panel-head">
-            <span class="sc-panel-title">Presets</span>
-            <button class="btn-add sm" onclick="addPreset()">+ Add</button>
-          </div>
-          <div class="sc-panel-body">
-            <div class="preset-list" id="presetList"></div>
+            <div class="sc-conf-label">Producer Message &rarr; Hosts</div>
+            <div class="producer-composer">
+              <input type="text" id="producerText" placeholder="Type a cue to send to the hosts…" onkeydown="event.stopPropagation(); if (event.key === 'Enter') sendProducer();">
+              <button class="btn-send" onclick="sendProducer()">Send</button>
+            </div>
+            <div class="level-row">
+              <button class="level-btn info on" id="levelInfo" onclick="setProducerLevel('info')">Info</button>
+              <button class="level-btn urgent" id="levelUrgent" onclick="setProducerLevel('urgent')">Urgent</button>
+              <span style="flex:1;"></span>
+              <button class="feat-btn clear" onclick="clearProducer()" style="padding:8px 12px;">Clear</button>
+            </div>
           </div>
         </div>
 
@@ -1403,32 +1401,32 @@
           </button>
         </div>
 
-        <!-- CONFIDENCE -->
-        <div class="sc-panel" id="confidenceSection" style="flex:1;">
+        <!-- QUEUE -->
+        <div class="sc-panel" style="flex:1;">
           <div class="sc-panel-head">
-            <span class="sc-panel-title">Confidence</span>
-            <span class="sc-panel-note">→ Host Monitor</span>
+            <span class="sc-panel-title">Queue</span>
+            <div class="mode-toggle sm">
+              <button class="mode-btn" id="modeTogether" onclick="setMode('together')">Together</button>
+              <button class="mode-btn active" id="modeSeparate" onclick="setMode('separate')">Separate</button>
+            </div>
           </div>
           <div class="sc-panel-body">
-            <div class="sc-conf-label">Studio State</div>
-            <div class="state-row">
-              <button class="state-btn clear active" data-state="clear" onclick="setStudioState('clear')">Clear</button>
-              <button class="state-btn standby" data-state="standby" onclick="setStudioState('standby')">Standby</button>
-              <button class="state-btn air" data-state="air" onclick="setStudioState('air')">On Air</button>
-              <button class="state-btn recording" data-state="recording" onclick="setStudioState('recording')">Recording</button>
-              <button class="state-btn wrap" data-state="wrap" onclick="setStudioState('wrap')">Wrap Up</button>
+            <div class="scene-selector" id="sceneSelector" style="display: none;"></div>
+            <div class="queue-preview" id="queuePreview">
+              <span class="queue-empty">Press 1-9 or click Queue to add names</span>
             </div>
-            <div class="sc-conf-label">Producer Message &rarr; Hosts</div>
-            <div class="producer-composer">
-              <input type="text" id="producerText" placeholder="Type a cue to send to the hosts…" onkeydown="event.stopPropagation(); if (event.key === 'Enter') sendProducer();">
-              <button class="btn-send" onclick="sendProducer()">Send</button>
-            </div>
-            <div class="level-row">
-              <button class="level-btn info on" id="levelInfo" onclick="setProducerLevel('info')">Info</button>
-              <button class="level-btn urgent" id="levelUrgent" onclick="setProducerLevel('urgent')">Urgent</button>
-              <span style="flex:1;"></span>
-              <button class="feat-btn clear" onclick="clearProducer()" style="padding:8px 12px;">Clear</button>
-            </div>
+            <div class="scene-overview" id="sceneOverview" style="display: none;"></div>
+          </div>
+        </div>
+
+        <!-- PRESETS -->
+        <div class="sc-panel" style="flex:1.5;">
+          <div class="sc-panel-head">
+            <span class="sc-panel-title">Presets</span>
+            <button class="btn-add sm" onclick="addPreset()">+ Add</button>
+          </div>
+          <div class="sc-panel-body">
+            <div class="preset-list" id="presetList"></div>
           </div>
         </div>
 
