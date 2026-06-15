@@ -1084,6 +1084,25 @@
     .mirror-toggle.on { color: #2ee6a0; border-color: rgba(46,230,160,0.45); background: rgba(46,230,160,0.1); }
     .mirror-toggle.on .mdot { background: #2ee6a0; }
 
+    /* ===== Send target selector (Program / Both / Confidence) ===== */
+    .target-seg {
+      display: flex; align-items: center; gap: 4px;
+      background: #0e1119; border: 1px solid #2a3144; border-radius: 9px; padding: 3px;
+    }
+    .target-seg .seg-label {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 700; font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase;
+      color: #5d6478; padding: 0 8px;
+    }
+    .target-seg .seg {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 700; font-size: 12px; letter-spacing: 0.04em; text-transform: uppercase;
+      border: none; border-radius: 6px; padding: 6px 12px; cursor: pointer;
+      background: transparent; color: #8b93a7; transition: background 0.15s, color 0.15s;
+    }
+    .target-seg .seg.active { background: #4d7cff; color: #fff; }
+    .target-seg .seg[data-t="confidence"].active { background: #2ee6a0; color: #08130d; }
+
     /* ===== Monitor bus (live previews) ===== */
     .monitor-bus {
       display: flex;
@@ -1156,6 +1175,7 @@
       opacity: 0.4; transition: opacity 0.15s, transform 0.1s; color: #fff;
     }
     .state-btn:active { transform: scale(0.97); }
+    .state-btn.clear { background: #2a3144; color: #cfd5e3; }
     .state-btn.standby { background: #4d7cff; }
     .state-btn.air { background: #ff4136; }
     .state-btn.wrap { background: #ffb02e; color: #1a1205; }
@@ -1211,9 +1231,12 @@
   <div class="header">
     <h1>Studio Control<span class="sub">ESA</span></h1>
     <div style="display: flex; align-items: center; gap: 16px;">
-      <button class="mirror-toggle" id="mirrorToggle" onclick="toggleMirror()" title="Mirror Program donation displays to the Host Confidence monitor">
-        <span class="mdot"></span><span id="mirrorLabel">Mirror · Off</span>
-      </button>
+      <div class="target-seg" id="targetSeg" title="Where Show buttons send overlays — Confidence-only lets hosts read before it hits stream">
+        <span class="seg-label">Send</span>
+        <button class="seg" data-t="program" onclick="setConfTarget('program')">Program</button>
+        <button class="seg active" data-t="both" onclick="setConfTarget('both')">Both</button>
+        <button class="seg" data-t="confidence" onclick="setConfTarget('confidence')">Confidence</button>
+      </div>
       <div class="mode-toggle">
         <button class="mode-btn active" id="modeBasic" onclick="setAdvancedMode(false)">One Scene</button>
         <button class="mode-btn" id="modeAdvanced" onclick="setAdvancedMode(true)">Multi-Scene</button>
@@ -1285,7 +1308,8 @@
         <div>
           <div class="conf-block-label">Studio State</div>
           <div class="state-row">
-            <button class="state-btn standby active" data-state="standby" onclick="setStudioState('standby')">Standby</button>
+            <button class="state-btn clear active" data-state="clear" onclick="setStudioState('clear')">Clear</button>
+            <button class="state-btn standby" data-state="standby" onclick="setStudioState('standby')">Standby</button>
             <button class="state-btn air" data-state="air" onclick="setStudioState('air')">On Air</button>
             <button class="state-btn wrap" data-state="wrap" onclick="setStudioState('wrap')">Wrap Up</button>
           </div>
@@ -1310,14 +1334,6 @@
             <button class="level-btn urgent" id="levelUrgent" onclick="setProducerLevel('urgent')">Urgent</button>
             <span style="flex:1;"></span>
             <button class="feat-btn clear" onclick="clearProducer()" style="padding:8px 12px;">Clear</button>
-          </div>
-          <div class="cue-row">
-            <button class="cue-btn info" onclick="sendProducer('30 seconds to air', 'info')">30s to air</button>
-            <button class="cue-btn info" onclick="sendProducer('Break after this', 'info')">Break after this</button>
-            <button class="cue-btn info" onclick="sendProducer('Plug the incentive', 'info')">Plug incentive</button>
-            <button class="cue-btn info" onclick="sendProducer('Filling — slow it down', 'info')">Slow down</button>
-            <button class="cue-btn urgent" onclick="sendProducer('Big donation — read it!', 'urgent')">Big donation</button>
-            <button class="cue-btn urgent" onclick="sendProducer('Tech is ready — wrap it up', 'urgent')">Tech ready — wrap</button>
           </div>
         </div>
       </div>
@@ -1589,35 +1605,81 @@
       if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
     }
 
-    // --- Confidence monitor + Mirror ---
+    // --- Confidence monitor: send-target routing + feature payloads ---
 
-    let mirrorOn = false;
+    let confTarget = 'both';   // 'program' | 'both' | 'confidence'
     let producerLevel = 'info';
 
-    function loadMirror() {
-      // Default ON: showing total / incentive / bid war / up next on Program also
-      // features it on the host monitor. Toggle off to drive the host board independently.
-      try {
-        const v = localStorage.getItem('esa-lt-mirror');
-        mirrorOn = (v === null) ? true : (v === 'true');
-      } catch (e) { mirrorOn = true; }
-      updateMirrorUI();
+    function loadConfTarget() {
+      try { confTarget = localStorage.getItem('esa-lt-conf-target') || 'both'; } catch (e) { confTarget = 'both'; }
+      if (!['program', 'both', 'confidence'].includes(confTarget)) confTarget = 'both';
+      updateTargetUI();
     }
-    function updateMirrorUI() {
-      document.getElementById('mirrorToggle').classList.toggle('on', mirrorOn);
-      document.getElementById('mirrorLabel').textContent = mirrorOn ? 'Mirror · On' : 'Mirror · Off';
+    function setConfTarget(t) {
+      confTarget = t;
+      try { localStorage.setItem('esa-lt-conf-target', t); } catch (e) {}
+      updateTargetUI();
+      const msg = { program: 'Shows go to Program only', both: 'Shows go to Program + Host monitor', confidence: 'Host monitor only — hosts read before it hits stream' };
+      showToast(msg[t] || '');
     }
-    function toggleMirror() {
-      mirrorOn = !mirrorOn;
-      try { localStorage.setItem('esa-lt-mirror', mirrorOn); } catch (e) {}
-      updateMirrorUI();
-      showToast(mirrorOn ? 'Mirror on — donation displays feature on the host monitor' : 'Mirror off');
+    function updateTargetUI() {
+      document.querySelectorAll('#targetSeg .seg').forEach(b => b.classList.toggle('active', b.dataset.t === confTarget));
     }
-    // Called by the Program show functions; only emits when Mirror is on. Runner cards never call this.
-    function mirrorFeature(feature, opts) {
-      if (!mirrorOn) return;
-      wsSend(Object.assign({ type: 'confidence_feature', feature }, opts || {}));
-      setFeatureUI(feature);
+    function progAllowed() { return confTarget !== 'confidence'; }
+    function confAllowed() { return confTarget !== 'program'; }
+
+    // Send a confidence feature payload (respecting the send target). Runner cards never call this.
+    function confShow(payload) {
+      if (!payload || !confAllowed()) return;
+      wsSend(Object.assign({ type: 'confidence_feature' }, payload));
+      setFeatureUI(payload.feature);
+    }
+    function confClear() {
+      if (!confAllowed()) return;
+      wsSend({ type: 'confidence_feature', feature: 'none' });
+      setFeatureUI('none');
+    }
+
+    // Build a confidence feature payload from the same data the Program show uses.
+    function buildFeat(kind, idx, list, mode) {
+      const td = tiltifyData;
+      idx = idx || 0;
+      switch (kind) {
+        case 'total': return { feature: 'total' };
+        case 'donation': {
+          const d = (td.donations || [])[idx]; if (!d) return null;
+          return { feature: 'donation', d: { name: d.donor_name || d.name || 'Anonymous', amount: d.amount?.value ?? d.amount ?? 0, comment: d.donor_comment || d.comment || '' } };
+        }
+        case 'target': {
+          const t = (td.targets || [])[idx]; if (!t) return null;
+          return { feature: 'incentive', t: { name: t.name || 'Incentive', raised: t.amount_raised?.value ?? t.current_amount?.value ?? 0, goal: t.amount?.value ?? t.goal?.value ?? 0 } };
+        }
+        case 'milestone': {
+          const ms = [...(td.milestones || [])].sort((a, b) => parseFloat(a.amount?.value || a.value || 0) - parseFloat(b.amount?.value || b.value || 0));
+          const m = ms[idx]; if (!m) return null;
+          const raised = parseFloat(td.campaign?.total_amount_raised?.value ?? td.campaign?.amount_raised?.value ?? 0);
+          const thr = parseFloat(m.amount?.value || m.value || 0);
+          return { feature: 'milestone', m: { name: m.name || 'Milestone', raised, threshold: thr, reached: thr > 0 && raised >= thr } };
+        }
+        case 'poll': {
+          const p = (td.polls || [])[idx]; if (!p) return null;
+          return { feature: 'bidwar', poll: { name: p.name || 'Bid War', options: (p.options || []).map(o => ({ name: o.name, amount: o.total_amount_raised?.value ?? o.amount_raised?.value ?? 0 })) } };
+        }
+        case 'match': {
+          const mm = (td.donationMatches || [])[idx]; if (!mm) return null;
+          const raised = parseFloat(mm.total_amount_raised?.value || 0), pledged = parseFloat(mm.pledged_amount?.value || 0);
+          return { feature: 'match', mm: { matchedBy: mm.matched_by || 'Anonymous', raised, pledged, complete: pledged > 0 && raised >= pledged } };
+        }
+        case 'schedule': {
+          const runs = (list === 'prev') ? (scheduleDataCache.previous || []) : (scheduleDataCache.upcoming || []);
+          const r = runs[idx]; if (!r) return null;
+          return { feature: 'schedule', run: { game: r.game, category: r.category, players: r.players, scheduled: r.scheduled, scheduled_t: r.scheduled_t, length_t: r.length_t, mode: mode || 'next' } };
+        }
+        case 'counter': return { feature: 'counter', c: { label: counterState.label, value: counterState.value } };
+        case 'quote': return { feature: 'quote', q: { quote: document.getElementById('quoteText').value, attribution: document.getElementById('quoteAttribution').value } };
+        case 'custom': return { feature: 'custom', cu: { heading: document.getElementById('customHeading').value, message: document.getElementById('customMessage').value } };
+      }
+      return null;
     }
 
     function setStudioState(state) {
@@ -1626,10 +1688,17 @@
       showToast('Studio state: ' + state.toUpperCase());
     }
 
-    function setFeatureLarge(feature, opts) {
-      wsSend(Object.assign({ type: 'confidence_feature', feature }, opts || {}));
-      setFeatureUI(feature);
-      showToast(feature === 'none' ? 'Host feature cleared' : 'Featuring on host monitor: ' + feature);
+    // Manual "Feature Large" buttons in the Confidence deck — always push to the host monitor.
+    function setFeatureLarge(kind) {
+      let payload = { feature: 'none' };
+      if (kind === 'total') payload = buildFeat('total');
+      else if (kind === 'incentive') payload = buildFeat('target', 0);
+      else if (kind === 'bidwar') payload = buildFeat('poll', 0);
+      else if (kind === 'schedule') payload = buildFeat('schedule', 0, 'up', 'next');
+      if (!payload) { showToast('Nothing to feature yet'); return; }
+      wsSend(Object.assign({ type: 'confidence_feature' }, payload));
+      setFeatureUI(payload.feature);
+      showToast(payload.feature === 'none' ? 'Host feature cleared' : 'Featuring on host monitor');
     }
     function setFeatureUI(feature) {
       const map = { total: 'featTotal', incentive: 'featIncentive', bidwar: 'featBidwar', schedule: 'featSchedule' };
@@ -2342,21 +2411,23 @@
     }
 
     function tiltifyShowDisplay(displayType) {
-      wsSend({ type: 'tiltify_show', display: displayType });
-      if (displayType === 'total' || displayType === 'totalizer') mirrorFeature('total');
+      if (progAllowed()) wsSend({ type: 'tiltify_show', display: displayType });
+      if (displayType === 'total' || displayType === 'totalizer') confShow(buildFeat('total'));
+      else if (displayType === 'matching') confShow(buildFeat('match', 0));
       showToast(`Tiltify: ${displayType}`);
     }
 
     function tiltifyShowDonation(index) {
-      wsSend({ type: 'tiltify_show', display: 'donation', donationIndex: index });
+      if (progAllowed()) wsSend({ type: 'tiltify_show', display: 'donation', donationIndex: index });
+      confShow(buildFeat('donation', index));
       const d = tiltifyData.donations[index];
       const name = d ? (d.donor_name || d.name || 'Anonymous') : 'Donation';
       showToast(`Showing donation from ${name}`);
     }
 
     function tiltifyShowTarget(index) {
-      wsSend({ type: 'tiltify_show', display: 'target', targetIndex: index });
-      mirrorFeature('incentive', { targetIndex: index });
+      if (progAllowed()) wsSend({ type: 'tiltify_show', display: 'target', targetIndex: index });
+      confShow(buildFeat('target', index));
       const t = tiltifyData.targets[index];
       showToast(`Showing target: ${t ? t.name : 'Target'}`);
     }
@@ -2365,27 +2436,30 @@
       // milestones are sorted in renderTiltifyLists, sort the same way here
       let milestones = [...(tiltifyData.milestones || [])];
       milestones.sort((a, b) => parseFloat(a.amount?.value || 0) - parseFloat(b.amount?.value || 0));
-      wsSend({ type: 'tiltify_show', display: 'milestone', milestoneIndex: index });
+      if (progAllowed()) wsSend({ type: 'tiltify_show', display: 'milestone', milestoneIndex: index });
+      confShow(buildFeat('milestone', index));
       const m = milestones[index];
       showToast(`Showing milestone: ${m ? m.name : 'Milestone'}`);
     }
 
     function tiltifyShowPoll(index) {
-      wsSend({ type: 'tiltify_show', display: 'poll', pollIndex: index });
-      mirrorFeature('bidwar', { pollIndex: index });
+      if (progAllowed()) wsSend({ type: 'tiltify_show', display: 'poll', pollIndex: index });
+      confShow(buildFeat('poll', index));
       const p = tiltifyData.polls[index];
       showToast(`Showing poll: ${p ? p.name : 'Poll'}`);
     }
 
     function tiltifyShowMatch(index) {
-      wsSend({ type: 'tiltify_show', display: 'matching', matchIndex: index });
+      if (progAllowed()) wsSend({ type: 'tiltify_show', display: 'matching', matchIndex: index });
+      confShow(buildFeat('match', index));
       const m = tiltifyData.donationMatches[index];
       showToast(`Showing match: ${m ? m.matched_by : 'Match'}`);
     }
 
     function tiltifyHide() {
       wsSend({ type: 'tiltify_hide' });
-      if (mirrorOn) { wsSend({ type: 'confidence_feature', feature: 'none' }); setFeatureUI('none'); }
+      wsSend({ type: 'confidence_feature', feature: 'none' });
+      setFeatureUI('none');
       stopAutoCycle();
       showToast('Tiltify display hidden');
     }
@@ -2524,8 +2598,8 @@
     }
 
     function scheduleShowRun(index, mode, list) {
-      wsSend({ type: 'schedule_show', runIndex: index, mode: mode, list: list });
-      mirrorFeature('schedule', { runIndex: index, list: list });
+      if (progAllowed()) wsSend({ type: 'schedule_show', runIndex: index, mode: mode, list: list });
+      confShow(buildFeat('schedule', index, list, mode));
       const runs = list === 'prev' ? scheduleDataCache.previous : scheduleDataCache.upcoming;
       const run = runs[index];
       const label = mode === 'next' ? 'Up Next' : 'Coming Up';
@@ -2589,7 +2663,8 @@
         showToast('Enter a heading or message');
         return;
       }
-      wsSend({ type: 'custom_show', heading, message, imageUrl });
+      if (progAllowed()) wsSend({ type: 'custom_show', heading, message, imageUrl });
+      confShow({ feature: 'custom', cu: { heading, message } });
       showToast('Showing custom message');
     }
 
@@ -2644,17 +2719,21 @@
     function counterShow() {
       counterState.label = document.getElementById('counterLabel').value || 'COUNTER';
       saveFunToolsState('counter');
-      wsSend({ type: 'counter_show', label: counterState.label, value: counterState.value });
+      if (progAllowed()) wsSend({ type: 'counter_show', label: counterState.label, value: counterState.value });
+      confShow(buildFeat('counter'));
       counterVisible = true;
       showToast('Counter shown');
     }
 
     function counterSendUpdate() {
-      wsSend({ type: 'counter_update', value: counterState.value });
+      if (progAllowed()) wsSend({ type: 'counter_update', value: counterState.value });
+      confShow(buildFeat('counter'));
     }
 
     function counterHide() {
       wsSend({ type: 'counter_hide' });
+      wsSend({ type: 'confidence_feature', feature: 'none' });
+      setFeatureUI('none');
       counterVisible = false;
       showToast('Counter hidden');
     }
@@ -2665,7 +2744,8 @@
       const quote = document.getElementById('quoteText').value;
       const attribution = document.getElementById('quoteAttribution').value;
       if (!quote) { showToast('Enter a quote'); return; }
-      wsSend({ type: 'quote_show', quote, attribution });
+      if (progAllowed()) wsSend({ type: 'quote_show', quote, attribution });
+      confShow({ feature: 'quote', q: { quote, attribution } });
       quoteLog.push({ quote, attribution, time: Date.now() });
       saveFunToolsState('quotes');
       renderQuoteLog();
@@ -2795,7 +2875,15 @@
         saveFunToolsState('statcards');
       }
 
-      wsSend({ type: 'stat_card_show', name, pronouns, gamesRun, worldRecords, totalPBs, twitchFollowers, esaCount, funFact });
+      if (progAllowed()) wsSend({ type: 'stat_card_show', name, pronouns, gamesRun, worldRecords, totalPBs, twitchFollowers, esaCount, funFact });
+      confShow({ feature: 'stat', s: { name, pronouns, fields: [
+        { label: 'Games Run', value: gamesRun },
+        { label: 'World Records', value: worldRecords },
+        { label: 'Total PBs', value: totalPBs },
+        { label: 'Twitch Followers', value: twitchFollowers },
+        { label: 'ESA Appearances', value: esaCount },
+        { label: 'Fun Fact', value: funFact },
+      ] } });
       showToast(`Showing stat card: ${name}`);
     }
 
@@ -3126,7 +3214,7 @@
     loadAdvancedState();
     loadFunToolsState();
     loadImagePresets();
-    loadMirror();
+    loadConfTarget();
     scalePreviews();
     render();
     renderQuoteLog();

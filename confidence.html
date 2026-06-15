@@ -33,7 +33,7 @@
     #stage {
       width: 1920px; height: 1080px; flex-shrink: 0;
       background: var(--bg); padding: 50px;
-      display: grid; grid-template-rows: 130px 1fr 268px 110px; gap: 26px;
+      display: grid; grid-template-rows: 120px 232px 1fr 104px; gap: 24px;
       transform-origin: center center;
     }
 
@@ -59,20 +59,19 @@
     /* hero */
     #hero { display: grid; grid-template-columns: 1.28fr 1fr; gap: 26px; min-height: 0; }
     .card { background: var(--panel); border: 1px solid rgba(255,255,255,.06); border-radius: 20px; }
-    #totalCard { padding: 40px 46px; display: flex; flex-direction: column; justify-content: center; }
-    #totalCard .hd { display: flex; align-items: center; gap: 13px; margin-bottom: 10px; }
-    #totalCard .dot { width: 15px; height: 15px; border-radius: 50%; background: var(--live); animation: ccdot 1.6s ease-in-out infinite; }
-    #totalCard .lbl { font: 700 20px 'Barlow Semi Condensed'; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
-    #totalAmt { font: 800 150px 'Barlow Semi Condensed'; font-variant-numeric: tabular-nums; letter-spacing: -.03em; line-height: .9; color: #fff; }
-    #totalFor { font-size: 27px; color: var(--muted-2); margin-top: 12px; }
+    #totalCard { padding: 26px 44px; display: flex; flex-direction: column; justify-content: center; }
+    #totalCard .hd { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+    #totalCard .dot { width: 14px; height: 14px; border-radius: 50%; background: var(--live); animation: ccdot 1.6s ease-in-out infinite; }
+    #totalCard .lbl { font: 700 18px 'Barlow Semi Condensed'; letter-spacing: .16em; text-transform: uppercase; color: var(--muted); }
+    #totalAmt { font: 800 108px 'Barlow Semi Condensed'; font-variant-numeric: tabular-nums; letter-spacing: -.03em; line-height: .9; color: #fff; }
+    #totalFor { font-size: 23px; color: var(--muted-2); margin-top: 8px; }
     #totalFor strong { color: var(--text); }
 
-    #stateCard { padding: 40px 46px; display: flex; flex-direction: column; justify-content: center; border-width: 2px; border-style: solid; }
-    #stateCard .lbl { font: 700 20px 'Barlow Semi Condensed'; letter-spacing: .16em; text-transform: uppercase; color: #cfd5e3; margin-bottom: 8px; }
-    #stateCard .big { display: flex; align-items: center; gap: 24px; }
-    #stateCard .sdot { width: 40px; height: 40px; border-radius: 50%; animation: ccdot 1.4s ease-in-out infinite; }
-    #stateLabel { font: 800 104px 'Barlow Semi Condensed'; line-height: .88; letter-spacing: -.01em; }
-    #stateSub { font: 700 30px 'Barlow Semi Condensed'; letter-spacing: .04em; text-transform: uppercase; color: #fff; margin-top: 18px; }
+    #stateCard { padding: 26px 44px; display: flex; flex-direction: column; justify-content: center; border-width: 2px; border-style: solid; }
+    #stateCard .lbl { font: 700 18px 'Barlow Semi Condensed'; letter-spacing: .16em; text-transform: uppercase; color: #cfd5e3; margin-bottom: 10px; }
+    #stateCard .big { display: flex; align-items: center; gap: 22px; }
+    #stateCard .sdot { width: 34px; height: 34px; border-radius: 50%; animation: ccdot 1.4s ease-in-out infinite; }
+    #stateLabel { font: 800 88px 'Barlow Semi Condensed'; line-height: .9; letter-spacing: -.01em; }
 
     /* modules */
     #modules { display: grid; grid-template-columns: 1.12fr 1fr; gap: 26px; min-height: 0; }
@@ -104,6 +103,31 @@
     #feature .ftitle { font: 800 30px 'Barlow Semi Condensed'; color: #fff; letter-spacing: .02em; }
     #feature .react { font: 600 17px 'Barlow Semi Condensed'; letter-spacing: .1em; text-transform: uppercase; color: #9fb4ff; }
     #featureBody { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
+
+    /* feature card primitives */
+    .feat-num { font: 800 122px 'Barlow Semi Condensed'; font-variant-numeric: tabular-nums; letter-spacing: -.03em; line-height: .9; color: #fff; text-align: center; }
+    .feat-line { font: 800 78px 'Barlow Semi Condensed'; line-height: 1; color: #fff; }
+    .feat-sub { font: 600 30px 'Barlow'; color: var(--muted-2); margin-top: 12px; text-align: center; }
+    .feat-quote { font: 500 42px 'Barlow'; font-style: italic; color: #fff; margin-top: 18px; line-height: 1.2; text-align: center; text-wrap: balance; }
+    .feat-attr { font: 700 24px 'Barlow Semi Condensed'; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2); margin-top: 14px; text-align: center; }
+    .feat-meta { display: flex; gap: 46px; justify-content: center; margin-top: 22px; }
+    .feat-meta .mv { font: 700 34px 'JetBrains Mono'; color: #fff; font-variant-numeric: tabular-nums; }
+    .feat-meta .ml { font: 600 16px 'Barlow Semi Condensed'; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); display: block; margin-top: 4px; }
+    .feat-prog-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 12px; }
+    .feat-prog-name { font: 800 48px 'Barlow Semi Condensed'; }
+    .feat-prog-pct { font: 800 52px 'Barlow Semi Condensed'; color: var(--accent); }
+    .feat-track { height: 40px; background: var(--bg); border-radius: 10px; overflow: hidden; }
+    .feat-fill { height: 100%; background: var(--accent); border-radius: 10px; transition: width .6s ease; }
+    .feat-cols { display: flex; gap: 34px; }
+    .feat-cols .col { flex: 1; }
+    .feat-cols .ch { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 10px; }
+    .feat-cols .cn { font: 800 44px 'Barlow Semi Condensed'; }
+    .feat-cols .cv { font: 800 44px 'Barlow Semi Condensed'; font-variant-numeric: tabular-nums; }
+    .feat-cols .ct { height: 34px; background: var(--bg); border-radius: 9px; overflow: hidden; }
+    .feat-cols .cf { height: 100%; border-radius: 9px; transition: width .6s ease; }
+    .feat-statgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 40px; }
+    .feat-statgrid .sv { font: 800 56px 'Barlow Semi Condensed'; color: #fff; font-variant-numeric: tabular-nums; line-height: 1; }
+    .feat-statgrid .sl { font: 600 17px 'Barlow Semi Condensed'; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
 
     /* producer banner */
     #producer { display: flex; align-items: center; gap: 24px; border-radius: 16px; padding: 0 34px; height: 100%; }
@@ -147,7 +171,6 @@
         <div id="stateCard">
           <div class="lbl">Studio State</div>
           <div class="big"><span class="sdot" id="stateDot"></span><span id="stateLabel" class="bsc">STANDBY</span></div>
-          <div id="stateSub">Standing By</div>
         </div>
       </div>
 
@@ -196,7 +219,7 @@
     // ===== State =====
     let tiltifyData = { campaign: null, donations: [], targets: [], polls: [], milestones: [], donationMatches: [], incentives: {} };
     let scheduleData = { upcoming: [], previous: [] };
-    let studioState = 'standby';
+    let studioState = 'clear';
     let feature = { feature: 'none' };
     let producer = { active: false, text: '', level: 'info' };
 
@@ -209,7 +232,9 @@
     // ===== Scale-to-fit =====
     const stage = document.getElementById('stage');
     function fit() {
-      const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+      // Fill the whole screen (cover) — exact on a 1920x1080 host monitor,
+      // edge-to-edge with minimal crop on other aspect ratios.
+      const s = Math.max(window.innerWidth / 1920, window.innerHeight / 1080);
       stage.style.transform = `scale(${s})`;
     }
     window.addEventListener('resize', fit);
@@ -260,9 +285,10 @@
 
     // ===== Studio state =====
     const MODES = {
-      standby: { label: 'STANDBY', sub: 'Standing By', color: '#4d7cff', soft: 'rgba(77,124,255,.14)' },
-      air:     { label: 'ON AIR',  sub: 'Hosts Are Live', color: '#ff4136', soft: 'rgba(255,65,54,.13)' },
-      wrap:    { label: 'WRAP UP', sub: 'Bring It Home', color: '#ffb02e', soft: 'rgba(255,176,46,.15)' },
+      clear:   { label: '—', color: '#5d6478', soft: 'transparent' },
+      standby: { label: 'STANDBY', color: '#4d7cff', soft: 'rgba(77,124,255,.14)' },
+      air:     { label: 'ON AIR',  color: '#ff4136', soft: 'rgba(255,65,54,.13)' },
+      wrap:    { label: 'WRAP UP', color: '#ffb02e', soft: 'rgba(255,176,46,.15)' },
     };
     function renderState() {
       const m = MODES[studioState] || MODES.standby;
@@ -270,11 +296,11 @@
       card.style.background = m.soft;
       card.style.borderColor = m.color;
       card.style.animation = studioState === 'wrap' ? 'ccpulse 1.15s ease-in-out infinite' : 'none';
-      document.getElementById('stateDot').style.background = m.color;
-      document.getElementById('stateDot').style.boxShadow = '0 0 36px ' + m.color;
+      const dot = document.getElementById('stateDot');
+      dot.style.background = m.color;
+      dot.style.boxShadow = studioState === 'clear' ? 'none' : '0 0 36px ' + m.color;
       const lab = document.getElementById('stateLabel');
       lab.textContent = m.label; lab.style.color = m.color;
-      document.getElementById('stateSub').textContent = m.sub;
     }
 
     // ===== Total =====
@@ -364,74 +390,120 @@
     }
 
     // ===== Feature takeover =====
+    function fmtLen(secs) {
+      secs = parseInt(secs) || 0;
+      const h = Math.floor(secs / 3600), m = Math.floor((secs % 3600) / 60);
+      return h > 0 ? (m > 0 ? h + 'h ' + m + 'm' : h + 'h') : m + 'm';
+    }
+    function metaRow(pairs) {
+      return '<div class="feat-meta">' + pairs.filter(Boolean).map(p =>
+        '<div style="text-align:center;"><div class="mv">' + escHtml(p[0]) + '</div><div class="ml">' + escHtml(p[1]) + '</div></div>').join('') + '</div>';
+    }
+    function singleBar(name, pct, lead) {
+      pct = Math.max(0, Math.min(100, Math.round(pct)));
+      return '<div class="feat-prog-head"><span class="feat-prog-name">' + escHtml(name || '') + '</span>' +
+        '<span class="feat-prog-pct">' + pct + '%</span></div>' +
+        '<div class="feat-track"><div class="feat-fill" style="width:' + pct + '%"></div></div>';
+    }
+    function pollColsFrom(options) {
+      const opts = (options || []).slice().sort((a, b) => (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0)).slice(0, 2);
+      const max = Math.max(...opts.map(o => parseFloat(o.amount) || 0), 1);
+      return '<div class="feat-cols">' + opts.map((o, i) => {
+        const amt = parseFloat(o.amount) || 0, pct = Math.round((amt / max) * 100), lead = i === 0;
+        const c = lead ? 'var(--accent)' : '#5d6478', tc = lead ? 'var(--accent)' : '#cfd5e3';
+        return '<div class="col"><div class="ch"><span class="cn">' + escHtml(o.name) + '</span>' +
+          '<span class="cv" style="color:' + tc + '">' + moneyBig(amt) + '</span></div>' +
+          '<div class="ct"><div class="cf" style="width:' + pct + '%;background:' + c + '"></div></div></div>';
+      }).join('') + '</div>';
+    }
+
     function renderFeature() {
       const f = feature.feature || 'none';
       const featEl = document.getElementById('feature');
       const modEl = document.getElementById('modules');
       if (f === 'none') { featEl.style.display = 'none'; modEl.style.display = 'grid'; return; }
       featEl.style.display = 'flex'; modEl.style.display = 'none';
-
       const title = document.getElementById('featureTitle');
       const body = document.getElementById('featureBody');
-      const polls = tiltifyData.polls || [];
-      const targets = tiltifyData.targets || [];
-      const runs = scheduleData.upcoming || [];
+      let html = '', t = '';
 
       if (f === 'total') {
         const c = tiltifyData.campaign;
         const raised = c ? (c.total_amount_raised?.value ?? c.amount_raised?.value ?? 0) : 0;
-        title.textContent = 'Donation Total';
-        body.innerHTML = '<div style="text-align:center;">' +
-          '<div style="font:800 130px \'Barlow Semi Condensed\';font-variant-numeric:tabular-nums;letter-spacing:-.03em;line-height:.9;color:#fff;">' + (c ? moneyBig(raised) : '—') + '</div>' +
-          '<div style="font:600 26px \'Barlow\';color:var(--muted-2);margin-top:10px;">raised so far — read the milestones</div></div>';
-      } else if (f === 'bidwar') {
-        const poll = polls[feature.pollIndex || 0] || polls[0];
-        if (poll) { title.textContent = poll.name || 'Bid War'; body.innerHTML = '<div style="display:flex;gap:34px;">' + featurePollCols(poll) + '</div>'; }
-        else { title.textContent = 'Bid War'; body.innerHTML = '<div class="empty">No active bid war.</div>'; }
+        t = 'Donation Total';
+        html = '<div class="feat-num">' + (c ? moneyBig(raised) : '—') + '</div>' +
+          '<div class="feat-sub">raised so far — read the milestones</div>';
+      } else if (f === 'donation') {
+        const d = feature.d || {};
+        t = 'Donation';
+        html = '<div class="feat-num">' + moneyBig(d.amount) + '</div>' +
+          '<div class="feat-sub">from ' + escHtml(d.name || 'Anonymous') + '</div>' +
+          (d.comment ? '<div class="feat-quote">“' + escHtml(d.comment) + '”</div>' : '');
       } else if (f === 'incentive') {
-        const t = targets[feature.targetIndex || 0] || targets[0];
-        if (t) {
-          const raised = parseFloat(t.amount_raised?.value || t.current_amount?.value || 0);
-          const goal = parseFloat(t.amount?.value || t.goal?.value || 1);
-          const pct = Math.min(100, Math.round((raised / goal) * 100));
-          title.textContent = t.name || 'Incentive';
-          body.innerHTML =
-            '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px;">' +
-              '<span style="font:800 40px \'Barlow Semi Condensed\';">' + escHtml(t.name || 'Incentive') + '</span>' +
-              '<span style="font:800 44px \'Barlow Semi Condensed\';color:var(--accent);">' + pct + '%</span></div>' +
-            '<div style="height:40px;background:var(--bg);border-radius:10px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:var(--accent);border-radius:10px;transition:width .6s ease;"></div></div>' +
-            '<div class="mono" style="display:flex;justify-content:space-between;margin-top:12px;font-size:24px;color:var(--muted-2);"><span>' + moneyBig(raised) + ' raised</span><span>' + moneyBig(goal) + ' goal</span></div>';
-        } else { title.textContent = 'Incentive'; body.innerHTML = '<div class="empty">No active incentive.</div>'; }
+        const x = feature.t || {};
+        const raised = parseFloat(x.raised) || 0, goal = parseFloat(x.goal) || 0;
+        const pct = goal > 0 ? (raised / goal) * 100 : 0;
+        t = 'Incentive';
+        html = singleBar(x.name || 'Incentive', pct) +
+          metaRow([[moneyBig(raised), 'raised'], [moneyBig(goal), 'goal']]);
+      } else if (f === 'milestone') {
+        const m = feature.m || {};
+        const raised = parseFloat(m.raised) || 0, thr = parseFloat(m.threshold) || 0;
+        const pct = thr > 0 ? (raised / thr) * 100 : 0;
+        t = m.reached ? 'Milestone Reached!' : 'Milestone';
+        html = singleBar(m.name || 'Milestone', pct) +
+          metaRow([[moneyBig(raised), 'raised'], [moneyBig(thr), 'goal']]);
+      } else if (f === 'bidwar') {
+        const poll = feature.poll || {};
+        t = poll.name || 'Bid War';
+        html = pollColsFrom(poll.options);
+      } else if (f === 'match') {
+        const mm = feature.mm || {};
+        const raised = parseFloat(mm.raised) || 0, pledged = parseFloat(mm.pledged) || 0;
+        const pct = pledged > 0 ? (raised / pledged) * 100 : 0;
+        t = mm.complete ? 'Donation Match Complete' : 'Donation Match';
+        html = '<div class="feat-line" style="margin-bottom:18px;">Matched by ' + escHtml(mm.matchedBy || 'Anonymous') + '</div>' +
+          singleBar('', pct) + metaRow([[moneyBig(raised), 'raised'], [moneyBig(pledged), 'pledged']]);
       } else if (f === 'schedule') {
-        const list = feature.list === 'prev' ? (scheduleData.previous || []) : runs;
-        const r = list[feature.runIndex || 0] || list[0];
-        if (r) {
-          title.textContent = 'Coming Up Next';
-          body.innerHTML = '<div>' +
-            '<div style="display:flex;align-items:baseline;gap:20px;"><span style="font:800 72px \'Barlow Semi Condensed\';line-height:1;">' + escHtml(r.game || 'TBD') + '</span>' +
-              (r.category ? '<span style="font:500 32px \'Barlow\';color:var(--muted-2);">' + escHtml(r.category) + '</span>' : '') + '</div>' +
-            '<div style="display:flex;align-items:center;gap:20px;margin-top:14px;">' +
-              (r.players ? '<span style="font:600 28px \'Barlow\';color:#e7ebf3;">' + escHtml(r.players) + '</span>' : '') +
-              (runEst(r) ? '<span class="mono" style="font:700 26px \'JetBrains Mono\';color:var(--accent);background:var(--bg);border-radius:9px;padding:6px 16px;">' + escHtml(runEst(r)) + '</span>' : '') +
-            '</div></div>';
-        } else { title.textContent = 'Coming Up Next'; body.innerHTML = '<div class="empty">No upcoming runs.</div>'; }
+        const r = feature.run || {};
+        // distinguish the immediate next run from a later "soon" run
+        t = (r.mode === 'coming') ? 'Coming Up Soon' : 'Up Next';
+        const est = runEst(r);
+        html = '<div style="display:flex;align-items:baseline;gap:22px;flex-wrap:wrap;">' +
+            '<span class="feat-line">' + escHtml(r.game || 'TBD') + '</span>' +
+            (r.category ? '<span style="font:500 34px \'Barlow\';color:var(--muted-2);">' + escHtml(r.category) + '</span>' : '') + '</div>' +
+          metaRow([
+            r.players ? [r.players, 'runners'] : null,
+            est ? [est, r.mode === 'coming' ? 'starts' : 'scheduled'] : null,
+            r.length_t ? [fmtLen(r.length_t), 'runtime'] : null,
+          ]);
+      } else if (f === 'counter') {
+        const c = feature.c || {};
+        t = c.label || 'Counter';
+        html = '<div class="feat-num">' + escHtml(String(c.value ?? 0)) + '</div>';
+      } else if (f === 'quote') {
+        const q = feature.q || {};
+        t = 'Quote';
+        html = '<div class="feat-quote">“' + escHtml(q.quote || '') + '”</div>' +
+          (q.attribution ? '<div class="feat-attr">— ' + escHtml(q.attribution) + '</div>' : '');
+      } else if (f === 'stat') {
+        const s = feature.s || {};
+        t = (s.name || 'Runner') + (s.pronouns ? '  ·  ' + s.pronouns : '');
+        const fields = (s.fields || []).filter(x => x && x.value);
+        html = fields.length
+          ? '<div class="feat-statgrid">' + fields.map(x =>
+              '<div><div class="sv">' + escHtml(String(x.value)) + '</div><div class="sl">' + escHtml(x.label) + '</div></div>').join('') + '</div>'
+          : '<div class="empty">No stats.</div>';
+      } else if (f === 'custom') {
+        const cu = feature.cu || {};
+        t = cu.heading || 'From the Booth';
+        html = '<div class="feat-quote">' + escHtml(cu.message || '') + '</div>';
+      } else {
+        t = ''; html = '';
       }
-    }
-    function featurePollCols(poll) {
-      const options = (poll.options || []).slice().sort((a, b) =>
-        parseFloat(b.total_amount_raised?.value || b.amount_raised?.value || 0) -
-        parseFloat(a.total_amount_raised?.value || a.amount_raised?.value || 0)).slice(0, 2);
-      const max = Math.max(...options.map(o => parseFloat(o.total_amount_raised?.value || o.amount_raised?.value || 0)), 1);
-      return options.map((o, i) => {
-        const amt = parseFloat(o.total_amount_raised?.value || o.amount_raised?.value || 0);
-        const pct = Math.round((amt / max) * 100);
-        const lead = i === 0;
-        return '<div style="flex:1;">' +
-          '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;">' +
-            '<span style="font:800 44px \'Barlow Semi Condensed\';">' + escHtml(o.name) + '</span>' +
-            '<span style="font:800 44px \'Barlow Semi Condensed\';color:' + (lead ? 'var(--accent)' : '#cfd5e3') + ';">' + moneyBig(amt) + '</span></div>' +
-          '<div style="height:34px;background:var(--bg);border-radius:9px;overflow:hidden;"><div style="height:100%;width:' + pct + '%;background:' + (lead ? 'var(--accent)' : '#5d6478') + ';border-radius:9px;transition:width .6s ease;"></div></div></div>';
-      }).join('');
+
+      title.textContent = t;
+      body.innerHTML = html;
     }
 
     // ===== Producer banner =====
