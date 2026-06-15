@@ -191,8 +191,6 @@
         <div class="fhd">
           <span class="live-tag"><span class="b"></span>Live on Stream</span>
           <span class="ftitle" id="featureTitle"></span>
-          <span style="flex:1;"></span>
-          <span class="react">Hosts — react to this</span>
         </div>
         <div id="featureBody"></div>
       </div>
@@ -200,7 +198,7 @@
       <!-- producer banner -->
       <div id="producer" class="idle">
         <span class="tag" id="prodTag">Producer</span>
-        <span class="msg" id="prodMsg">Booth is quiet — no active cue.</span>
+        <span class="msg" id="prodMsg"></span>
       </div>
 
     </div>
@@ -285,10 +283,11 @@
 
     // ===== Studio state =====
     const MODES = {
-      clear:   { label: '—', color: '#5d6478', soft: 'transparent' },
-      standby: { label: 'STANDBY', color: '#4d7cff', soft: 'rgba(77,124,255,.14)' },
-      air:     { label: 'ON AIR',  color: '#ff4136', soft: 'rgba(255,65,54,.13)' },
-      wrap:    { label: 'WRAP UP', color: '#ffb02e', soft: 'rgba(255,176,46,.15)' },
+      clear:     { label: 'CLEAR', color: '#5d6478', soft: 'transparent' },
+      standby:   { label: 'STANDBY', color: '#4d7cff', soft: 'rgba(77,124,255,.14)' },
+      air:       { label: 'ON AIR', color: '#ff4136', soft: 'rgba(255,65,54,.13)' },
+      recording: { label: 'RECORDING', color: '#e11d48', soft: 'rgba(225,29,72,.14)' },
+      wrap:      { label: 'WRAP UP', color: '#ffb02e', soft: 'rgba(255,176,46,.15)' },
     };
     function renderState() {
       const m = MODES[studioState] || MODES.standby;
@@ -436,9 +435,11 @@
       } else if (f === 'donation') {
         const d = feature.d || {};
         t = 'Donation';
-        html = '<div class="feat-num">' + moneyBig(d.amount) + '</div>' +
-          '<div class="feat-sub">from ' + escHtml(d.name || 'Anonymous') + '</div>' +
-          (d.comment ? '<div class="feat-quote">“' + escHtml(d.comment) + '”</div>' : '');
+        html = '<div style="text-align:center;">' +
+          '<div class="feat-line" style="font-size:88px;line-height:1;">' + escHtml(d.name || 'Anonymous') + '</div>' +
+          '<div class="feat-num" style="font-size:104px;color:var(--live);margin-top:6px;">' + moneyBig(d.amount) + '</div>' +
+          (d.comment ? '<div class="feat-quote">“' + escHtml(d.comment) + '”</div>' : '') +
+          '</div>';
       } else if (f === 'incentive') {
         const x = feature.t || {};
         const raised = parseFloat(x.raised) || 0, goal = parseFloat(x.goal) || 0;
@@ -531,7 +532,7 @@
         tag.style.cssText = '';
         tag.textContent = 'Producer';
         msg.style.cssText = '';
-        msg.textContent = 'Booth is quiet — no active cue.';
+        msg.textContent = '';
       }
     }
 

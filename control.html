@@ -1102,6 +1102,11 @@
     }
     .target-seg .seg.active { background: #4d7cff; color: #fff; }
     .target-seg .seg[data-t="confidence"].active { background: #2ee6a0; color: #08130d; }
+    .target-hint {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 11px; font-weight: 600; letter-spacing: 0.04em;
+      color: #5d6478; white-space: nowrap;
+    }
 
     /* ===== Monitor bus (live previews) ===== */
     .monitor-bus {
@@ -1178,6 +1183,7 @@
     .state-btn.clear { background: #2a3144; color: #cfd5e3; }
     .state-btn.standby { background: #4d7cff; }
     .state-btn.air { background: #ff4136; }
+    .state-btn.recording { background: #e11d48; }
     .state-btn.wrap { background: #ffb02e; color: #1a1205; }
     .state-btn.active { opacity: 1; }
     .feat-row { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -1231,12 +1237,13 @@
   <div class="header">
     <h1>Studio Control<span class="sub">ESA</span></h1>
     <div style="display: flex; align-items: center; gap: 16px;">
-      <div class="target-seg" id="targetSeg" title="Where Show buttons send overlays — Confidence-only lets hosts read before it hits stream">
+      <div class="target-seg" id="targetSeg" title="Default for Show buttons. Per click: Shift = Program only · Alt = Confidence only">
         <span class="seg-label">Send</span>
         <button class="seg" data-t="program" onclick="setConfTarget('program')">Program</button>
         <button class="seg active" data-t="both" onclick="setConfTarget('both')">Both</button>
         <button class="seg" data-t="confidence" onclick="setConfTarget('confidence')">Confidence</button>
       </div>
+      <span class="target-hint">⇧ Program · ⌥ Confidence</span>
       <div class="mode-toggle">
         <button class="mode-btn active" id="modeBasic" onclick="setAdvancedMode(false)">One Scene</button>
         <button class="mode-btn" id="modeAdvanced" onclick="setAdvancedMode(true)">Multi-Scene</button>
@@ -1311,6 +1318,7 @@
             <button class="state-btn clear active" data-state="clear" onclick="setStudioState('clear')">Clear</button>
             <button class="state-btn standby" data-state="standby" onclick="setStudioState('standby')">Standby</button>
             <button class="state-btn air" data-state="air" onclick="setStudioState('air')">On Air</button>
+            <button class="state-btn recording" data-state="recording" onclick="setStudioState('recording')">Recording</button>
             <button class="state-btn wrap" data-state="wrap" onclick="setStudioState('wrap')">Wrap Up</button>
           </div>
           <div class="conf-block-label">Feature Large
@@ -1625,8 +1633,18 @@
     function updateTargetUI() {
       document.querySelectorAll('#targetSeg .seg').forEach(b => b.classList.toggle('active', b.dataset.t === confTarget));
     }
-    function progAllowed() { return confTarget !== 'confidence'; }
-    function confAllowed() { return confTarget !== 'program'; }
+    // Per-click target override so you don't have to flip the Send selector mid-flow:
+    //   Shift+click = Program only · Alt/Ctrl/Cmd+click = Confidence only · plain click = selector default.
+    function clickTarget() {
+      const e = window.event;
+      if (e) {
+        if (e.shiftKey) return 'program';
+        if (e.altKey || e.ctrlKey || e.metaKey) return 'confidence';
+      }
+      return confTarget;
+    }
+    function progAllowed() { return clickTarget() !== 'confidence'; }
+    function confAllowed() { return clickTarget() !== 'program'; }
 
     // Send a confidence feature payload (respecting the send target). Runner cards never call this.
     function confShow(payload) {
