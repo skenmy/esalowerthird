@@ -125,6 +125,12 @@
     .feat-cols .cv { font: 800 44px 'Barlow Semi Condensed'; font-variant-numeric: tabular-nums; }
     .feat-cols .ct { height: 34px; background: var(--bg); border-radius: 9px; overflow: hidden; }
     .feat-cols .cf { height: 100%; border-radius: 9px; transition: width .6s ease; }
+    .feat-poll { display: flex; flex-direction: column; gap: 16px; }
+    .feat-poll-row { display: flex; align-items: center; gap: 24px; }
+    .feat-poll-name { font: 800 38px 'Barlow Semi Condensed'; min-width: 320px; max-width: 46%; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feat-poll-track { flex: 1; height: 28px; background: var(--bg); border-radius: 8px; overflow: hidden; }
+    .feat-poll-fill { height: 100%; border-radius: 8px; transition: width .6s ease; }
+    .feat-poll-amt { font: 800 38px 'Barlow Semi Condensed'; font-variant-numeric: tabular-nums; min-width: 150px; text-align: right; }
     .feat-statgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 40px; }
     .feat-statgrid .sv { font: 800 56px 'Barlow Semi Condensed'; color: #fff; font-variant-numeric: tabular-nums; line-height: 1; }
     .feat-statgrid .sl { font: 600 17px 'Barlow Semi Condensed'; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
@@ -345,7 +351,7 @@
       const options = (poll.options || []).slice().sort((a, b) =>
         parseFloat(b.total_amount_raised?.value || b.amount_raised?.value || 0) -
         parseFloat(a.total_amount_raised?.value || a.amount_raised?.value || 0));
-      const top = options.slice(0, big ? 2 : 2);
+      const top = options;
       const max = Math.max(...top.map(o => parseFloat(o.total_amount_raised?.value || o.amount_raised?.value || 0)), 1);
       return top.map((o, i) => {
         const amt = parseFloat(o.total_amount_raised?.value || o.amount_raised?.value || 0);
@@ -405,14 +411,16 @@
         '<div class="feat-track"><div class="feat-fill" style="width:' + pct + '%"></div></div>';
     }
     function pollColsFrom(options) {
-      const opts = (options || []).slice().sort((a, b) => (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0)).slice(0, 2);
+      const opts = (options || []).slice().sort((a, b) => (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0));
+      if (!opts.length) return '<div class="empty">No options.</div>';
       const max = Math.max(...opts.map(o => parseFloat(o.amount) || 0), 1);
-      return '<div class="feat-cols">' + opts.map((o, i) => {
+      return '<div class="feat-poll">' + opts.map((o, i) => {
         const amt = parseFloat(o.amount) || 0, pct = Math.round((amt / max) * 100), lead = i === 0;
         const c = lead ? 'var(--accent)' : '#5d6478', tc = lead ? 'var(--accent)' : '#cfd5e3';
-        return '<div class="col"><div class="ch"><span class="cn">' + escHtml(o.name) + '</span>' +
-          '<span class="cv" style="color:' + tc + '">' + moneyBig(amt) + '</span></div>' +
-          '<div class="ct"><div class="cf" style="width:' + pct + '%;background:' + c + '"></div></div></div>';
+        return '<div class="feat-poll-row">' +
+          '<span class="feat-poll-name">' + escHtml(o.name) + '</span>' +
+          '<div class="feat-poll-track"><div class="feat-poll-fill" style="width:' + pct + '%;background:' + c + '"></div></div>' +
+          '<span class="feat-poll-amt" style="color:' + tc + '">' + moneyBig(amt) + '</span></div>';
       }).join('') + '</div>';
     }
 
