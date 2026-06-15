@@ -1595,7 +1595,12 @@
     let producerLevel = 'info';
 
     function loadMirror() {
-      try { mirrorOn = localStorage.getItem('esa-lt-mirror') === 'true'; } catch (e) {}
+      // Default ON: showing total / incentive / bid war / up next on Program also
+      // features it on the host monitor. Toggle off to drive the host board independently.
+      try {
+        const v = localStorage.getItem('esa-lt-mirror');
+        mirrorOn = (v === null) ? true : (v === 'true');
+      } catch (e) { mirrorOn = true; }
       updateMirrorUI();
     }
     function updateMirrorUI() {
