@@ -1242,8 +1242,8 @@
     .sc-div { width: 1px; height: 26px; background: rgba(255,255,255,.1); flex-shrink: 0; }
     .sc-route-label { font: 700 10px 'Barlow Semi Condensed', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #6c7488; }
 
-    .sc-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 300px minmax(0,1fr) 384px; gap: 12px; padding: 12px; }
-    @media (max-width: 1320px) { .sc-grid { grid-template-columns: 264px minmax(0,1fr) 340px; } }
+    .sc-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 360px minmax(0,1fr) 408px; gap: 12px; padding: 12px; }
+    @media (max-width: 1320px) { .sc-grid { grid-template-columns: 320px minmax(0,1fr) 364px; } }
     .sc-rail, .sc-col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 
     .sc-panel { background: #101218; border: 1px solid rgba(255,255,255,.07); border-radius: 13px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
@@ -1270,6 +1270,11 @@
     .mode-toggle.sm .mode-btn { padding: 4px 9px; font-size: 10px; }
     .btn-add.sm { padding: 4px 9px; font-size: 11px; }
     #funToolsSection .sc-panel-body { padding-top: 4px; }
+    /* stack the editable preset fields so they're usable in the rail */
+    .sc-rail .preset-card { align-items: flex-start; }
+    .sc-rail .preset-fields { flex-direction: column; }
+    .sc-rail .preset-fields input.input-pronouns { flex: 1 1 auto; min-width: 0; width: 100%; }
+    .sc-rail .preset-actions { flex-direction: column; align-items: stretch; }
   </style>
   <script src="https://tools.skenmy.com/embed.js" data-app="lowerthird" data-role="admin"></script>
 </head>
