@@ -6,7 +6,7 @@ COPY package.json package-lock.json* ./
 RUN npm ci --omit=dev && npm cache clean --force
 
 COPY relay.js ./
-COPY source.html control.html index.html ./
+COPY source.html control.html confidence.html index.html esa-logotype.png ./
 
 ENV NODE_ENV=production
 ENV RELAY_PORT=8081

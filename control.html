@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ESA Lower Third - Control</title>
+  <title>Studio Control</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -15,15 +15,15 @@
     }
 
     body {
-      background: #0f0a1a;
-      font-family: 'Inter', sans-serif;
+      background: #0b0d13;
+      font-family: 'Barlow', sans-serif;
       color: #fff;
       min-height: 100vh;
     }
 
     .header {
-      background: #1a1030;
-      border-bottom: 2px solid #6b4d8a;
+      background: #141823;
+      border-bottom: 2px solid #5d6478;
       padding: 16px 24px;
       display: flex;
       align-items: center;
@@ -33,7 +33,7 @@
     .header h1 {
       font-size: 18px;
       font-weight: 700;
-      color: #e0b060;
+      color: #4d7cff;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
@@ -52,12 +52,12 @@
       width: 10px;
       height: 10px;
       border-radius: 50%;
-      background: #9f4a4a;
+      background: #ff4136;
       transition: background 0.3s;
     }
 
     .status-dot.connected {
-      background: #4a9f4a;
+      background: #2ee6a0;
       box-shadow: 0 0 8px rgba(74, 159, 74, 0.5);
     }
 
@@ -85,8 +85,8 @@
 
     /* Queue preview */
     .queue-section {
-      background: #1a1030;
-      border: 2px solid #6b4d8a;
+      background: #141823;
+      border: 2px solid #5d6478;
       border-radius: 8px;
       padding: 16px 20px;
       margin-bottom: 20px;
@@ -102,14 +102,14 @@
     .queue-section h3 {
       font-size: 11px;
       font-weight: 600;
-      color: #6b4d8a;
+      color: #5d6478;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
     .mode-toggle {
       display: flex;
-      border: 2px solid #6b4d8a;
+      border: 2px solid #5d6478;
       border-radius: 6px;
       overflow: hidden;
     }
@@ -118,26 +118,26 @@
       padding: 5px 14px;
       font-size: 12px;
       font-weight: 600;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
       border: none;
       cursor: pointer;
-      background: #2a1d42;
-      color: #6b4d8a;
+      background: #0e1119;
+      color: #5d6478;
       transition: background 0.15s, color 0.15s;
     }
 
     .mode-btn + .mode-btn {
-      border-left: 2px solid #6b4d8a;
+      border-left: 2px solid #5d6478;
     }
 
     .mode-btn.active {
-      background: #e0b060;
-      color: #1a1030;
+      background: #4d7cff;
+      color: #141823;
     }
 
     .mode-btn:not(.active):hover {
-      background: #3d2a5c;
-      color: #a08cc0;
+      background: #2a3144;
+      color: #8b93a7;
     }
 
     .queue-preview {
@@ -149,7 +149,7 @@
     }
 
     .queue-empty {
-      color: #3d2a5c;
+      color: #2a3144;
       font-size: 13px;
       font-style: italic;
     }
@@ -158,8 +158,8 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      background: #2a1d42;
-      border: 1px solid #6b4d8a;
+      background: #0e1119;
+      border: 1px solid #5d6478;
       border-radius: 6px;
       padding: 6px 12px;
       font-size: 13px;
@@ -167,7 +167,7 @@
     }
 
     .queue-chip .queue-pos {
-      color: #e0b060;
+      color: #4d7cff;
       font-weight: 700;
       font-size: 11px;
     }
@@ -177,7 +177,7 @@
     }
 
     .queue-arrow {
-      color: #3d2a5c;
+      color: #2a3144;
       font-size: 14px;
       user-select: none;
     }
@@ -191,23 +191,23 @@
 
     .btn-go-live {
       flex: 2;
-      background: linear-gradient(135deg, #4a9f4a 0%, #3a7a3a 100%);
-      color: #fff;
+      background: linear-gradient(135deg, #2ee6a0 0%, #1fbf83 100%);
+      color: #08130d;
       border: none;
       padding: 18px;
       border-radius: 8px;
       font-size: 18px;
       font-weight: 700;
       cursor: pointer;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
       text-transform: uppercase;
       letter-spacing: 1px;
       transition: transform 0.1s, opacity 0.1s;
     }
 
     .btn-go-live:disabled {
-      background: #2a2a2a;
-      color: #555;
+      background: #1a1e29;
+      color: #5d6478;
       cursor: not-allowed;
       transform: none;
     }
@@ -230,7 +230,7 @@
 
     .btn-hide-global {
       flex: 1;
-      background: linear-gradient(135deg, #9f4a4a 0%, #7a3a3a 100%);
+      background: linear-gradient(135deg, #ff4136 0%, #c4302a 100%);
       color: #fff;
       border: none;
       padding: 18px;
@@ -238,7 +238,7 @@
       font-size: 16px;
       font-weight: 700;
       cursor: pointer;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
       text-transform: uppercase;
       letter-spacing: 1px;
       transition: transform 0.1s, opacity 0.1s;
@@ -271,26 +271,26 @@
     .presets-header h2 {
       font-size: 13px;
       font-weight: 600;
-      color: #a08cc0;
+      color: #8b93a7;
       text-transform: uppercase;
       letter-spacing: 1px;
     }
 
     .btn-add {
-      background: linear-gradient(135deg, #3d2a5c 0%, #2d1b4e 100%);
-      border: 2px solid #6b4d8a;
-      color: #e0b060;
+      background: linear-gradient(135deg, #2a3144 0%, #0b0d13 100%);
+      border: 2px solid #5d6478;
+      color: #4d7cff;
       padding: 8px 16px;
       border-radius: 6px;
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
       transition: border-color 0.15s, transform 0.1s;
     }
 
     .btn-add:hover {
-      border-color: #e0b060;
+      border-color: #4d7cff;
       transform: scale(1.02);
     }
 
@@ -306,8 +306,8 @@
     }
 
     .preset-card {
-      background: #1a1030;
-      border: 2px solid #6b4d8a;
+      background: #141823;
+      border: 2px solid #5d6478;
       border-radius: 8px;
       padding: 12px 16px;
       display: flex;
@@ -323,34 +323,34 @@
     }
 
     .preset-card.drag-over {
-      border-color: #e0b060;
+      border-color: #4d7cff;
       transform: translateY(2px);
     }
 
     .preset-card.queued {
-      border-color: #e0b060;
-      background: #1f1a10;
+      border-color: #4d7cff;
+      background: #10203a;
     }
 
     .preset-key {
       width: 36px;
       height: 36px;
-      background: #2a1d42;
-      border: 2px solid #6b4d8a;
+      background: #0e1119;
+      border: 2px solid #5d6478;
       border-radius: 6px;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 16px;
       font-weight: 700;
-      color: #e0b060;
+      color: #4d7cff;
       flex-shrink: 0;
       user-select: none;
     }
 
     .preset-card.queued .preset-key {
-      border-color: #e0b060;
-      background: #2a2010;
+      border-color: #4d7cff;
+      background: #13233f;
     }
 
     .preset-fields {
@@ -363,12 +363,12 @@
     .preset-fields input {
       flex: 1;
       padding: 8px 12px;
-      border: 2px solid #3d2a5c;
+      border: 2px solid #2a3144;
       border-radius: 6px;
-      background: #2a1d42;
+      background: #0e1119;
       color: #fff;
       font-size: 14px;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
       min-width: 0;
       transition: border-color 0.15s;
     }
@@ -376,16 +376,16 @@
     .preset-fields input.input-pronouns {
       flex: 0 0 100px;
       min-width: 100px;
-      color: #a08cc0;
+      color: #8b93a7;
     }
 
     .preset-fields input:focus {
       outline: none;
-      border-color: #e0b060;
+      border-color: #4d7cff;
     }
 
     .preset-fields input::placeholder {
-      color: #6b4d8a;
+      color: #5d6478;
     }
 
     .preset-actions {
@@ -398,14 +398,14 @@
     .queue-badge {
       width: 32px;
       height: 32px;
-      background: linear-gradient(135deg, #e0b060 0%, #c0903a 100%);
+      background: linear-gradient(135deg, #4d7cff 0%, #3a63d6 100%);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
       font-size: 14px;
       font-weight: 700;
-      color: #1a1030;
+      color: #141823;
       flex-shrink: 0;
     }
 
@@ -417,20 +417,20 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
       transition: transform 0.1s, opacity 0.1s;
       white-space: nowrap;
     }
 
     .btn-queue.add {
-      background: linear-gradient(135deg, #3d2a5c 0%, #2d1b4e 100%);
-      border: 2px solid #6b4d8a;
+      background: linear-gradient(135deg, #2a3144 0%, #0b0d13 100%);
+      border: 2px solid #5d6478;
     }
 
     .btn-queue.remove {
       background: transparent;
-      border: 2px solid #e0b060;
-      color: #e0b060;
+      border: 2px solid #4d7cff;
+      color: #4d7cff;
     }
 
     .btn-queue:hover {
@@ -443,8 +443,8 @@
 
     .btn-delete {
       background: transparent;
-      border: 2px solid #3d2a5c;
-      color: #6b4d8a;
+      border: 2px solid #2a3144;
+      color: #5d6478;
       width: 36px;
       height: 36px;
       border-radius: 6px;
@@ -454,12 +454,12 @@
       align-items: center;
       justify-content: center;
       transition: border-color 0.15s, color 0.15s, transform 0.1s;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
     }
 
     .btn-delete:hover {
-      border-color: #9f4a4a;
-      color: #9f4a4a;
+      border-color: #ff4136;
+      color: #ff4136;
       transform: scale(1.05);
     }
 
@@ -469,8 +469,8 @@
 
     /* Shortcuts */
     .shortcuts {
-      background: #1a1030;
-      border: 2px solid #3d2a5c;
+      background: #141823;
+      border: 2px solid #2a3144;
       border-radius: 8px;
       padding: 16px 20px;
     }
@@ -478,7 +478,7 @@
     .shortcuts h3 {
       font-size: 11px;
       font-weight: 600;
-      color: #6b4d8a;
+      color: #5d6478;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin-bottom: 10px;
@@ -495,18 +495,18 @@
       align-items: center;
       gap: 8px;
       font-size: 12px;
-      color: #a08cc0;
+      color: #8b93a7;
     }
 
     .shortcut-item kbd {
-      background: #2a1d42;
-      border: 1px solid #6b4d8a;
+      background: #0e1119;
+      border: 1px solid #5d6478;
       border-radius: 4px;
       padding: 2px 8px;
       font-size: 11px;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
       font-weight: 600;
-      color: #e0b060;
+      color: #4d7cff;
       min-width: 28px;
       text-align: center;
     }
@@ -517,13 +517,13 @@
       bottom: 24px;
       left: 50%;
       transform: translateX(-50%) translateY(100px);
-      background: #2a1d42;
-      border: 2px solid #6b4d8a;
+      background: #0e1119;
+      border: 2px solid #5d6478;
       border-radius: 8px;
       padding: 12px 24px;
       font-size: 13px;
       font-weight: 500;
-      color: #e0b060;
+      color: #4d7cff;
       opacity: 0;
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.3s;
       pointer-events: none;
@@ -538,14 +538,14 @@
     .empty-state {
       text-align: center;
       padding: 40px 20px;
-      color: #6b4d8a;
+      color: #5d6478;
       font-size: 14px;
     }
 
     /* Tiltify section */
     .tiltify-section {
-      background: #1a1030;
-      border: 2px solid #6b4d8a;
+      background: #141823;
+      border: 2px solid #5d6478;
       border-radius: 8px;
       padding: 16px 20px;
       margin-bottom: 24px;
@@ -559,7 +559,7 @@
     .tiltify-section h3 {
       font-size: 11px;
       font-weight: 600;
-      color: #6b4d8a;
+      color: #5d6478;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin-bottom: 12px;
@@ -575,7 +575,7 @@
     .tiltify-campaign-name {
       font-size: 14px;
       font-weight: 600;
-      color: #e0b060;
+      color: #4d7cff;
       flex: 1;
     }
 
@@ -587,13 +587,13 @@
 
     .tiltify-raised .of-goal {
       font-weight: 400;
-      color: #a08cc0;
+      color: #8b93a7;
       font-size: 12px;
     }
 
     .tiltify-mini-bar {
       height: 4px;
-      background: #2a1d42;
+      background: #0e1119;
       border-radius: 2px;
       overflow: hidden;
       margin-bottom: 4px;
@@ -601,14 +601,14 @@
 
     .tiltify-mini-fill {
       height: 100%;
-      background: linear-gradient(90deg, #f0a030 0%, #e0c060 100%);
+      background: linear-gradient(90deg, #4d7cff 0%, #6f97ff 100%);
       border-radius: 2px;
       transition: width 0.5s ease;
     }
 
     .tiltify-updated {
       font-size: 11px;
-      color: #6b4d8a;
+      color: #5d6478;
       margin-bottom: 12px;
     }
 
@@ -625,10 +625,10 @@
       font-size: 13px;
       font-weight: 600;
       cursor: pointer;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
       transition: transform 0.1s;
-      border: 2px solid #6b4d8a;
-      background: linear-gradient(135deg, #3d2a5c 0%, #2d1b4e 100%);
+      border: 2px solid #5d6478;
+      background: linear-gradient(135deg, #2a3144 0%, #0b0d13 100%);
       color: #fff;
     }
 
@@ -641,14 +641,14 @@
     }
 
     .tiltify-btn.active {
-      border-color: #e0b060;
-      background: linear-gradient(135deg, #e0b060 0%, #c0903a 100%);
-      color: #1a1030;
+      border-color: #4d7cff;
+      background: linear-gradient(135deg, #4d7cff 0%, #3a63d6 100%);
+      color: #141823;
     }
 
     .tiltify-btn.hide-btn {
-      border-color: #9f4a4a;
-      background: linear-gradient(135deg, #9f4a4a 0%, #7a3a3a 100%);
+      border-color: #ff4136;
+      background: linear-gradient(135deg, #ff4136 0%, #c4302a 100%);
       color: #fff;
     }
 
@@ -664,7 +664,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      background: #2a1d42;
+      background: #0e1119;
       border-radius: 6px;
       padding: 8px 12px;
     }
@@ -689,12 +689,12 @@
     .tiltify-donor-amount {
       font-size: 13px;
       font-weight: 700;
-      color: #e0b060;
+      color: #4d7cff;
     }
 
     .tiltify-donor-comment {
       font-size: 11px;
-      color: #a08cc0;
+      color: #8b93a7;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -704,7 +704,7 @@
     .tiltify-donor-incentive {
       font-size: 10px;
       font-weight: 600;
-      color: #e0b060;
+      color: #4d7cff;
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -716,17 +716,17 @@
       font-size: 11px;
       font-weight: 600;
       cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      border: 1px solid #6b4d8a;
-      background: #1a1030;
-      color: #a08cc0;
+      font-family: 'Barlow', sans-serif;
+      border: 1px solid #5d6478;
+      background: #141823;
+      color: #8b93a7;
       flex-shrink: 0;
       transition: transform 0.1s, border-color 0.15s;
     }
 
     .tiltify-donation-show:hover {
-      border-color: #e0b060;
-      color: #e0b060;
+      border-color: #4d7cff;
+      color: #4d7cff;
       transform: scale(1.04);
     }
 
@@ -737,7 +737,7 @@
     .tiltify-sub-header {
       font-size: 10px;
       font-weight: 600;
-      color: #6b4d8a;
+      color: #5d6478;
       text-transform: uppercase;
       letter-spacing: 1px;
       margin-top: 10px;
@@ -752,7 +752,7 @@
       display: flex;
       align-items: center;
       gap: 10px;
-      background: #2a1d42;
+      background: #0e1119;
       border-radius: 6px;
       padding: 8px 12px;
       margin-bottom: 4px;
@@ -778,11 +778,11 @@
 
     .tiltify-item-amounts {
       font-size: 11px;
-      color: #a08cc0;
+      color: #8b93a7;
     }
 
     .tiltify-item-amounts .gold {
-      color: #e0b060;
+      color: #4d7cff;
       font-weight: 600;
     }
 
@@ -790,7 +790,7 @@
       display: flex;
       gap: 0;
       margin-bottom: 10px;
-      border-bottom: 2px solid #3d2a5c;
+      border-bottom: 2px solid #2a3144;
       flex-wrap: wrap;
     }
 
@@ -798,10 +798,10 @@
       padding: 6px 10px;
       font-size: 11px;
       font-weight: 600;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: #6b4d8a;
+      color: #5d6478;
       background: transparent;
       border: none;
       border-bottom: 2px solid transparent;
@@ -811,23 +811,23 @@
     }
 
     .tiltify-tab:hover {
-      color: #a08cc0;
+      color: #8b93a7;
     }
 
     .tiltify-tab.active {
-      color: #e0b060;
-      border-bottom-color: #e0b060;
+      color: #4d7cff;
+      border-bottom-color: #4d7cff;
     }
 
     .tiltify-tab .tab-count {
       font-size: 10px;
       font-weight: 400;
-      color: #6b4d8a;
+      color: #5d6478;
       margin-left: 4px;
     }
 
     .tiltify-tab.active .tab-count {
-      color: #a08cc0;
+      color: #8b93a7;
     }
 
     .tiltify-tab-panel {
@@ -843,7 +843,7 @@
     .schedule-time {
       font-size: 11px;
       font-weight: 600;
-      color: #e0b060;
+      color: #4d7cff;
       white-space: nowrap;
       min-width: 52px;
     }
@@ -851,8 +851,8 @@
     .schedule-next-badge {
       font-size: 10px;
       font-weight: 700;
-      color: #1a1030;
-      background: #4a9f4a;
+      color: #141823;
+      background: #2ee6a0;
       border-radius: 3px;
       padding: 1px 6px;
       text-transform: uppercase;
@@ -862,8 +862,8 @@
     .schedule-done-badge {
       font-size: 10px;
       font-weight: 700;
-      color: #1a1030;
-      background: #6b4d8a;
+      color: #141823;
+      background: #5d6478;
       border-radius: 3px;
       padding: 1px 6px;
       text-transform: uppercase;
@@ -876,7 +876,7 @@
 
     .schedule-estimate {
       font-size: 10px;
-      color: #6b4d8a;
+      color: #5d6478;
       white-space: nowrap;
     }
 
@@ -884,25 +884,25 @@
       width: 100%;
       padding: 7px 12px;
       margin-bottom: 8px;
-      border: 2px solid #3d2a5c;
+      border: 2px solid #2a3144;
       border-radius: 6px;
-      background: #2a1d42;
+      background: #0e1119;
       color: #fff;
       font-size: 13px;
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
     }
 
     .tab-filter:focus {
       outline: none;
-      border-color: #e0b060;
+      border-color: #4d7cff;
     }
 
     .tab-filter::placeholder {
-      color: #6b4d8a;
+      color: #5d6478;
     }
 
     textarea.tab-filter {
-      font-family: 'Inter', sans-serif;
+      font-family: 'Barlow', sans-serif;
     }
 
     input[type="datetime-local"].tab-filter {
@@ -923,10 +923,10 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
-      font-family: 'Inter', sans-serif;
-      border: 2px solid #3d2a5c;
-      background: #2a1d42;
-      color: #a08cc0;
+      font-family: 'Barlow', sans-serif;
+      border: 2px solid #2a3144;
+      background: #0e1119;
+      color: #8b93a7;
       transition: border-color 0.15s, background 0.15s, color 0.15s, transform 0.1s;
       display: flex;
       align-items: center;
@@ -934,21 +934,21 @@
     }
 
     .scene-btn:hover {
-      border-color: #6b4d8a;
+      border-color: #5d6478;
       transform: scale(1.02);
     }
 
     .scene-btn.active {
-      border-color: #e0b060;
-      background: #2a2010;
-      color: #e0b060;
+      border-color: #4d7cff;
+      background: #13233f;
+      color: #4d7cff;
     }
 
     .scene-btn .scene-count {
       font-size: 10px;
       font-weight: 700;
-      background: #3d2a5c;
-      color: #a08cc0;
+      background: #2a3144;
+      color: #8b93a7;
       border-radius: 3px;
       padding: 1px 5px;
       min-width: 18px;
@@ -956,8 +956,8 @@
     }
 
     .scene-btn.active .scene-count {
-      background: #e0b060;
-      color: #1a1030;
+      background: #4d7cff;
+      color: #141823;
     }
 
     .scene-btn .scene-live-dot {
@@ -969,7 +969,7 @@
     }
 
     .scene-btn .scene-live-dot.live {
-      background: #4a9f4a;
+      background: #2ee6a0;
       box-shadow: 0 0 6px rgba(74, 159, 74, 0.5);
     }
 
@@ -984,7 +984,7 @@
     .scene-overview-item {
       font-size: 10px;
       font-weight: 500;
-      color: #6b4d8a;
+      color: #5d6478;
       display: flex;
       align-items: center;
       gap: 4px;
@@ -994,15 +994,15 @@
       width: 5px;
       height: 5px;
       border-radius: 50%;
-      background: #3d2a5c;
+      background: #2a3144;
     }
 
     .scene-overview-item .scene-overview-dot.live {
-      background: #4a9f4a;
+      background: #2ee6a0;
     }
 
     .scene-overview-item.active-scene {
-      color: #e0b060;
+      color: #4d7cff;
     }
 
     /* Image preset/queue */
@@ -1011,21 +1011,21 @@
       height: 45px;
       object-fit: cover;
       border-radius: 4px;
-      border: 2px solid #6b4d8a;
-      background: #2a1d42;
+      border: 2px solid #5d6478;
+      background: #0e1119;
       cursor: pointer;
       transition: border-color 0.15s;
     }
 
     .image-queue-thumb:hover {
-      border-color: #e0b060;
+      border-color: #4d7cff;
     }
 
     .image-preset-row {
       display: flex;
       align-items: center;
       gap: 8px;
-      background: #2a1d42;
+      background: #0e1119;
       border-radius: 6px;
       padding: 8px 10px;
     }
@@ -1042,16 +1042,178 @@
       height: 34px;
       object-fit: cover;
       border-radius: 3px;
-      background: #1a1030;
+      background: #141823;
       flex-shrink: 0;
     }
+
+    /* ===== Studio Control header wordmark ===== */
+    .header h1 {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 20px;
+      color: #f4f6fb;
+      letter-spacing: 0.04em;
+    }
+    .header h1 .sub {
+      color: #5d6478;
+      font-weight: 600;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      margin-left: 8px;
+    }
+
+    /* ===== Mirror toggle ===== */
+    .mirror-toggle {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 700;
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      padding: 7px 13px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: #0e1119;
+      border: 1px solid #2a3144;
+      color: #8b93a7;
+      transition: border-color 0.15s, color 0.15s;
+    }
+    .mirror-toggle .mdot { width: 8px; height: 8px; border-radius: 50%; background: #5d6478; }
+    .mirror-toggle.on { color: #2ee6a0; border-color: rgba(46,230,160,0.45); background: rgba(46,230,160,0.1); }
+    .mirror-toggle.on .mdot { background: #2ee6a0; }
+
+    /* ===== Monitor bus (live previews) ===== */
+    .monitor-bus {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+    .monitor { flex: 1; min-width: 300px; }
+    .monitor-label {
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      margin-bottom: 8px;
+    }
+    .monitor-label .pill {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 800;
+      font-size: 11px;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #08130d;
+      border-radius: 5px;
+      padding: 3px 8px;
+    }
+    .monitor-label .pill.program { background: #ff4136; color: #fff; }
+    .monitor-label .pill.host { background: #4d7cff; color: #fff; }
+    .monitor-label .name {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 700; font-size: 12px; letter-spacing: 0.06em;
+      text-transform: uppercase; color: #cfd5e3;
+    }
+    .monitor-label .meta { font-size: 12px; color: #8b93a7; }
+    .monitor-frame {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border-radius: 11px;
+      overflow: hidden;
+      position: relative;
+      border: 1px solid #232838;
+      background: #0a0b0e;
+    }
+    .monitor-frame iframe {
+      position: absolute;
+      top: 0; left: 0;
+      width: 1920px; height: 1080px;
+      border: 0;
+      transform-origin: top left;
+    }
+
+    /* ===== Confidence section ===== */
+    .conf-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    @media (max-width: 900px) { .conf-grid { grid-template-columns: 1fr; } }
+    .conf-block-label {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #8b93a7; margin-bottom: 9px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .state-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .state-btn {
+      flex: 1;
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 800; font-size: 14px; letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: none; border-radius: 9px; padding: 13px; cursor: pointer;
+      opacity: 0.4; transition: opacity 0.15s, transform 0.1s; color: #fff;
+    }
+    .state-btn:active { transform: scale(0.97); }
+    .state-btn.standby { background: #4d7cff; }
+    .state-btn.air { background: #ff4136; }
+    .state-btn.wrap { background: #ffb02e; color: #1a1205; }
+    .state-btn.active { opacity: 1; }
+    .feat-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .feat-btn {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 700; font-size: 13px; letter-spacing: 0.04em;
+      text-transform: uppercase;
+      border: 1px solid #2a3144; border-radius: 9px; padding: 10px 14px; cursor: pointer;
+      background: #0e1119; color: #cfd5e3; transition: border-color 0.15s, transform 0.1s;
+    }
+    .feat-btn:active { transform: scale(0.96); }
+    .feat-btn.active { background: #2ee6a0; color: #08130d; border-color: #2ee6a0; }
+    .feat-btn.clear { color: #8b93a7; border-color: #2a3144; }
+    .producer-composer { display: flex; gap: 8px; margin-bottom: 10px; }
+    .producer-composer input {
+      flex: 1; min-width: 0;
+      padding: 11px 14px;
+      border: 1px solid #2a3144; border-radius: 9px;
+      background: #0e1119; color: #f4f6fb; font-size: 14px; font-family: 'Barlow', sans-serif;
+    }
+    .producer-composer input:focus { outline: none; border-color: #4d7cff; }
+    .producer-composer input::placeholder { color: #5d6478; }
+    .level-row { display: flex; gap: 8px; align-items: center; margin-bottom: 12px; }
+    .level-btn {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 700; font-size: 12px; letter-spacing: 0.06em; text-transform: uppercase;
+      border-radius: 8px; padding: 8px 12px; cursor: pointer; background: transparent;
+    }
+    .level-btn.info { border: 1px solid #4d7cff; color: #9fb4ff; }
+    .level-btn.info.on { background: #4d7cff; color: #fff; }
+    .level-btn.urgent { border: 1px solid #ff4136; color: #ff8a82; }
+    .level-btn.urgent.on { background: #ff4136; color: #fff; }
+    .btn-send {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 800; font-size: 13px; letter-spacing: 0.06em; text-transform: uppercase;
+      border: none; border-radius: 9px; padding: 0 18px; cursor: pointer;
+      background: #2ee6a0; color: #08130d;
+    }
+    .cue-row { display: flex; gap: 7px; flex-wrap: wrap; }
+    .cue-btn {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
+      border-radius: 8px; padding: 7px 10px; cursor: pointer; background: #0e1119;
+    }
+    .cue-btn.info { border: 1px solid rgba(77,124,255,0.4); color: #9fb4ff; }
+    .cue-btn.urgent { border: 1px solid rgba(255,65,54,0.4); color: #ff8a82; }
   </style>
   <script src="https://tools.skenmy.com/embed.js" data-app="lowerthird" data-role="admin"></script>
 </head>
 <body>
   <div class="header">
-    <h1>ESA Lower Third Control</h1>
+    <h1>Studio Control<span class="sub">ESA</span></h1>
     <div style="display: flex; align-items: center; gap: 16px;">
+      <button class="mirror-toggle" id="mirrorToggle" onclick="toggleMirror()" title="Mirror Program donation displays to the Host Confidence monitor">
+        <span class="mdot"></span><span id="mirrorLabel">Mirror · Off</span>
+      </button>
       <div class="mode-toggle">
         <button class="mode-btn active" id="modeBasic" onclick="setAdvancedMode(false)">One Scene</button>
         <button class="mode-btn" id="modeAdvanced" onclick="setAdvancedMode(true)">Multi-Scene</button>
@@ -1090,6 +1252,75 @@
         Hide<br>
         <span class="shortcut">Escape</span>
       </button>
+    </div>
+
+    <!-- Monitor bus: live Program + Host previews -->
+    <div class="monitor-bus">
+      <div class="monitor">
+        <div class="monitor-label">
+          <span class="pill program">Program</span>
+          <span class="name">OBS Overlay</span>
+          <span class="meta">source.html</span>
+        </div>
+        <div class="monitor-frame">
+          <iframe src="source.html" title="Program overlay preview" onload="scalePreviews()" scrolling="no"></iframe>
+        </div>
+      </div>
+      <div class="monitor">
+        <div class="monitor-label">
+          <span class="pill host">Host</span>
+          <span class="name">Confidence Monitor</span>
+          <span class="meta">confidence.html</span>
+        </div>
+        <div class="monitor-frame">
+          <iframe src="confidence.html?scene=confidence" title="Host confidence preview" onload="scalePreviews()" scrolling="no"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- Confidence — host monitor controls -->
+    <div class="tiltify-section active" id="confidenceSection">
+      <h3>Confidence — Host Monitor</h3>
+      <div class="conf-grid">
+        <div>
+          <div class="conf-block-label">Studio State</div>
+          <div class="state-row">
+            <button class="state-btn standby active" data-state="standby" onclick="setStudioState('standby')">Standby</button>
+            <button class="state-btn air" data-state="air" onclick="setStudioState('air')">On Air</button>
+            <button class="state-btn wrap" data-state="wrap" onclick="setStudioState('wrap')">Wrap Up</button>
+          </div>
+          <div class="conf-block-label">Feature Large
+            <button class="feat-btn clear" onclick="setFeatureLarge('none')" style="padding:6px 11px;">Clear</button>
+          </div>
+          <div class="feat-row">
+            <button class="feat-btn" id="featTotal" onclick="setFeatureLarge('total')">Donation</button>
+            <button class="feat-btn" id="featIncentive" onclick="setFeatureLarge('incentive')">Incentive</button>
+            <button class="feat-btn" id="featBidwar" onclick="setFeatureLarge('bidwar')">Bid War</button>
+            <button class="feat-btn" id="featSchedule" onclick="setFeatureLarge('schedule')">Up Next</button>
+          </div>
+        </div>
+        <div>
+          <div class="conf-block-label">Producer Message &rarr; Hosts</div>
+          <div class="producer-composer">
+            <input type="text" id="producerText" placeholder="Type a cue to send to the hosts…" onkeydown="event.stopPropagation(); if (event.key === 'Enter') sendProducer();">
+            <button class="btn-send" onclick="sendProducer()">Send</button>
+          </div>
+          <div class="level-row">
+            <button class="level-btn info on" id="levelInfo" onclick="setProducerLevel('info')">Info</button>
+            <button class="level-btn urgent" id="levelUrgent" onclick="setProducerLevel('urgent')">Urgent</button>
+            <span style="flex:1;"></span>
+            <button class="feat-btn clear" onclick="clearProducer()" style="padding:8px 12px;">Clear</button>
+          </div>
+          <div class="cue-row">
+            <button class="cue-btn info" onclick="sendProducer('30 seconds to air', 'info')">30s to air</button>
+            <button class="cue-btn info" onclick="sendProducer('Break after this', 'info')">Break after this</button>
+            <button class="cue-btn info" onclick="sendProducer('Plug the incentive', 'info')">Plug incentive</button>
+            <button class="cue-btn info" onclick="sendProducer('Filling — slow it down', 'info')">Slow down</button>
+            <button class="cue-btn urgent" onclick="sendProducer('Big donation — read it!', 'urgent')">Big donation</button>
+            <button class="cue-btn urgent" onclick="sendProducer('Tech is ready — wrap it up', 'urgent')">Tech ready — wrap</button>
+          </div>
+        </div>
+      </div>
     </div>
 
     <div class="columns">
@@ -1237,7 +1468,7 @@
               </div>
               <input type="text" id="statESACount" placeholder="ESA Appearances" class="tab-filter" onkeydown="event.stopPropagation()">
               <input type="text" id="statFunFact" placeholder="Fun Fact" class="tab-filter" onkeydown="event.stopPropagation()">
-              <div id="statFetchStatus" style="font-size: 12px; color: #a08cc0; min-height: 16px;"></div>
+              <div id="statFetchStatus" style="font-size: 12px; color: #8b93a7; min-height: 16px;"></div>
             </div>
             <div class="tiltify-buttons">
               <button class="tiltify-btn" onclick="showStatCard()">Show</button>
@@ -1262,7 +1493,7 @@
           <div class="tiltify-tab-panel" id="ftPanelImages">
             <div class="tiltify-sub-header">Queue</div>
             <div id="imageQueuePreview" style="display: flex; gap: 8px; flex-wrap: wrap; min-height: 40px; margin-bottom: 12px;">
-              <span style="color: #3d2a5c; font-size: 13px; font-style: italic;">No images queued</span>
+              <span style="color: #2a3144; font-size: 13px; font-style: italic;">No images queued</span>
             </div>
             <div class="tiltify-buttons" style="margin-bottom: 12px;">
               <button class="tiltify-btn" onclick="imageShowNext()">Show Next</button>
@@ -1272,7 +1503,7 @@
             <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
               <div class="tiltify-sub-header" style="margin: 0;">Presets</div>
               <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 11px; color: #6b4d8a;">Default:</span>
+                <span style="font-size: 11px; color: #5d6478;">Default:</span>
                 <div class="mode-toggle">
                   <button class="mode-btn active" id="imgPosLeft" onclick="setImageDefaultPos('left')" style="padding: 3px 10px; font-size: 11px;">Left</button>
                   <button class="mode-btn" id="imgPosRight" onclick="setImageDefaultPos('right')" style="padding: 3px 10px; font-size: 11px;">Right</button>
@@ -1357,6 +1588,77 @@
     function wsSend(obj) {
       if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
     }
+
+    // --- Confidence monitor + Mirror ---
+
+    let mirrorOn = false;
+    let producerLevel = 'info';
+
+    function loadMirror() {
+      try { mirrorOn = localStorage.getItem('esa-lt-mirror') === 'true'; } catch (e) {}
+      updateMirrorUI();
+    }
+    function updateMirrorUI() {
+      document.getElementById('mirrorToggle').classList.toggle('on', mirrorOn);
+      document.getElementById('mirrorLabel').textContent = mirrorOn ? 'Mirror · On' : 'Mirror · Off';
+    }
+    function toggleMirror() {
+      mirrorOn = !mirrorOn;
+      try { localStorage.setItem('esa-lt-mirror', mirrorOn); } catch (e) {}
+      updateMirrorUI();
+      showToast(mirrorOn ? 'Mirror on — donation displays feature on the host monitor' : 'Mirror off');
+    }
+    // Called by the Program show functions; only emits when Mirror is on. Runner cards never call this.
+    function mirrorFeature(feature, opts) {
+      if (!mirrorOn) return;
+      wsSend(Object.assign({ type: 'confidence_feature', feature }, opts || {}));
+      setFeatureUI(feature);
+    }
+
+    function setStudioState(state) {
+      wsSend({ type: 'confidence_state', state });
+      document.querySelectorAll('.state-btn').forEach(b => b.classList.toggle('active', b.dataset.state === state));
+      showToast('Studio state: ' + state.toUpperCase());
+    }
+
+    function setFeatureLarge(feature, opts) {
+      wsSend(Object.assign({ type: 'confidence_feature', feature }, opts || {}));
+      setFeatureUI(feature);
+      showToast(feature === 'none' ? 'Host feature cleared' : 'Featuring on host monitor: ' + feature);
+    }
+    function setFeatureUI(feature) {
+      const map = { total: 'featTotal', incentive: 'featIncentive', bidwar: 'featBidwar', schedule: 'featSchedule' };
+      document.querySelectorAll('.feat-row .feat-btn').forEach(b => b.classList.remove('active'));
+      const el = document.getElementById(map[feature]);
+      if (el) el.classList.add('active');
+    }
+
+    function setProducerLevel(level) {
+      producerLevel = level;
+      document.getElementById('levelInfo').classList.toggle('on', level === 'info');
+      document.getElementById('levelUrgent').classList.toggle('on', level === 'urgent');
+    }
+    function sendProducer(text, level) {
+      const input = document.getElementById('producerText');
+      const t = (text != null ? text : (input.value || '')).trim();
+      if (!t) return;
+      wsSend({ type: 'producer_msg', active: true, text: t, level: level || producerLevel });
+      if (text == null) input.value = '';
+      showToast('Cue sent to hosts');
+    }
+    function clearProducer() {
+      wsSend({ type: 'producer_msg', active: false, text: '', level: 'info' });
+      showToast('Producer banner cleared');
+    }
+
+    // Live preview iframes are fixed 1920x1080; scale them to fit their frame.
+    function scalePreviews() {
+      document.querySelectorAll('.monitor-frame').forEach(frame => {
+        const iframe = frame.querySelector('iframe');
+        if (iframe) iframe.style.transform = 'scale(' + (frame.clientWidth / 1920) + ')';
+      });
+    }
+    window.addEventListener('resize', scalePreviews);
 
     // --- Persistence ---
 
@@ -1644,6 +1946,8 @@
       wsSend({ type: 'schedule_hide' });
       wsSend({ type: 'wheel_hide' });
       wsSend({ type: 'image_hide' });
+      wsSend({ type: 'confidence_feature', feature: 'none' });
+      setFeatureUI('none');
       stopAutoCycle();
       isLive = false;
       for (const s of SCENES) sceneLiveStatus[s] = false;
@@ -1913,7 +2217,7 @@
         : donations;
       const donList = document.getElementById('listDonations');
       if (filteredDonations.length === 0) {
-        donList.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">' + (donations.length ? 'No matches' : 'No donations yet') + '</div>';
+        donList.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">' + (donations.length ? 'No matches' : 'No donations yet') + '</div>';
       } else {
         donList.innerHTML = filteredDonations.map((d) => {
           const origIndex = donations.indexOf(d);
@@ -1941,7 +2245,7 @@
         : targets;
       const tgtList = document.getElementById('listTargets');
       if (filteredTargets.length === 0) {
-        tgtList.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">' + (targets.length ? 'No matches' : 'No targets') + '</div>';
+        tgtList.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">' + (targets.length ? 'No matches' : 'No targets') + '</div>';
       } else {
         tgtList.innerHTML = filteredTargets.map((t) => {
           const origIndex = targets.indexOf(t);
@@ -1968,7 +2272,7 @@
         : polls;
       const pollList = document.getElementById('listPolls');
       if (filteredPolls.length === 0) {
-        pollList.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">' + (polls.length ? 'No matches' : 'No polls') + '</div>';
+        pollList.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">' + (polls.length ? 'No matches' : 'No polls') + '</div>';
       } else {
         pollList.innerHTML = filteredPolls.map((p) => {
           const origIndex = polls.indexOf(p);
@@ -1992,7 +2296,7 @@
         : milestones;
       const msList = document.getElementById('listMilestones');
       if (filteredMs.length === 0) {
-        msList.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">' + (milestones.length ? 'No matches' : 'No milestones') + '</div>';
+        msList.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">' + (milestones.length ? 'No matches' : 'No milestones') + '</div>';
       } else {
         msList.innerHTML = filteredMs.map((m) => {
           const origIndex = milestones.indexOf(m);
@@ -2013,7 +2317,7 @@
       // Donation matches list
       const matchList = document.getElementById('listMatches');
       if (donationMatches.length === 0) {
-        matchList.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">No donation matches</div>';
+        matchList.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">No donation matches</div>';
       } else {
         matchList.innerHTML = donationMatches.map((m, i) => {
           const raised = parseFloat(m.total_amount_raised?.value || 0);
@@ -2034,6 +2338,7 @@
 
     function tiltifyShowDisplay(displayType) {
       wsSend({ type: 'tiltify_show', display: displayType });
+      if (displayType === 'total' || displayType === 'totalizer') mirrorFeature('total');
       showToast(`Tiltify: ${displayType}`);
     }
 
@@ -2046,6 +2351,7 @@
 
     function tiltifyShowTarget(index) {
       wsSend({ type: 'tiltify_show', display: 'target', targetIndex: index });
+      mirrorFeature('incentive', { targetIndex: index });
       const t = tiltifyData.targets[index];
       showToast(`Showing target: ${t ? t.name : 'Target'}`);
     }
@@ -2061,6 +2367,7 @@
 
     function tiltifyShowPoll(index) {
       wsSend({ type: 'tiltify_show', display: 'poll', pollIndex: index });
+      mirrorFeature('bidwar', { pollIndex: index });
       const p = tiltifyData.polls[index];
       showToast(`Showing poll: ${p ? p.name : 'Poll'}`);
     }
@@ -2073,6 +2380,7 @@
 
     function tiltifyHide() {
       wsSend({ type: 'tiltify_hide' });
+      if (mirrorOn) { wsSend({ type: 'confidence_feature', feature: 'none' }); setFeatureUI('none'); }
       stopAutoCycle();
       showToast('Tiltify display hidden');
     }
@@ -2161,7 +2469,7 @@
 
       const listEl = document.getElementById('listSchedule');
       if (filteredPrev.length === 0 && filteredUp.length === 0) {
-        listEl.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">' + (totalCount ? 'No matches' : 'No runs') + '</div>';
+        listEl.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">' + (totalCount ? 'No matches' : 'No runs') + '</div>';
       } else {
         const prevHtml = filteredPrev.map((run) => {
           const origIndex = previous.indexOf(run);
@@ -2212,6 +2520,7 @@
 
     function scheduleShowRun(index, mode, list) {
       wsSend({ type: 'schedule_show', runIndex: index, mode: mode, list: list });
+      mirrorFeature('schedule', { runIndex: index, list: list });
       const runs = list === 'prev' ? scheduleDataCache.previous : scheduleDataCache.upcoming;
       const run = runs[index];
       const label = mode === 'next' ? 'Up Next' : 'Coming Up';
@@ -2371,7 +2680,7 @@
       const el = document.getElementById('quoteLog');
       if (!el) return;
       if (quoteLog.length === 0) {
-        el.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 4px;">No quotes yet</div>';
+        el.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 4px;">No quotes yet</div>';
         return;
       }
       el.innerHTML = quoteLog.slice().reverse().map((q, ri) => {
@@ -2410,7 +2719,7 @@
       const el = document.getElementById('sleepList');
       if (!el) return;
       if (sleepPeopleList.length === 0) {
-        el.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 4px;">No people added</div>';
+        el.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 4px;">No people added</div>';
         return;
       }
       el.innerHTML = sleepPeopleList.map((p, i) => {
@@ -2421,7 +2730,7 @@
             `<div class="tiltify-item-name">${escHtml(p.name)}</div>` +
             `<div class="tiltify-item-amounts">Woke at ${timeStr}</div>` +
           `</div>` +
-          `<button class="tiltify-donation-show" onclick="removeSleepPerson(${i})" style="color: #9f4a4a; border-color: #9f4a4a;">&times;</button>` +
+          `<button class="tiltify-donation-show" onclick="removeSleepPerson(${i})" style="color: #ff4136; border-color: #ff4136;">&times;</button>` +
         `</div>`;
       }).join('');
     }
@@ -2503,30 +2812,30 @@
       const statusEl = document.getElementById('statFetchStatus');
       if (data.error) {
         statusEl.textContent = 'SRC: ' + data.error;
-        statusEl.style.color = '#9f4a4a';
-        setTimeout(() => { statusEl.style.color = '#a08cc0'; }, 5000);
+        statusEl.style.color = '#ff4136';
+        setTimeout(() => { statusEl.style.color = '#8b93a7'; }, 5000);
         return;
       }
       document.getElementById('statGamesRun').value = data.gamesRun || '';
       document.getElementById('statTotalPBs').value = data.totalPBs || '';
       document.getElementById('statWorldRecords').value = data.worldRecords || '';
       statusEl.textContent = `SRC: Found ${data.username} (${data.totalPBs} PBs across ${data.gamesRun} games)`;
-      statusEl.style.color = '#4a9f4a';
-      setTimeout(() => { statusEl.style.color = '#a08cc0'; }, 5000);
+      statusEl.style.color = '#2ee6a0';
+      setTimeout(() => { statusEl.style.color = '#8b93a7'; }, 5000);
     }
 
     function handleTwitchResult(data) {
       const statusEl = document.getElementById('statFetchStatus');
       if (data.error) {
         statusEl.textContent = 'Twitch: ' + data.error;
-        statusEl.style.color = '#9f4a4a';
-        setTimeout(() => { statusEl.style.color = '#a08cc0'; }, 5000);
+        statusEl.style.color = '#ff4136';
+        setTimeout(() => { statusEl.style.color = '#8b93a7'; }, 5000);
         return;
       }
       document.getElementById('statTwitchFollowers').value = formatFollowers(data.followers);
       statusEl.textContent = `Twitch: Found ${data.username} (${data.followers.toLocaleString()} followers)`;
-      statusEl.style.color = '#4a9f4a';
-      setTimeout(() => { statusEl.style.color = '#a08cc0'; }, 5000);
+      statusEl.style.color = '#2ee6a0';
+      setTimeout(() => { statusEl.style.color = '#8b93a7'; }, 5000);
     }
 
     function formatFollowers(n) {
@@ -2563,7 +2872,7 @@
       const el = document.getElementById('wheelHistory');
       if (!el) return;
       if (wheelHistory.length === 0) {
-        el.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 4px;">No spins yet</div>';
+        el.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 4px;">No spins yet</div>';
         return;
       }
       el.innerHTML = wheelHistory.slice().reverse().map(h => {
@@ -2705,7 +3014,7 @@
       const el = document.getElementById('imagePresetList');
       if (!el) return;
       if (imagePresets.length === 0) {
-        el.innerHTML = '<div style="color: #6b4d8a; font-size: 12px; padding: 8px;">No image presets. Click + Add to create one.</div>';
+        el.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">No image presets. Click + Add to create one.</div>';
         return;
       }
       el.innerHTML = imagePresets.map(preset => {
@@ -2713,15 +3022,15 @@
         const posLabel = (preset.position || imageDefaultPos) === 'left' ? 'L' : 'R';
         const thumbSrc = preset.url || '';
         return `<div class="image-preset-row">` +
-          (thumbSrc ? `<img class="image-preset-thumb" src="${escHtml(thumbSrc)}" alt="" onerror="this.style.display='none'">` : `<div class="image-preset-thumb" style="display:flex;align-items:center;justify-content:center;color:#6b4d8a;font-size:10px;">IMG</div>`) +
+          (thumbSrc ? `<img class="image-preset-thumb" src="${escHtml(thumbSrc)}" alt="" onerror="this.style.display='none'">` : `<div class="image-preset-thumb" style="display:flex;align-items:center;justify-content:center;color:#5d6478;font-size:10px;">IMG</div>`) +
           `<div class="preset-fields">` +
             `<input type="text" value="${escHtml(preset.url)}" placeholder="Image URL" class="tab-filter" style="flex: 2; padding: 6px 8px; font-size: 12px;" data-field="url" onchange="updateImagePreset('${preset.id}', 'url', this.value)" onkeydown="event.stopPropagation()">` +
             `<input type="text" value="${escHtml(preset.title)}" placeholder="Title (optional)" class="tab-filter" style="flex: 1; padding: 6px 8px; font-size: 12px;" data-field="title" onchange="updateImagePreset('${preset.id}', 'title', this.value)" onkeydown="event.stopPropagation()">` +
           `</div>` +
           `<button class="tiltify-donation-show" onclick="toggleImagePosition('${preset.id}')" title="Position: ${posLabel === 'L' ? 'Left' : 'Right'}" style="min-width: 28px; padding: 4px 6px; font-size: 11px; font-weight: 700;">${posLabel}</button>` +
-          `<button class="tiltify-donation-show" onclick="${isQueued ? `unqueueImage('${preset.id}')` : `queueImage('${preset.id}')`}" style="font-size: 11px; padding: 4px 8px;${isQueued ? ' border-color: #e0b060; color: #e0b060;' : ''}">${isQueued ? 'Queued' : 'Queue'}</button>` +
+          `<button class="tiltify-donation-show" onclick="${isQueued ? `unqueueImage('${preset.id}')` : `queueImage('${preset.id}')`}" style="font-size: 11px; padding: 4px 8px;${isQueued ? ' border-color: #4d7cff; color: #4d7cff;' : ''}">${isQueued ? 'Queued' : 'Queue'}</button>` +
           `<button class="tiltify-donation-show" onclick="imageShowDirect('${preset.id}')" style="font-size: 11px; padding: 4px 8px;">Show</button>` +
-          `<button class="tiltify-donation-show" onclick="deleteImagePreset('${preset.id}')" style="color: #9f4a4a; border-color: #9f4a4a; font-size: 14px; padding: 4px 6px;">&times;</button>` +
+          `<button class="tiltify-donation-show" onclick="deleteImagePreset('${preset.id}')" style="color: #ff4136; border-color: #ff4136; font-size: 14px; padding: 4px 6px;">&times;</button>` +
         `</div>`;
       }).join('');
     }
@@ -2736,7 +3045,7 @@
         saveImageQueue();
       }
       if (imageQueue.length === 0) {
-        el.innerHTML = '<span style="color: #3d2a5c; font-size: 13px; font-style: italic;">No images queued</span>';
+        el.innerHTML = '<span style="color: #2a3144; font-size: 13px; font-style: italic;">No images queued</span>';
         return;
       }
       el.innerHTML = imageQueue.map((id, i) => {
@@ -2745,8 +3054,8 @@
         const thumbSrc = preset.url || '';
         const title = preset.title || `#${i + 1}`;
         return `<div style="display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer;" onclick="unqueueImage('${id}')" title="Click to remove from queue">` +
-          (thumbSrc ? `<img class="image-queue-thumb" src="${escHtml(thumbSrc)}" alt="" onerror="this.style.display='none'">` : `<div class="image-queue-thumb" style="display:flex;align-items:center;justify-content:center;color:#6b4d8a;font-size:10px;">IMG</div>`) +
-          `<span style="font-size: 10px; color: #a08cc0; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escHtml(title)}</span>` +
+          (thumbSrc ? `<img class="image-queue-thumb" src="${escHtml(thumbSrc)}" alt="" onerror="this.style.display='none'">` : `<div class="image-queue-thumb" style="display:flex;align-items:center;justify-content:center;color:#5d6478;font-size:10px;">IMG</div>`) +
+          `<span style="font-size: 10px; color: #8b93a7; max-width: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${escHtml(title)}</span>` +
         `</div>`;
       }).join('');
     }
@@ -2812,6 +3121,8 @@
     loadAdvancedState();
     loadFunToolsState();
     loadImagePresets();
+    loadMirror();
+    scalePreviews();
     render();
     renderQuoteLog();
     renderSleepList();

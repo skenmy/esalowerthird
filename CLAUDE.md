@@ -6,18 +6,30 @@ here. This file is for things that aren't obvious from the README.
 
 ## Shape of the codebase
 
-Four hand-written files. No build step, no bundler, no framework.
+Five hand-written files. No build step, no bundler, no framework.
 
-- `relay.js` (~630 lines) — Node WebSocket relay. Also serves the three
+- `relay.js` (~650 lines) — Node WebSocket relay. Also serves the static
   HTML files over plain HTTP (so the same port hosts `/ws`, the static
   files, `/healthz`, `/api/send`, `/api/hide`). Polls Tiltify (15s) and
   Horaro (5m); handles `src_lookup` / `twitch_lookup` itself rather
-  than broadcasting.
-- `source.html` (~2.1k lines) — OBS browser source. Listens only,
+  than broadcasting. Caches the last `confidence_state` /
+  `confidence_feature` / `producer_msg` and replays them to clients that
+  connect later (so a host monitor opened mid-show still syncs).
+- `source.html` (~2.2k lines) — OBS browser source. Listens only,
   never sends commands (except status pings). Dispatches incoming WS
-  messages via a `switch` on `data.type` around line 855.
-- `control.html` (~2.8k lines) — operator panel. Single-file app with
-  presets, queues, Tiltify browser, fun-tools tabs. Heavy.
+  messages via a `switch` on `data.type`. Overlays use the "Cube System"
+  skin driven by CSS variables; `?theme=mono` swaps the heritage
+  purple/gold palette for graphite/blue.
+- `control.html` (~3k lines) — operator panel ("Studio Control").
+  Single-file app with presets, queues, Tiltify browser, fun-tools tabs,
+  live Program/Host preview iframes, and a Confidence section (studio
+  state, feature-large pushes, producer-message composer) plus a global
+  Mirror toggle. Heavy.
+- `confidence.html` (~500 lines) — NEW host confidence monitor.
+  Listen-only (`?scene=confidence`), self-scales its fixed 1920×1080
+  stage to fit. Reads the same `tiltify_data` / `schedule_data` feeds for
+  the always-on board (total, up next, bid war, studio state, producer
+  banner) and surfaces a large feature takeover on `confidence_feature`.
 - `index.html` (~330 lines) — standalone keyboard-driven demo, no
   WebSocket. Lives on for designing overlay states without a relay.
 
@@ -69,6 +81,15 @@ dispatched by `source.html` also includes:
 `sleep_show`/`_hide`, `stat_card_show`, `wheel_show`/`_hide`,
 `image_show`/`_hide`, `status` (sent by source on visibility change).
 
+Confidence-monitor messages (dispatched by `confidence.html`, sent by
+`control.html`, cached + replayed by `relay.js`):
+`confidence_state { state: standby|air|wrap }`,
+`confidence_feature { feature: total|incentive|bidwar|schedule|none, ... }`,
+`producer_msg { text, level: info|urgent, active }`. With the control
+panel's **Mirror** toggle on, showing total / target / poll / schedule on
+Program also emits the matching `confidence_feature` (with the item index)
+so the host monitor features it large. Runner cards never mirror.
+
 Tiltify cache exposes nested types via `tiltify_data` payloads —
 control.html has a sub-switch on item type around line 1097
 (`totalizer`, `total`, `donation`, `target`, `milestone`, `poll`,
@@ -117,5 +138,5 @@ terminates TLS at `lowerthird.skenmy.com` and proxies to the container.
   directly from the root. The merging logic in `pollTiltify` /
   `fetchIncentives` is the part to look at.
 - Adding new static files: only `source.html`, `control.html`,
-  `index.html` are in `STATIC_FILES` allowlist in `relay.js`; the
-  Dockerfile also `COPY`s exactly those three.
+  `confidence.html`, `index.html` are in the `STATIC_FILES` allowlist in
+  `relay.js`; the Dockerfile also `COPY`s exactly those four.

@@ -1,22 +1,32 @@
 # esalowerthird
 
 Browser-source overlay system for ESA (European Speedrunner Assembly)
-marathon streams. Three surfaces, one tiny WebSocket relay:
+marathon streams. Four surfaces, one tiny WebSocket relay:
 
 - **`/source.html`** — the OBS browser source. Transparent background,
   renders animated lower-thirds (runner names, Tiltify donation totals,
-  schedule rail, fun tools like wheels / counters / quotes). Listen
-  only — never sends commands.
-- **`/control.html`** — the operator control panel. Sends commands
-  over WebSocket to show / hide overlays, manage presets, queue runners,
-  browse live Tiltify data, and trigger the fun tools. Heavy single-file
-  app (~99 KB).
+  schedule rail, fun tools like wheels / counters / quotes) in the
+  ESA "Cube System" skin. Add `?theme=mono` for the graphite/blue
+  variant, `?logo=<url>` to swap the cube logo. Listen only — never
+  sends commands.
+- **`/control.html`** — the operator control panel ("Studio Control").
+  Sends commands over WebSocket to show / hide overlays, manage presets,
+  queue runners, browse live Tiltify data, trigger the fun tools, and
+  drive the host confidence monitor (studio state, feature-large pushes,
+  producer messages, and a global **Mirror** toggle). Includes live
+  Program + Host preview iframes. Heavy single-file app.
+- **`/confidence.html`** — the host confidence monitor for studio hosts
+  during intermissions. Always-on board (live total, up next, bid war,
+  studio state, producer banner) that surfaces what viewers see large so
+  hosts can react. Listen only (`?scene=confidence`); self-scales to any
+  1920×1080 display.
 - **`/index.html`** — standalone demo (no WebSocket, keyboard-driven).
   Useful for designing overlays without the relay running.
 
 Live at **<https://lowerthird.skenmy.com>** — `/control.html` is gated
 behind a Twitch sign-in via [tools.skenmy.com](https://tools.skenmy.com);
-`/source.html` is public so OBS can hit it without credentials.
+`/source.html` and `/confidence.html` are public so OBS / the host
+monitor can hit them without credentials.
 
 ## What the relay does
 
@@ -55,11 +65,22 @@ either a server-originated broadcast or a request the relay handles.
 | `src_result` | server → control | `{ username, gamesRun, totalPBs, worldRecords }` |
 | `twitch_lookup` | control → server | `{ username }` |
 | `twitch_result` | server → control | `{ username, followers, broadcasterType }` |
+| `confidence_state` | control → confidence | `{ state: standby\|air\|wrap }` |
+| `confidence_feature` | control → confidence | `{ feature: total\|incentive\|bidwar\|schedule\|none, … }` |
+| `producer_msg` | control → confidence | `{ text, level: info\|urgent, active }` |
 | `ping` / `pong` | both | `{}` (server pings every 30s) |
 | `clients` | server → all | `{ count }` |
 
+The relay caches the last `confidence_state` / `confidence_feature` /
+`producer_msg` and replays them to clients that connect later, so a host
+monitor opened mid-show still syncs. With the control panel's **Mirror**
+toggle on, showing the donation total / target / poll / schedule on
+Program also emits the matching `confidence_feature` so the host monitor
+features it large — runner cards never mirror.
+
 Scene filtering: `source.html?scene=<name>` makes that instance only
-react to messages with `scene === <name>`.
+react to messages with `scene === <name>`. `confidence.html` defaults to
+`scene=confidence`.
 
 ## Conventions in `source.html` / `control.html`
 

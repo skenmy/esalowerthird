@@ -13,7 +13,7 @@ const { WebSocketServer } = require('ws');
 // Static-file serving. STATIC_DIR holds source.html / control.html / index.html
 // alongside relay.js inside the container; set STATIC_DIR=disabled to opt out.
 const STATIC_DIR = process.env.STATIC_DIR === 'disabled' ? null : (process.env.STATIC_DIR || __dirname);
-const STATIC_FILES = new Set(['source.html', 'control.html', 'index.html']);
+const STATIC_FILES = new Set(['source.html', 'control.html', 'confidence.html', 'index.html', 'esa-logotype.png']);
 const CONTENT_TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json; charset=utf-8' };
 
 const PORT = parseInt(process.env.RELAY_PORT || '8081', 10);
@@ -379,6 +379,13 @@ function broadcastTiltifyData() {
 
 let horaroCache = { schedule: null, upcoming: [], lastUpdated: 0 };
 
+// --- Host confidence state (last-known, replayed to new clients) ---
+let confidenceCache = {
+  state: null,    // { type: 'confidence_state', state }
+  feature: null,  // { type: 'confidence_feature', feature, ... }
+  producer: null, // { type: 'producer_msg', text, level, active }
+};
+
 async function pollHoraro() {
   try {
     const [event, schedule] = HORARO_SCHEDULE.split('/');
@@ -512,6 +519,9 @@ const server = http.createServer((req, res) => {
     for (const type of hideTypes) {
       broadcastToAll({ type });
     }
+    // Clear the host confidence feature takeover (studio state + producer banner left intact)
+    confidenceCache.feature = { type: 'confidence_feature', feature: 'none' };
+    broadcastToAll(confidenceCache.feature);
     console.log('[API] GET /api/hide — broadcast all hide commands');
     res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
     res.end(JSON.stringify({ ok: true }));
@@ -548,6 +558,10 @@ wss.on('connection', (ws) => {
   if (horaroEnabled && horaroCache.lastUpdated > 0) {
     ws.send(JSON.stringify({ type: 'schedule_data', ...horaroCache }));
   }
+  // Replay last-known confidence state so a host monitor opened late still syncs
+  for (const cached of [confidenceCache.state, confidenceCache.feature, confidenceCache.producer]) {
+    if (cached) ws.send(JSON.stringify(cached));
+  }
 
   ws.on('message', (raw) => {
     let data;
@@ -575,6 +589,11 @@ wss.on('connection', (ws) => {
       handleTwitchLookup(ws, data);
       return;
     }
+
+    // Cache confidence state so it can be replayed to clients that connect later
+    if (data.type === 'confidence_state') confidenceCache.state = data;
+    else if (data.type === 'confidence_feature') confidenceCache.feature = data;
+    else if (data.type === 'producer_msg') confidenceCache.producer = data;
 
     // Relay all other messages to all OTHER clients
     const msg = JSON.stringify(data);
