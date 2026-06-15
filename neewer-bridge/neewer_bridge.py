@@ -94,6 +94,64 @@ def cmd_hsi(mac, hue, sat, bri, reverse=False):
     return bytes(body + [_checksum(body)])
 
 
+# --- legacy (non-Infinity) frames, for the --probe fallback ---
+def cmd_power_legacy(on):
+    body = [0x78, 0x81, 0x01, 0x01 if on else 0x02]
+    return bytes(body + [_checksum(body)])
+
+
+def cmd_hsi_legacy(hue, sat, bri):
+    body = [0x78, 0x86, 0x04, hue & 0xFF, (hue >> 8) & 0xFF, sat & 0xFF, bri & 0xFF]
+    return bytes(body + [_checksum(body)])
+
+
+def _hex(b):
+    return " ".join(f"{x:02X}" for x in b)
+
+
+async def probe(args):
+    """Try candidate framings, watch the light, see which one turns it red."""
+    target = args.connect or args.mac
+    print(f"[ble] connecting {target} …")
+    async with BleakClient(target) as client:
+        print("[ble] connected\n")
+        print("GATT characteristics:")
+        for s in client.services:
+            for c in s.characteristics:
+                star = "  <-- write target" if c.uuid.lower() == WRITE_CHAR else ""
+                print(f"  {c.uuid}  [{','.join(c.properties)}]{star}")
+        print()
+
+        mac = args.mac
+        candidates = [
+            ("A  Infinity, MAC as-is, no-response",
+             [cmd_power(mac, True), cmd_hsi(mac, 0, 100, 100)], False),
+            ("B  Infinity, MAC reversed, no-response",
+             [cmd_power(mac, True, True), cmd_hsi(mac, 0, 100, 100, True)], False),
+            ("C  Infinity, MAC as-is, with-response",
+             [cmd_power(mac, True), cmd_hsi(mac, 0, 100, 100)], True),
+            ("D  Infinity, MAC reversed, with-response",
+             [cmd_power(mac, True, True), cmd_hsi(mac, 0, 100, 100, True)], True),
+            ("E  Legacy (no MAC), no-response",
+             [cmd_power_legacy(True), cmd_hsi_legacy(0, 100, 100)], False),
+            ("F  Legacy (no MAC), with-response",
+             [cmd_power_legacy(True), cmd_hsi_legacy(0, 100, 100)], True),
+        ]
+        print("Watch the light. Each candidate tries to make it BRIGHT RED for ~4s.\n")
+        for label, pkts, resp in candidates:
+            print(f"→ {label}")
+            for p in pkts:
+                print(f"     write {_hex(p)} (response={resp})")
+                try:
+                    await client.write_gatt_char(WRITE_CHAR, p, response=resp)
+                except Exception as e:
+                    print(f"     ! write failed: {e}")
+                await asyncio.sleep(0.15)
+            await asyncio.sleep(4)
+        print("\nDone. Whichever letter turned it red → tell me, and that's the framing to lock in.")
+        print("(B/D = add --reverse-mac to the normal run; C/D = needs with-response.)")
+
+
 async def apply_state(client, args, state):
     """Write the colour for `state` to the connected light."""
     if state == "clear" or state not in STATE_HEX:
@@ -181,10 +239,17 @@ def main():
     p.add_argument("--reverse-mac", action="store_true",
                    help="reverse MAC byte order in packets (try this if the light doesn't react)")
     p.add_argument("--discover", action="store_true", help="scan for NEEWER lights and exit")
+    p.add_argument("--probe", action="store_true",
+                   help="try candidate framings (watch the light) + dump its characteristics, then exit")
     args = p.parse_args()
 
     if args.discover:
         asyncio.run(discover())
+        return
+    if args.probe:
+        if not args.mac:
+            p.error("--probe needs --mac (and --connect on macOS).")
+        asyncio.run(probe(args))
         return
     if not args.mac:
         p.error("--mac is required (or set LIGHT_MAC). Run with --discover to find it.")
