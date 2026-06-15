@@ -132,10 +132,11 @@ async def ws_task(args, queue):
 
 async def ble_task(args, queue):
     last = None
+    target = args.connect or args.mac
     while True:
         try:
-            print(f"[ble] connecting {args.mac} …")
-            async with BleakClient(args.mac) as client:
+            print(f"[ble] connecting {target} …")
+            async with BleakClient(target) as client:
                 print("[ble] connected")
                 if last is not None:
                     await apply_state(client, args, last)
@@ -168,7 +169,11 @@ def main():
     p.add_argument("--relay", default=os.environ.get("RELAY_WS", "wss://lowerthird.skenmy.com/ws"),
                    help="relay WebSocket URL (default: %(default)s)")
     p.add_argument("--mac", default=os.environ.get("LIGHT_MAC"),
-                   help="RGB1 BLE MAC address, e.g. AA:BB:CC:DD:EE:FF (env LIGHT_MAC)")
+                   help="RGB1 BLE MAC address, e.g. AA:BB:CC:DD:EE:FF (env LIGHT_MAC). "
+                        "On macOS this is the real MAC used in the packets (find it via nRF Connect).")
+    p.add_argument("--connect", default=os.environ.get("LIGHT_CONNECT"),
+                   help="address to connect to, if different from --mac. On macOS use the "
+                        "CoreBluetooth UUID from --discover here; keep the real MAC in --mac.")
     p.add_argument("--brightness", type=int, default=int(os.environ.get("LIGHT_BRIGHTNESS", "100")),
                    help="light brightness 0-100 (default: %(default)s)")
     p.add_argument("--scene", default=os.environ.get("LIGHT_SCENE", ""),

@@ -35,15 +35,34 @@ box, or Windows PC works best (see the macOS note below).
 
 ```bash
 cd neewer-bridge
+
+# use a virtualenv (Homebrew/Debian Python is "externally managed", PEP 668)
+python3 -m venv .venv
+source .venv/bin/activate
 pip install -r requirements.txt
 
-# 1) find the light's MAC (turn the RGB1 on, in Bluetooth mode)
+# 1) find the light (turn the RGB1 on, in Bluetooth mode)
 python neewer_bridge.py --discover
 #   AA:BB:CC:DD:EE:FF   NW-20200015...
 
 # 2) run the bridge
 python neewer_bridge.py --mac AA:BB:CC:DD:EE:FF
 ```
+
+(Next time, just `source .venv/bin/activate` before running.)
+
+### On macOS
+
+CoreBluetooth doesn't expose the real MAC — `--discover` shows a **UUID**
+instead, and the Infinity packets still need the real MAC. So pass both:
+
+```bash
+python neewer_bridge.py \
+  --connect 0F1E2D3C-... \      # the UUID from --discover (what bleak connects to)
+  --mac AA:BB:CC:DD:EE:FF       # the real MAC (from nRF Connect on your phone)
+```
+
+On Linux / Raspberry Pi / Windows the address *is* the MAC, so just `--mac`.
 
 By default it connects to the production relay
 (`wss://lowerthird.skenmy.com/ws`). Override with `--relay` (or `RELAY_WS`),
