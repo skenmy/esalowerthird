@@ -86,6 +86,16 @@
     .run-plat { font: 600 14px 'Barlow Semi Condensed'; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--bg); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 5px 11px; }
     .empty { color: #5d6478; font-size: 22px; padding: 16px 0; }
 
+    /* latest donations module */
+    @keyframes donIn { 0% { opacity: 0; transform: translateY(-10px); } 100% { opacity: 1; transform: translateY(0); } }
+    .don-row { padding: 11px 0; border-top: 1px solid rgba(255,255,255,.06); }
+    .don-row:first-child { border-top: none; padding-top: 4px; }
+    .don-row.fadein { animation: donIn .55s cubic-bezier(.16,1,.3,1) both; }
+    .don-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+    .don-name { font: 700 30px 'Barlow Semi Condensed'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .don-amt { font: 800 30px 'Barlow Semi Condensed'; color: var(--live); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .don-comment { font-size: 20px; color: var(--muted); margin-top: 3px; line-height: 1.25; max-height: 2.5em; overflow: hidden; }
+
     /* bid war / progress bars */
     .bar-block { margin-bottom: 22px; }
     .bar-block:last-child { margin-bottom: 0; }
@@ -186,9 +196,9 @@
           <div class="mod-title">Up Next</div>
           <div id="upNextRows"><div class="empty">Schedule loading…</div></div>
         </div>
-        <div class="mod card" id="secondaryMod" style="justify-content:center;">
-          <div class="mod-title" id="secondaryTitle">Bid War</div>
-          <div id="secondaryBody"><div class="empty">No active incentive.</div></div>
+        <div class="mod card" id="secondaryMod" style="overflow:hidden;">
+          <div class="mod-title" id="secondaryTitle">Latest Donations</div>
+          <div id="secondaryBody" style="min-height:0;overflow:hidden;"><div class="empty">No donations yet.</div></div>
         </div>
       </div>
 
@@ -377,21 +387,32 @@
           '<span style="color:var(--muted-2);font-size:21px;">' + moneyBig(goal) + ' goal</span></div>' +
       '</div>';
     }
+    // Latest donations — newest at top, new ones fade in (no rotation).
+    const seenDonations = new Set();
+    let donationsSeeded = false;
+    function donationKey(d) {
+      return d.id || (String(d.donor_name || d.name || '') + '|' + String(d.amount?.value ?? d.amount ?? '') + '|' + String(d.completed_at || d.created_at || ''));
+    }
     function renderSecondary() {
       const titleEl = document.getElementById('secondaryTitle');
       const body = document.getElementById('secondaryBody');
-      const polls = tiltifyData.polls || [];
-      const targets = tiltifyData.targets || [];
-      if (polls.length) {
-        titleEl.textContent = polls[0].name || 'Bid War';
-        body.innerHTML = pollBars(polls[0], false);
-      } else if (targets.length) {
-        titleEl.textContent = 'Incentive';
-        body.innerHTML = targetBars(targets[0]);
-      } else {
-        titleEl.textContent = 'Bid War';
-        body.innerHTML = '<div class="empty">No active incentive.</div>';
-      }
+      titleEl.textContent = 'Latest Donations';
+      const dons = (tiltifyData.donations || []).slice().sort((a, b) =>
+        new Date(b.completed_at || b.created_at || 0) - new Date(a.completed_at || a.created_at || 0)).slice(0, 6);
+      if (!dons.length) { body.innerHTML = '<div class="empty">No donations yet.</div>'; return; }
+      const animate = donationsSeeded; // don't fade in the whole backlog on first load
+      body.innerHTML = dons.map(d => {
+        const isNew = animate && !seenDonations.has(donationKey(d));
+        const name = escHtml(d.donor_name || d.name || 'Anonymous');
+        const amt = moneyBig(d.amount?.value ?? d.amount ?? 0);
+        const comment = escHtml(d.donor_comment || d.comment || '');
+        return '<div class="don-row' + (isNew ? ' fadein' : '') + '">' +
+          '<div class="don-top"><span class="don-name">' + name + '</span><span class="don-amt">' + amt + '</span></div>' +
+          (comment ? '<div class="don-comment">' + comment + '</div>' : '') +
+        '</div>';
+      }).join('');
+      dons.forEach(d => seenDonations.add(donationKey(d)));
+      donationsSeeded = true;
     }
 
     // ===== Feature takeover =====
