@@ -1230,137 +1230,212 @@
     }
     .cue-btn.info { border: 1px solid rgba(77,124,255,0.4); color: #9fb4ff; }
     .cue-btn.urgent { border: 1px solid rgba(255,65,54,0.4); color: #ff8a82; }
+
+    /* ===================== Studio Control dashboard ===================== */
+    html, body { height: 100%; }
+    body { overflow: hidden; background: #0a0b0e; }
+    .sc-app { height: 100vh; display: flex; flex-direction: column; background: #0a0b0e; overflow: hidden; }
+
+    .sc-appbar { flex-shrink: 0; height: 56px; background: #101218; border-bottom: 1px solid rgba(255,255,255,.08); display: flex; align-items: center; gap: 16px; padding: 0 18px; }
+    .sc-brand { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .sc-wordmark { font: 800 16px 'Barlow Semi Condensed', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #f4f6fb; }
+    .sc-div { width: 1px; height: 26px; background: rgba(255,255,255,.1); flex-shrink: 0; }
+    .sc-route-label { font: 700 10px 'Barlow Semi Condensed', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #6c7488; }
+
+    .sc-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 300px minmax(0,1fr) 384px; gap: 12px; padding: 12px; }
+    @media (max-width: 1320px) { .sc-grid { grid-template-columns: 264px minmax(0,1fr) 340px; } }
+    .sc-rail, .sc-col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+
+    .sc-panel { background: #101218; border: 1px solid rgba(255,255,255,.07); border-radius: 13px; display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .sc-panel-static { flex-shrink: 0; }
+    .sc-panel-head { flex-shrink: 0; display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px 10px; }
+    .sc-panel-title { font: 800 11px 'Barlow Semi Condensed', sans-serif; letter-spacing: .16em; text-transform: uppercase; color: #8b93a7; }
+    .sc-panel-note { font: 600 11px 'Barlow Semi Condensed', sans-serif; letter-spacing: .06em; text-transform: uppercase; color: #5d6478; }
+    .sc-panel-subtitle { font: 700 10px 'Barlow Semi Condensed', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #5d6478; margin-bottom: 8px; }
+    .sc-panel-body { flex: 1; min-height: 0; overflow-y: auto; padding: 0 14px 13px; }
+    .sc-shortcuts { padding: 11px 14px; }
+    .sc-bottom { flex-shrink: 0; height: 234px; display: grid; grid-template-columns: 1.4fr 1fr; gap: 12px; padding: 0 12px 12px; }
+    @media (max-width: 900px) { .sc-bottom { grid-template-columns: 1fr; height: auto; } }
+
+    .sc-conf-label { font: 700 10px 'Barlow Semi Condensed', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #8b93a7; margin: 12px 0 8px; }
+    .sc-conf-label:first-child { margin-top: 4px; }
+
+    /* tiltify rail: fixed head + scrolling list */
+    .sc-tilt-head { flex-shrink: 0; padding: 12px 14px 9px; border-bottom: 1px solid rgba(255,255,255,.06); }
+
+    /* reuse-component overrides inside the dashboard */
+    .sc-col .monitor-bus, .sc-col .action-buttons { margin-bottom: 0; flex-shrink: 0; }
+    .sc-panel-body .preset-list { margin-bottom: 0; }
+    .sc-panel-body .shortcuts, .sc-shortcuts .shortcuts { background: none; border: none; padding: 0; }
+    .mode-toggle.sm .mode-btn { padding: 4px 9px; font-size: 10px; }
+    .btn-add.sm { padding: 4px 9px; font-size: 11px; }
+    #funToolsSection .sc-panel-body { padding-top: 4px; }
   </style>
   <script src="https://tools.skenmy.com/embed.js" data-app="lowerthird" data-role="admin"></script>
 </head>
 <body>
-  <div class="header">
-    <h1>Studio Control<span class="sub">ESA</span></h1>
-    <div style="display: flex; align-items: center; gap: 16px;">
+  <div class="sc-app">
+
+    <!-- ===================== APP BAR ===================== -->
+    <div class="sc-appbar">
+      <div class="sc-brand">
+        <svg width="24" height="24" viewBox="0 0 100 100"><polygon points="50,5 93,29 50,53 7,29" fill="#4d7cff"/><polygon points="7,29 50,53 50,95 7,71" fill="#3a63d6"/><polygon points="93,29 50,53 50,95 93,71" fill="#2c4ba8"/></svg>
+        <span class="sc-wordmark">Studio Control</span>
+      </div>
+      <div class="sc-div"></div>
+
+      <!-- send routing -->
+      <span class="sc-route-label">Route</span>
       <div class="target-seg" id="targetSeg" title="Default for Show buttons. Per click: Shift = Program only · Alt = Confidence only">
-        <span class="seg-label">Send</span>
         <button class="seg" data-t="program" onclick="setConfTarget('program')">Program</button>
         <button class="seg active" data-t="both" onclick="setConfTarget('both')">Both</button>
         <button class="seg" data-t="confidence" onclick="setConfTarget('confidence')">Confidence</button>
       </div>
       <span class="target-hint">⇧ Program · ⌥ Confidence</span>
+
+      <div class="sc-div"></div>
+
+      <!-- scene mode -->
       <div class="mode-toggle">
         <button class="mode-btn active" id="modeBasic" onclick="setAdvancedMode(false)">One Scene</button>
         <button class="mode-btn" id="modeAdvanced" onclick="setAdvancedMode(true)">Multi-Scene</button>
       </div>
+
+      <span style="flex:1;"></span>
+
       <div class="connection-status">
         <span class="status-dot" id="statusDot"></span>
         <span id="statusText">Waiting for source...</span>
       </div>
     </div>
-  </div>
 
-  <div class="main">
-    <!-- Queue preview -->
-    <div class="queue-section">
-      <div class="queue-header">
-        <h3>Queue</h3>
-        <div class="mode-toggle">
-          <button class="mode-btn" id="modeTogether" onclick="setMode('together')">Together</button>
-          <button class="mode-btn active" id="modeSeparate" onclick="setMode('separate')">Separate</button>
-        </div>
-      </div>
-      <div class="scene-selector" id="sceneSelector" style="display: none;"></div>
-      <div class="queue-preview" id="queuePreview">
-        <span class="queue-empty">Press 1-9 or click Queue to add names</span>
-      </div>
-      <div class="scene-overview" id="sceneOverview" style="display: none;"></div>
-    </div>
+    <!-- ===================== MAIN GRID ===================== -->
+    <div class="sc-grid">
 
-    <!-- Action buttons -->
-    <div class="action-buttons">
-      <button class="btn-go-live" id="btnGoLive" onclick="goLive()" disabled>
-        Go Live<br>
-        <span class="shortcut">Enter</span>
-      </button>
-      <button class="btn-hide-global" id="btnHide" onclick="handleHideClick()">
-        Hide<br>
-        <span class="shortcut">Escape</span>
-      </button>
-    </div>
+      <!-- ============ LEFT RAIL ============ -->
+      <div class="sc-rail">
 
-    <!-- Monitor bus: live Program + Host previews -->
-    <div class="monitor-bus">
-      <div class="monitor">
-        <div class="monitor-label">
-          <span class="pill program">Program</span>
-          <span class="name">OBS Overlay</span>
-          <span class="meta">source.html</span>
-        </div>
-        <div class="monitor-frame">
-          <iframe src="source.html" title="Program overlay preview" onload="scalePreviews()" scrolling="no"></iframe>
-        </div>
-      </div>
-      <div class="monitor">
-        <div class="monitor-label">
-          <span class="pill host">Host</span>
-          <span class="name">Confidence Monitor</span>
-          <span class="meta">confidence.html</span>
-        </div>
-        <div class="monitor-frame">
-          <iframe src="confidence.html?scene=confidence" title="Host confidence preview" onload="scalePreviews()" scrolling="no"></iframe>
-        </div>
-      </div>
-    </div>
-
-    <!-- Confidence — host monitor controls -->
-    <div class="tiltify-section active" id="confidenceSection">
-      <h3>Confidence — Host Monitor</h3>
-      <div class="conf-grid">
-        <div>
-          <div class="conf-block-label">Studio State</div>
-          <div class="state-row">
-            <button class="state-btn clear active" data-state="clear" onclick="setStudioState('clear')">Clear</button>
-            <button class="state-btn standby" data-state="standby" onclick="setStudioState('standby')">Standby</button>
-            <button class="state-btn air" data-state="air" onclick="setStudioState('air')">On Air</button>
-            <button class="state-btn recording" data-state="recording" onclick="setStudioState('recording')">Recording</button>
-            <button class="state-btn wrap" data-state="wrap" onclick="setStudioState('wrap')">Wrap Up</button>
+        <!-- QUEUE -->
+        <div class="sc-panel" style="flex:1.15;">
+          <div class="sc-panel-head">
+            <span class="sc-panel-title">Queue</span>
+            <div class="mode-toggle sm">
+              <button class="mode-btn" id="modeTogether" onclick="setMode('together')">Together</button>
+              <button class="mode-btn active" id="modeSeparate" onclick="setMode('separate')">Separate</button>
+            </div>
+          </div>
+          <div class="sc-panel-body">
+            <div class="scene-selector" id="sceneSelector" style="display: none;"></div>
+            <div class="queue-preview" id="queuePreview">
+              <span class="queue-empty">Press 1-9 or click Queue to add names</span>
+            </div>
+            <div class="scene-overview" id="sceneOverview" style="display: none;"></div>
           </div>
         </div>
-        <div>
-          <div class="conf-block-label">Producer Message &rarr; Hosts</div>
-          <div class="producer-composer">
-            <input type="text" id="producerText" placeholder="Type a cue to send to the hosts…" onkeydown="event.stopPropagation(); if (event.key === 'Enter') sendProducer();">
-            <button class="btn-send" onclick="sendProducer()">Send</button>
-          </div>
-          <div class="level-row">
-            <button class="level-btn info on" id="levelInfo" onclick="setProducerLevel('info')">Info</button>
-            <button class="level-btn urgent" id="levelUrgent" onclick="setProducerLevel('urgent')">Urgent</button>
-            <span style="flex:1;"></span>
-            <button class="feat-btn clear" onclick="clearProducer()" style="padding:8px 12px;">Clear</button>
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div class="columns">
-      <!-- Left: Presets -->
-      <div class="col-presets">
-        <div class="presets-header">
-          <h2>Presets</h2>
-          <button class="btn-add" onclick="addPreset()">+ Add Preset</button>
-        </div>
-        <div class="preset-list" id="presetList"></div>
-        <div class="shortcuts">
-          <h3>Keyboard Shortcuts</h3>
-          <div class="shortcuts-grid">
-            <div class="shortcut-item"><kbd>1</kbd><span>-</span><kbd>9</kbd> Toggle preset in queue</div>
-            <div class="shortcut-item"><kbd>Enter</kbd> Go Live</div>
-            <div class="shortcut-item"><kbd>Esc</kbd> Hide all lower thirds</div>
-            <div class="shortcut-item"><kbd>0</kbd> Clear queue</div>
+        <!-- PRESETS -->
+        <div class="sc-panel" style="flex:1;">
+          <div class="sc-panel-head">
+            <span class="sc-panel-title">Presets</span>
+            <button class="btn-add sm" onclick="addPreset()">+ Add</button>
+          </div>
+          <div class="sc-panel-body">
+            <div class="preset-list" id="presetList"></div>
           </div>
         </div>
+
+        <!-- SHORTCUTS -->
+        <div class="sc-panel sc-panel-static">
+          <div class="sc-shortcuts">
+            <div class="sc-panel-subtitle">Shortcuts</div>
+            <div class="shortcuts-grid">
+              <div class="shortcut-item"><kbd>1</kbd>–<kbd>9</kbd> queue preset</div>
+              <div class="shortcut-item"><kbd>Enter</kbd> go live</div>
+              <div class="shortcut-item"><kbd>Esc</kbd> hide all</div>
+              <div class="shortcut-item"><kbd>0</kbd> clear queue</div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
-      <!-- Right: Tiltify -->
-      <div class="col-tiltify">
-        <div class="tiltify-section" id="tiltifySection">
-          <h3>Tiltify Donations</h3>
+      <!-- ============ CENTER ============ -->
+      <div class="sc-col">
+
+        <!-- MONITORS -->
+        <div class="monitor-bus">
+          <div class="monitor">
+            <div class="monitor-label">
+              <span class="pill program">Program</span>
+              <span class="name">OBS Overlay</span>
+              <span class="meta">source.html</span>
+            </div>
+            <div class="monitor-frame">
+              <iframe src="source.html" title="Program overlay preview" onload="scalePreviews()" scrolling="no"></iframe>
+            </div>
+          </div>
+          <div class="monitor">
+            <div class="monitor-label">
+              <span class="pill host">Host</span>
+              <span class="name">Confidence Monitor</span>
+              <span class="meta">confidence.html</span>
+            </div>
+            <div class="monitor-frame">
+              <iframe src="confidence.html?scene=confidence" title="Host confidence preview" onload="scalePreviews()" scrolling="no"></iframe>
+            </div>
+          </div>
+        </div>
+
+        <!-- GO LIVE / HIDE -->
+        <div class="action-buttons">
+          <button class="btn-go-live" id="btnGoLive" onclick="goLive()" disabled>
+            Go Live<br>
+            <span class="shortcut">Enter</span>
+          </button>
+          <button class="btn-hide-global" id="btnHide" onclick="handleHideClick()">
+            Hide All<br>
+            <span class="shortcut">Escape</span>
+          </button>
+        </div>
+
+        <!-- CONFIDENCE -->
+        <div class="sc-panel" id="confidenceSection" style="flex:1;">
+          <div class="sc-panel-head">
+            <span class="sc-panel-title">Confidence</span>
+            <span class="sc-panel-note">→ Host Monitor</span>
+          </div>
+          <div class="sc-panel-body">
+            <div class="sc-conf-label">Studio State</div>
+            <div class="state-row">
+              <button class="state-btn clear active" data-state="clear" onclick="setStudioState('clear')">Clear</button>
+              <button class="state-btn standby" data-state="standby" onclick="setStudioState('standby')">Standby</button>
+              <button class="state-btn air" data-state="air" onclick="setStudioState('air')">On Air</button>
+              <button class="state-btn recording" data-state="recording" onclick="setStudioState('recording')">Recording</button>
+              <button class="state-btn wrap" data-state="wrap" onclick="setStudioState('wrap')">Wrap Up</button>
+            </div>
+            <div class="sc-conf-label">Producer Message &rarr; Hosts</div>
+            <div class="producer-composer">
+              <input type="text" id="producerText" placeholder="Type a cue to send to the hosts…" onkeydown="event.stopPropagation(); if (event.key === 'Enter') sendProducer();">
+              <button class="btn-send" onclick="sendProducer()">Send</button>
+            </div>
+            <div class="level-row">
+              <button class="level-btn info on" id="levelInfo" onclick="setProducerLevel('info')">Info</button>
+              <button class="level-btn urgent" id="levelUrgent" onclick="setProducerLevel('urgent')">Urgent</button>
+              <span style="flex:1;"></span>
+              <button class="feat-btn clear" onclick="clearProducer()" style="padding:8px 12px;">Clear</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ============ RIGHT RAIL — TILTIFY ============ -->
+      <div class="sc-panel" id="tiltifySection">
+        <div class="sc-tilt-head">
+          <div class="sc-panel-head" style="padding:0 0 8px;">
+            <span class="sc-panel-title">Tiltify Donations</span>
+            <span class="tiltify-updated" id="tiltifyUpdated" style="margin:0;">Waiting for data...</span>
+          </div>
           <div class="tiltify-campaign-summary">
             <span class="tiltify-campaign-name" id="tiltifyCampaignName">--</span>
             <span class="tiltify-raised" id="tiltifyRaised">--</span>
@@ -1368,7 +1443,6 @@
           <div class="tiltify-mini-bar">
             <div class="tiltify-mini-fill" id="tiltifyMiniFill" style="width: 0%"></div>
           </div>
-          <div class="tiltify-updated" id="tiltifyUpdated">Waiting for data...</div>
           <div class="tiltify-buttons">
             <button class="tiltify-btn" onclick="tiltifyShowDisplay('totalizer')">Totalizer</button>
             <button class="tiltify-btn" onclick="tiltifyShowDisplay('total')">Total Only</button>
@@ -1380,6 +1454,8 @@
             <button class="tiltify-btn hide-btn" onclick="tiltifyHide()">Hide</button>
           </div>
           <div class="tiltify-tabs" id="tiltifyTabs"></div>
+        </div>
+        <div class="sc-panel-body" style="padding-top:10px;">
           <div class="tiltify-tab-panel active" id="tiltifyPanelDonations">
             <input class="tab-filter" type="text" placeholder="Filter donations..." oninput="onFilterInput('donations', this.value)" onkeydown="event.stopPropagation()">
             <div id="listDonations"></div>
@@ -1404,10 +1480,18 @@
             <div id="listMatches"></div>
           </div>
         </div>
+      </div>
 
-        <div class="tiltify-section active" id="funToolsSection">
-          <h3>Fun Tools</h3>
-          <div class="tiltify-tabs" id="funToolsTabs">
+    </div>
+
+    <!-- ===================== BOTTOM STRIP ===================== -->
+    <div class="sc-bottom">
+
+      <!-- FUN TOOLS -->
+      <div class="sc-panel" id="funToolsSection">
+        <div class="sc-panel-head">
+          <span class="sc-panel-title">Fun Tools</span>
+          <div class="tiltify-tabs" id="funToolsTabs" style="margin:0;border:none;flex:1;justify-content:flex-end;">
             <button class="tiltify-tab active" data-tab="ft-counter" onclick="switchFunTab('counter')">Counter</button>
             <button class="tiltify-tab" data-tab="ft-quote" onclick="switchFunTab('quote')">Quote</button>
             <button class="tiltify-tab" data-tab="ft-sleep" onclick="switchFunTab('sleep')">Sleep</button>
@@ -1415,7 +1499,8 @@
             <button class="tiltify-tab" data-tab="ft-wheel" onclick="switchFunTab('wheel')">Wheel</button>
             <button class="tiltify-tab" data-tab="ft-images" onclick="switchFunTab('images')">Images</button>
           </div>
-
+        </div>
+        <div class="sc-panel-body">
           <!-- Counter tab -->
           <div class="tiltify-tab-panel active" id="ftPanelCounter">
             <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
@@ -1529,9 +1614,14 @@
             <div id="imagePresetList" style="display: flex; flex-direction: column; gap: 6px; max-height: 400px; overflow-y: auto;"></div>
           </div>
         </div>
+      </div>
 
-        <div class="tiltify-section active" id="customSection">
-          <h3>Custom Message</h3>
+      <!-- CUSTOM MESSAGE -->
+      <div class="sc-panel" id="customSection">
+        <div class="sc-panel-head">
+          <span class="sc-panel-title">Custom Message</span>
+        </div>
+        <div class="sc-panel-body">
           <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px;">
             <input type="text" id="customHeading" placeholder="Heading (optional)" class="tab-filter" onkeydown="event.stopPropagation()">
             <input type="text" id="customMessage" placeholder="Message text" class="tab-filter" onkeydown="event.stopPropagation()">
@@ -1543,7 +1633,9 @@
           </div>
         </div>
       </div>
+
     </div>
+
   </div>
 
   <div class="toast" id="toast"></div>
@@ -2241,9 +2333,9 @@
     function switchTab(tab) {
       activeTab = tab;
       document.querySelectorAll('.tiltify-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
-      document.querySelectorAll('.tiltify-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tiltifyPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)));
+      document.querySelectorAll('#tiltifySection .tiltify-tab-panel').forEach(p => p.classList.toggle('active', p.id === 'tiltifyPanel' + tab.charAt(0).toUpperCase() + tab.slice(1)));
       // Focus filter input on tab switch
-      const filterInput = document.querySelector('.tiltify-tab-panel.active .tab-filter');
+      const filterInput = document.querySelector('#tiltifySection .tiltify-tab-panel.active .tab-filter');
       if (filterInput) filterInput.focus();
     }
 
@@ -2692,7 +2784,7 @@
       activeFunTab = tab;
       const tabs = document.querySelectorAll('#funToolsTabs .tiltify-tab');
       tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === 'ft-' + tab));
-      const panels = document.querySelectorAll('#funToolsSection > .tiltify-tab-panel');
+      const panels = document.querySelectorAll('#funToolsSection .tiltify-tab-panel');
       const panelMap = { counter: 'ftPanelCounter', quote: 'ftPanelQuote', sleep: 'ftPanelSleep', stat: 'ftPanelStat', wheel: 'ftPanelWheel', images: 'ftPanelImages' };
       panels.forEach(p => p.classList.toggle('active', p.id === panelMap[tab]));
     }
@@ -3225,6 +3317,8 @@
     loadImagePresets();
     loadConfTarget();
     scalePreviews();
+    setTimeout(scalePreviews, 120);
+    setTimeout(scalePreviews, 450);
     render();
     renderQuoteLog();
     renderSleepList();
