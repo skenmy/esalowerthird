@@ -1443,9 +1443,6 @@
             <span class="tiltify-campaign-name" id="tiltifyCampaignName">--</span>
             <span class="tiltify-raised" id="tiltifyRaised">--</span>
           </div>
-          <div class="tiltify-mini-bar">
-            <div class="tiltify-mini-fill" id="tiltifyMiniFill" style="width: 0%"></div>
-          </div>
           <div class="tiltify-buttons">
             <button class="tiltify-btn" onclick="tiltifyShowDisplay('total')">Total</button>
             <button class="tiltify-btn" onclick="tiltifyShowDisplay('matching')">Matching</button>
@@ -2317,9 +2314,7 @@
       const pct = goal > 0 ? Math.min(100, (raised / goal) * 100) : 0;
 
       document.getElementById('tiltifyCampaignName').textContent = name;
-      document.getElementById('tiltifyRaised').innerHTML =
-        `${formatCurrency(raised)} <span class="of-goal">/ ${formatCurrency(goal)}</span>`;
-      document.getElementById('tiltifyMiniFill').style.width = pct + '%';
+      document.getElementById('tiltifyRaised').textContent = formatCurrency(raised);
 
       const ago = Math.round((Date.now() - tiltifyData.lastUpdated) / 1000);
       document.getElementById('tiltifyUpdated').textContent =
