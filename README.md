@@ -34,9 +34,10 @@ monitor can hit them without credentials.
 
 1. Serves the three HTML files.
 2. Hosts a WebSocket relay — broadcasts any message a client sends to
-   every other connected client. Designed for tiny operator-team setups,
-   not for the public internet, so the protocol is just JSON `{ type, … }`
-   with no auth (auth lives at the Caddy edge).
+   every other connected client. Designed for tiny operator-team setups;
+   the protocol is just JSON `{ type, … }`. Set `RELAY_TOKEN` to require a
+   shared token on `/ws` and `/api/*` (see [Auth](#auth)) so a public
+   relay can't be hijacked.
 3. Polls **Tiltify** every 15 seconds for the configured campaign:
    donations, milestones, targets, polls, donation matches. Supports
    both `campaigns/<id>` and `team_campaigns/<id>` — for team campaigns
@@ -70,6 +71,7 @@ either a server-originated broadcast or a request the relay handles.
 | `producer_msg` | control → confidence | `{ text, level: info\|urgent, active }` |
 | `ping` / `pong` | both | `{}` (server pings every 30s) |
 | `clients` | server → all | `{ count }` |
+| `remote_cmd` | server → control | `{ cmd: go\|hide\|total }` (a Companion deck press, see [Companion](#bitfocus-companion)) |
 
 The relay caches the last `confidence_state` / `confidence_feature` /
 `producer_msg` and replays them to clients that connect later, so a host
@@ -110,6 +112,67 @@ All optional — the relay degrades gracefully when a section is unset.
 | `TILTIFY_CAMPAIGN_TYPE` | `team_campaigns` (default) or `campaigns`. |
 | `HORARO_SCHEDULE` | e.g. `esa/2026-winter1` (event-slug/schedule-slug). |
 | `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET` | optional — enables `twitch_lookup`. |
+| `RELAY_TOKEN` | optional shared secret. When set, `/ws` and `/api/*` require it (see [Auth](#auth)). Unset = open. |
+
+## HTTP API
+
+The relay serves a small HTTP surface on the same port (handy for
+Bitfocus Companion, scripts, health probes). All `/api/*` routes require
+the token when `RELAY_TOKEN` is set; `/healthz` and the static files stay
+open.
+
+| route | does |
+|---|---|
+| `POST /api/send` | broadcast the JSON body to every WS client (arbitrary `{ type, … }`). |
+| `GET /api/hide` | hide every overlay (names, tiltify, schedule, wheel, image) + clear the host feature. |
+| `GET /api/cmd/<go\|hide\|total>` | fire a Companion deck press — relayed to `control.html` as `remote_cmd`. |
+| `GET /api/state` | `{ ok, names, total }` — current overlay state, for Companion button feedback. |
+| `GET /healthz` | `ok` (container probe, always open). |
+
+## Auth
+
+Leave `RELAY_TOKEN` unset for a private/edge-gated relay (current ESA
+setup: the control panel sits behind Twitch sign-in at the Caddy edge).
+
+Set `RELAY_TOKEN=<secret>` before publishing the relay openly. Then:
+
+- **WS clients** must connect with `?token=<secret>`. Open each HTML page
+  once with `?token=…` appended (e.g. the OBS browser-source URL, the
+  control panel) — it's saved to `localStorage` (`esa-lt-token`) and
+  reused, so you only pass it the first time per machine/browser.
+- **HTTP `/api/*`** accepts the token as `?token=`, an `X-Relay-Token`
+  header, or `Authorization: Bearer <secret>`.
+
+The token is never committed — it lives in `/opt/skenmy-vps/.env` like
+the other secrets.
+
+## Bitfocus Companion
+
+The deck acts as a **remote keyboard for the open control panel** — it
+fires the same actions as the operator's keyboard, using whatever queue
+the operator has built in `control.html`. Use Companion's built-in
+**Generic HTTP** module.
+
+**Actions** (one HTTP GET per button; append `?token=…` if `RELAY_TOKEN`
+is set):
+
+| button | request |
+|---|---|
+| Go Live (Enter) | `GET http://<relay>/api/cmd/go` |
+| Hide (Esc) | `GET http://<relay>/api/cmd/hide` |
+| Show donation total | `GET http://<relay>/api/cmd/total` |
+
+**Feedback** (red/green when something is on screen):
+
+1. In the Generic HTTP connection config, add **Variables** that poll
+   `http://<relay>/api/state` (e.g. every 500 ms): `names` ← JSONPath
+   `$.names`, `total` ← JSONPath `$.total`.
+2. On each button add the internal **Variable: check value** feedback
+   comparing the matching variable to `true`; set the button background
+   green when true (red/off otherwise).
+
+So "Go Live" / "Hide" track `$(generic-http:names)` and "Show total"
+tracks `$(generic-http:total)`.
 
 ## Local dev
 

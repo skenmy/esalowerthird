@@ -1640,7 +1640,15 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+    // Relay token: take it from ?token= once (then remember it), so the WS can
+    // authenticate when the relay has RELAY_TOKEN set. Harmless when it doesn't.
+    const relayToken = (() => {
+      const q = new URLSearchParams(location.search).get('token');
+      if (q) { try { localStorage.setItem('esa-lt-token', q); } catch (e) {} return q; }
+      try { return localStorage.getItem('esa-lt-token') || ''; } catch (e) { return ''; }
+    })();
+    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'
+      + (relayToken ? '?token=' + encodeURIComponent(relayToken) : '');
     let ws;
     let presets = [];
     let queue = [];  // ordered array of preset IDs
@@ -1683,6 +1691,8 @@
           handleSrcResult(data);
         } else if (data.type === 'twitch_result') {
           handleTwitchResult(data);
+        } else if (data.type === 'remote_cmd') {
+          handleRemoteCmd(data.cmd);
         }
       };
       ws.onclose = () => {
@@ -2131,6 +2141,17 @@
 
     function handleHideClick() {
       hideAll();
+    }
+
+    // Bitfocus Companion "deck as remote keyboard": the relay forwards a
+    // remote_cmd and we run the same action the operator's keyboard would.
+    //   go    = Enter / Go Live (sends the current queue)
+    //   hide  = Esc / hide everything
+    //   total = show the Tiltify donation total
+    function handleRemoteCmd(cmd) {
+      if (cmd === 'go') goLive();
+      else if (cmd === 'hide') hideAll();
+      else if (cmd === 'total') tiltifyShowDisplay('total');
     }
 
     function hideScene(scene) {

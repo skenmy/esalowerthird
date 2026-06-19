@@ -911,7 +911,14 @@
     const imageDisplayEl = document.getElementById('imageDisplay');
     let imageVisible = false;
 
-    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+    // Relay token from ?token= (remembered), for when the relay sets RELAY_TOKEN.
+    const relayToken = (() => {
+      const q = new URLSearchParams(location.search).get('token');
+      if (q) { try { localStorage.setItem('esa-lt-token', q); } catch (e) {} return q; }
+      try { return localStorage.getItem('esa-lt-token') || ''; } catch (e) { return ''; }
+    })();
+    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'
+      + (relayToken ? '?token=' + encodeURIComponent(relayToken) : '');
     let ws;
 
     function connect() {

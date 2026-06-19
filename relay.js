@@ -33,9 +33,31 @@ const TWITCH_CLIENT_ID = process.env.TWITCH_CLIENT_ID;
 const TWITCH_CLIENT_SECRET = process.env.TWITCH_CLIENT_SECRET;
 const TWITCH_API = 'https://api.twitch.tv/helix';
 
+// Shared secret gating the WebSocket + /api/* surface. When set, every WS
+// client and HTTP API caller must present it (?token=, X-Relay-Token header,
+// or "Authorization: Bearer <token>"). Unset = open (legacy behaviour, fine
+// when something else fronts auth). Static files + /healthz stay open.
+const RELAY_TOKEN = process.env.RELAY_TOKEN || '';
+
 const tiltifyEnabled = !!(TILTIFY_CLIENT_ID && TILTIFY_CLIENT_SECRET && TILTIFY_CAMPAIGN_ID);
 const horaroEnabled = !!HORARO_SCHEDULE;
 const twitchEnabled = !!(TWITCH_CLIENT_ID && TWITCH_CLIENT_SECRET);
+const authEnabled = !!RELAY_TOKEN;
+
+// Constant-ish-time token check: accept the token from the query string or a
+// header so both browser WS clients (?token=) and Companion's HTTP module
+// (header) work. Returns true when auth is disabled.
+function tokenValid(token) {
+  return !!token && token === RELAY_TOKEN;
+}
+function authOk(req, url) {
+  if (!authEnabled) return true;
+  if (tokenValid(url.searchParams.get('token'))) return true;
+  if (tokenValid(req.headers['x-relay-token'])) return true;
+  const auth = req.headers['authorization'] || '';
+  if (auth.startsWith('Bearer ') && tokenValid(auth.slice(7))) return true;
+  return false;
+}
 
 // --- Tiltify state ---
 let accessToken = null;
@@ -461,6 +483,34 @@ function broadcastToAll(data) {
   }
 }
 
+// --- Overlay live-state (for Companion button feedback) ---
+// The relay is a forwarder, so it infers "what's currently on screen" by
+// watching the real messages it relays. Companion polls GET /api/state and
+// colours its buttons from these booleans.
+let liveState = { names: false, total: false };
+
+function trackOverlayState(data) {
+  if (!data || typeof data.type !== 'string') return;
+  switch (data.type) {
+    case 'update':
+      // A global (sceneless) nameplate push. Scene-scoped pushes drive the
+      // advanced multi-cam flow and don't map onto the single deck button.
+      if (!data.scene && Array.isArray(data.items) && data.items.length > 0) {
+        liveState.names = true;
+      }
+      break;
+    case 'hide':
+      if (!data.scene) { liveState.names = false; liveState.total = false; }
+      break;
+    case 'tiltify_show':
+      liveState.total = (data.display === 'total' || data.display === 'totalizer');
+      break;
+    case 'tiltify_hide':
+      liveState.total = false;
+      break;
+  }
+}
+
 const server = http.createServer((req, res) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -494,6 +544,37 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // Everything under /api/* is gated by the shared token (when configured).
+  if (url.pathname.startsWith('/api/') && !authOk(req, url)) {
+    res.writeHead(401, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+    res.end(JSON.stringify({ ok: false, error: 'Unauthorized' }));
+    return;
+  }
+
+  // GET /api/state — current overlay state for Companion button feedback
+  if (url.pathname === '/api/state' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+    res.end(JSON.stringify({ ok: true, ...liveState }));
+    return;
+  }
+
+  // GET /api/cmd/<go|hide|total> — Companion "deck as remote keyboard". The
+  // relay just relays a remote_cmd; control.html (which holds the queue)
+  // runs the matching goLive()/hideAll()/show-total action.
+  if (url.pathname.startsWith('/api/cmd/') && req.method === 'GET') {
+    const cmd = url.pathname.slice('/api/cmd/'.length);
+    if (!['go', 'hide', 'total'].includes(cmd)) {
+      res.writeHead(404, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      res.end(JSON.stringify({ ok: false, error: 'Unknown command' }));
+      return;
+    }
+    broadcastToAll({ type: 'remote_cmd', cmd });
+    console.log(`[API] GET /api/cmd/${cmd}`);
+    res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+    res.end(JSON.stringify({ ok: true, cmd }));
+    return;
+  }
+
   // POST /api/send — broadcast arbitrary JSON to all WS clients
   if (url.pathname === '/api/send' && req.method === 'POST') {
     let body = '';
@@ -501,6 +582,7 @@ const server = http.createServer((req, res) => {
     req.on('end', () => {
       try {
         const data = JSON.parse(body);
+        trackOverlayState(data);
         broadcastToAll(data);
         console.log(`[API] POST /api/send — type=${data.type || '?'}${data.scene ? ` scene=${data.scene}` : ''}`);
         res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
@@ -519,6 +601,8 @@ const server = http.createServer((req, res) => {
     for (const type of hideTypes) {
       broadcastToAll({ type });
     }
+    liveState.names = false;
+    liveState.total = false;
     // Clear the host confidence feature takeover (studio state + producer banner left intact)
     confidenceCache.feature = { type: 'confidence_feature', feature: 'none' };
     broadcastToAll(confidenceCache.feature);
@@ -546,7 +630,17 @@ function broadcastClientCount() {
   }
 }
 
-wss.on('connection', (ws) => {
+wss.on('connection', (ws, req) => {
+  // Gate the socket on the shared token (?token=) before wiring anything up.
+  if (authEnabled) {
+    const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+    if (!tokenValid(u.searchParams.get('token'))) {
+      console.log('[WS] Rejected connection (bad/missing token)');
+      ws.close(1008, 'unauthorized');
+      return;
+    }
+  }
+
   clientCount++;
   console.log(`[WS] Client connected (${clientCount} total)`);
   broadcastClientCount();
@@ -595,6 +689,9 @@ wss.on('connection', (ws) => {
     else if (data.type === 'confidence_feature') confidenceCache.feature = data;
     else if (data.type === 'producer_msg') confidenceCache.producer = data;
 
+    // Track overlay state from real traffic for Companion button feedback
+    trackOverlayState(data);
+
     // Relay all other messages to all OTHER clients
     const msg = JSON.stringify(data);
     for (const client of wss.clients) {
@@ -626,6 +723,9 @@ setInterval(() => {
 
 server.listen(PORT, () => {
   console.log(`[Relay] WebSocket relay listening on port ${PORT}`);
+  console.log(authEnabled
+    ? '[Auth] Token required for /ws and /api/* (RELAY_TOKEN set)'
+    : '[Auth] DISABLED — /ws and /api/* are open (set RELAY_TOKEN to gate them)');
   if (tiltifyEnabled) {
     console.log(`[Tiltify] Integration enabled (campaign ${TILTIFY_CAMPAIGN_ID})`);
     // Initial poll, then every 15s
