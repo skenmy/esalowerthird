@@ -126,7 +126,8 @@ open.
 | `POST /api/send` | broadcast the JSON body to every WS client (arbitrary `{ type, … }`). |
 | `GET /api/hide` | hide every overlay (names, tiltify, schedule, wheel, image) + clear the host feature. |
 | `GET /api/cmd/<go\|hide\|total>` | fire a Companion deck press — relayed to `control.html` as `remote_cmd`. |
-| `GET /api/state` | `{ ok, names, total }` — current overlay state, for Companion button feedback. |
+| `GET /api/studio/<clear\|standby\|air\|recording\|wrap>` | set the host-monitor studio state directly (broadcasts `confidence_state`). |
+| `GET /api/state` | `{ ok, names, total, studio }` — current overlay state, for Companion button feedback. |
 | `GET /healthz` | `ok` (container probe, always open). |
 
 ## Auth
@@ -173,18 +174,24 @@ is set):
 | Go Live (Enter) | `GET http://<relay>/api/cmd/go` |
 | Hide (Esc) | `GET http://<relay>/api/cmd/hide` |
 | Show donation total | `GET http://<relay>/api/cmd/total` |
+| Studio state | `GET http://<relay>/api/studio/<clear\|standby\|air\|recording\|wrap>` |
 
-**Feedback** (red/green when something is on screen):
+The Go Live / Hide / Show-total buttons drive the open control panel (its
+queue). The studio-state buttons hit the relay directly — they work even
+if the control panel isn't open, and one button per state (Clear, Standby,
+On Air, Recording, Wrap) is the usual layout.
+
+**Feedback** (light the active button):
 
 1. In the Generic HTTP connection config, add **Variables** that poll
    `http://<relay>/api/state` (e.g. every 500 ms): `names` ← JSONPath
-   `$.names`, `total` ← JSONPath `$.total`.
-2. On each button add the internal **Variable: check value** feedback
-   comparing the matching variable to `true`; set the button background
-   green when true (red/off otherwise).
-
-So "Go Live" / "Hide" track `$(generic-http:names)` and "Show total"
-tracks `$(generic-http:total)`.
+   `$.names`, `total` ← `$.total`, `studio` ← `$.studio`.
+2. On each button add the internal **Variable: check value** feedback and
+   set the button background when it matches:
+   - Go Live / Hide → `$(generic-http:names)` equals `true` (green).
+   - Show total → `$(generic-http:total)` equals `true` (green).
+   - Each studio button → `$(generic-http:studio)` equals its own state
+     (e.g. the On Air button lights when `studio` = `air`).
 
 ## Local dev
 

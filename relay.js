@@ -486,8 +486,9 @@ function broadcastToAll(data) {
 // --- Overlay live-state (for Companion button feedback) ---
 // The relay is a forwarder, so it infers "what's currently on screen" by
 // watching the real messages it relays. Companion polls GET /api/state and
-// colours its buttons from these booleans.
-let liveState = { names: false, total: false };
+// colours its buttons from these values.
+const STUDIO_STATES = ['clear', 'standby', 'air', 'recording', 'wrap'];
+let liveState = { names: false, total: false, studio: 'clear' };
 
 function trackOverlayState(data) {
   if (!data || typeof data.type !== 'string') return;
@@ -507,6 +508,9 @@ function trackOverlayState(data) {
       break;
     case 'tiltify_hide':
       liveState.total = false;
+      break;
+    case 'confidence_state':
+      if (STUDIO_STATES.includes(data.state)) liveState.studio = data.state;
       break;
   }
 }
@@ -572,6 +576,26 @@ const server = http.createServer((req, res) => {
     console.log(`[API] GET /api/cmd/${cmd}`);
     res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
     res.end(JSON.stringify({ ok: true, cmd }));
+    return;
+  }
+
+  // GET /api/studio/<clear|standby|air|recording|wrap> — set the host
+  // confidence studio state directly (no control panel needed). Cached +
+  // replayed like a confidence_state sent over WS.
+  if (url.pathname.startsWith('/api/studio/') && req.method === 'GET') {
+    const state = url.pathname.slice('/api/studio/'.length);
+    if (!STUDIO_STATES.includes(state)) {
+      res.writeHead(404, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      res.end(JSON.stringify({ ok: false, error: 'Unknown studio state' }));
+      return;
+    }
+    const msg = { type: 'confidence_state', state };
+    confidenceCache.state = msg;
+    liveState.studio = state;
+    broadcastToAll(msg);
+    console.log(`[API] GET /api/studio/${state}`);
+    res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+    res.end(JSON.stringify({ ok: true, studio: state }));
     return;
   }
 

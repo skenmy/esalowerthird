@@ -1696,6 +1696,9 @@
           handleTwitchResult(data);
         } else if (data.type === 'remote_cmd') {
           handleRemoteCmd(data.cmd);
+        } else if (data.type === 'confidence_state') {
+          // Keep the Studio State buttons in sync when set elsewhere (Companion).
+          syncStudioStateUI(data.state);
         }
       };
       ws.onclose = () => {
@@ -1797,8 +1800,11 @@
 
     function setStudioState(state) {
       wsSend({ type: 'confidence_state', state });
-      document.querySelectorAll('.state-btn').forEach(b => b.classList.toggle('active', b.dataset.state === state));
+      syncStudioStateUI(state);
       showToast('Studio state: ' + state.toUpperCase());
+    }
+    function syncStudioStateUI(state) {
+      document.querySelectorAll('.state-btn').forEach(b => b.classList.toggle('active', b.dataset.state === state));
     }
 
     // Manual "Feature Large" buttons in the Confidence deck — always push to the host monitor.

@@ -11,11 +11,12 @@ Five hand-written files. No build step, no bundler, no framework.
 - `relay.js` (~650 lines) — Node WebSocket relay. Also serves the static
   HTML files over plain HTTP (so the same port hosts `/ws`, the static
   files, `/healthz`, `/api/send`, `/api/hide`, `/api/cmd/<go|hide|total>`,
-  `/api/state`). `RELAY_TOKEN` (when set) makes `/ws` reads open but gates
-  *writes* — a connection may mutate the overlay only if it carries a
-  Caddy-injected `X-Forwarded-User` (control panel via the `/adminws`
-  forward_auth path) or a valid `?token=`; `/api/*` always needs the token.
-  `liveState` (names/total) is inferred from relayed traffic so `/api/state`
+  `/api/studio/<clear|standby|air|recording|wrap>`, `/api/state`).
+  `RELAY_TOKEN` (when set) makes `/ws` reads open but gates *writes* — a
+  connection may mutate the overlay only if it carries a Caddy-injected
+  `X-Forwarded-User` (control panel via the `/adminws` forward_auth path)
+  or a valid `?token=`; `/api/*` always needs the token. `liveState`
+  (names/total/studio) is inferred from relayed traffic so `/api/state`
   can drive Companion button feedback. Polls Tiltify (15s) and
   Horaro (5m); handles `src_lookup` / `twitch_lookup` itself rather
   than broadcasting. Caches the last `confidence_state` /
@@ -91,6 +92,11 @@ dispatched by `source.html` also includes:
 emitted by the relay's `/api/cmd/*` endpoint and dispatched by
 `control.html` (acts as a remote keyboard: `go`→`goLive()`,
 `hide`→`hideAll()`, `total`→`tiltifyShowDisplay('total')`).
+
+Companion can also set the studio state via `GET /api/studio/<state>`,
+which broadcasts `confidence_state` directly (no control panel needed);
+`control.html` listens for `confidence_state` and re-syncs its Studio
+State buttons (`syncStudioStateUI`) so the panel stays in step.
 
 Confidence-monitor messages (dispatched by `confidence.html`, sent by
 `control.html`, cached + replayed by `relay.js`):
