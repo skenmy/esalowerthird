@@ -911,14 +911,10 @@
     const imageDisplayEl = document.getElementById('imageDisplay');
     let imageVisible = false;
 
-    // Relay token from ?token= (remembered), for when the relay sets RELAY_TOKEN.
-    const relayToken = (() => {
-      const q = new URLSearchParams(location.search).get('token');
-      if (q) { try { localStorage.setItem('esa-lt-token', q); } catch (e) {} return q; }
-      try { return localStorage.getItem('esa-lt-token') || ''; } catch (e) { return ''; }
-    })();
-    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'
-      + (relayToken ? '?token=' + encodeURIComponent(relayToken) : '');
+    // Listen-only overlay: connects on the open /ws path with no credential
+    // (an OBS browser source can't do an interactive login). The relay lets
+    // it receive everything but drops any overlay-mutating message it sends.
+    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
     let ws;
 
     function connect() {

@@ -1640,14 +1640,17 @@
   <div class="toast" id="toast"></div>
 
   <script>
-    // Relay token: take it from ?token= once (then remember it), so the WS can
-    // authenticate when the relay has RELAY_TOKEN set. Harmless when it doesn't.
+    // The control panel writes to the overlay, so it connects on the
+    // Twitch-gated /adminws path: Caddy verifies the operator's login and
+    // injects X-Forwarded-User, which the relay treats as "trusted writer"
+    // — no separate token to type. A ?token= override still works for
+    // setups without the Caddy edge (local dev, scripts).
     const relayToken = (() => {
       const q = new URLSearchParams(location.search).get('token');
       if (q) { try { localStorage.setItem('esa-lt-token', q); } catch (e) {} return q; }
       try { return localStorage.getItem('esa-lt-token') || ''; } catch (e) { return ''; }
     })();
-    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws'
+    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/adminws'
       + (relayToken ? '?token=' + encodeURIComponent(relayToken) : '');
     let ws;
     let presets = [];

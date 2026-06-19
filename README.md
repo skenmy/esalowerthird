@@ -35,9 +35,9 @@ monitor can hit them without credentials.
 1. Serves the three HTML files.
 2. Hosts a WebSocket relay — broadcasts any message a client sends to
    every other connected client. Designed for tiny operator-team setups;
-   the protocol is just JSON `{ type, … }`. Set `RELAY_TOKEN` to require a
-   shared token on `/ws` and `/api/*` (see [Auth](#auth)) so a public
-   relay can't be hijacked.
+   the protocol is just JSON `{ type, … }`. Reads stay open; set
+   `RELAY_TOKEN` to gate *writes* (see [Auth](#auth)) so a public relay
+   can't be hijacked.
 3. Polls **Tiltify** every 15 seconds for the configured campaign:
    donations, milestones, targets, polls, donation matches. Supports
    both `campaigns/<id>` and `team_campaigns/<id>` — for team campaigns
@@ -112,7 +112,7 @@ All optional — the relay degrades gracefully when a section is unset.
 | `TILTIFY_CAMPAIGN_TYPE` | `team_campaigns` (default) or `campaigns`. |
 | `HORARO_SCHEDULE` | e.g. `esa/2026-winter1` (event-slug/schedule-slug). |
 | `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET` | optional — enables `twitch_lookup`. |
-| `RELAY_TOKEN` | optional shared secret. When set, `/ws` and `/api/*` require it (see [Auth](#auth)). Unset = open. |
+| `RELAY_TOKEN` | optional shared secret. When set, `/ws` writes need Caddy auth or `?token=`, and `/api/*` needs the token (see [Auth](#auth)). Unset = fully open. |
 
 ## HTTP API
 
@@ -131,20 +131,32 @@ open.
 
 ## Auth
 
-Leave `RELAY_TOKEN` unset for a private/edge-gated relay (current ESA
-setup: the control panel sits behind Twitch sign-in at the Caddy edge).
+The relay separates **reading** the feed from **writing** to the overlay,
+so the public-facing parts stay open while injection is locked down.
 
-Set `RELAY_TOKEN=<secret>` before publishing the relay openly. Then:
+- **Reads are always open.** `source.html` / `confidence.html` connect to
+  `/ws` with no credential and just receive — an OBS browser source can't
+  do an interactive login, so this has to work. They never need a token.
+- **Writes need to be trusted.** A WS connection may send overlay-mutating
+  messages (and trigger `src_lookup` / `twitch_lookup`) only if it is
+  either:
+  - **Twitch-authed via Caddy** — the control panel connects on `/adminws`,
+    which the edge gates with the same `forward_auth` as `control.html` and
+    stamps with `X-Forwarded-User`. The relay trusts that header. So the
+    operator's existing Twitch login is the credential — no separate token.
+  - **token-bearing** — a `?token=<secret>` on the WS URL (for scripts /
+    machine writers without the Caddy edge).
+- **`/api/*` needs the token** — `POST /api/send`, `GET /api/hide`,
+  `/api/cmd/*`, `/api/state`. Pass it as `?token=`, an `X-Relay-Token`
+  header, or `Authorization: Bearer <secret>`. This is what Bitfocus
+  Companion uses.
 
-- **WS clients** must connect with `?token=<secret>`. Open each HTML page
-  once with `?token=…` appended (e.g. the OBS browser-source URL, the
-  control panel) — it's saved to `localStorage` (`esa-lt-token`) and
-  reused, so you only pass it the first time per machine/browser.
-- **HTTP `/api/*`** accepts the token as `?token=`, an `X-Relay-Token`
-  header, or `Authorization: Bearer <secret>`.
-
-The token is never committed — it lives in `/opt/skenmy-vps/.env` like
-the other secrets.
+Set `RELAY_TOKEN=<secret>` to turn all of this on; leave it unset and the
+relay is fully open (fine when nothing is public yet, or something else
+fronts auth). For the trust-by-header path to be safe the edge **must
+strip client-supplied `X-Forwarded-User` on the open route** — the
+`lowerthird` Caddy fragment in `skenmy-vps` does this. The token is never
+committed; it lives in `/opt/skenmy-vps/.env` with the other secrets.
 
 ## Bitfocus Companion
 

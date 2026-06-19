@@ -631,15 +631,16 @@ function broadcastClientCount() {
 }
 
 wss.on('connection', (ws, req) => {
-  // Gate the socket on the shared token (?token=) before wiring anything up.
-  if (authEnabled) {
-    const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
-    if (!tokenValid(u.searchParams.get('token'))) {
-      console.log('[WS] Rejected connection (bad/missing token)');
-      ws.close(1008, 'unauthorized');
-      return;
-    }
-  }
+  // Reads are open — OBS overlays / the host monitor connect with no
+  // credential and just listen. A connection may SEND overlay-mutating
+  // messages only if it's trusted: it arrived through Caddy's Twitch-gated
+  // path (X-Forwarded-User injected, see the lowerthird Caddyfile) or it
+  // presented a valid ?token= (Companion-over-WS / scripts). When auth is
+  // disabled the relay is fully open (legacy behaviour).
+  const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  ws.canWrite = !authEnabled
+    || !!req.headers['x-forwarded-user']
+    || tokenValid(u.searchParams.get('token'));
 
   clientCount++;
   console.log(`[WS] Client connected (${clientCount} total)`);
@@ -671,6 +672,12 @@ wss.on('connection', (ws, req) => {
       return;
     }
     if (data.type === 'pong') {
+      return;
+    }
+
+    // Untrusted (read-only) connections may emit `status` visibility pings
+    // but nothing that drives the overlay or hits an upstream API.
+    if (!ws.canWrite && data.type !== 'status') {
       return;
     }
 
@@ -724,8 +731,8 @@ setInterval(() => {
 server.listen(PORT, () => {
   console.log(`[Relay] WebSocket relay listening on port ${PORT}`);
   console.log(authEnabled
-    ? '[Auth] Token required for /ws and /api/* (RELAY_TOKEN set)'
-    : '[Auth] DISABLED — /ws and /api/* are open (set RELAY_TOKEN to gate them)');
+    ? '[Auth] Enabled — /ws reads open, writes need Caddy auth (X-Forwarded-User) or ?token=; /api/* needs the token'
+    : '[Auth] DISABLED — /ws and /api/* fully open (set RELAY_TOKEN to gate writes)');
   if (tiltifyEnabled) {
     console.log(`[Tiltify] Integration enabled (campaign ${TILTIFY_CAMPAIGN_ID})`);
     // Initial poll, then every 15s
