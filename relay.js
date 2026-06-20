@@ -284,7 +284,7 @@ async function pollTiltify() {
     const base = `/api/public/${TILTIFY_CAMPAIGN_TYPE}/${TILTIFY_CAMPAIGN_ID}`;
     const [campaignRes, donationsRes, targetsRes, milestonesRes] = await Promise.all([
       tiltifyGet(base),
-      tiltifyGet(`${base}/donations?limit=50`),
+      tiltifyGet(`${base}/donations?limit=100`),
       tiltifyGet(`${base}/targets`),
       tiltifyGet(`${base}/milestones`),
     ]);
