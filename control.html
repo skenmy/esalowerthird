@@ -973,6 +973,32 @@
       box-shadow: 0 0 6px rgba(74, 159, 74, 0.5);
     }
 
+    /* Copy-source-URL helper sits at the end of the scene selector row */
+    .scene-copy-btn {
+      margin-left: auto;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: 'Barlow', sans-serif;
+      border: 2px dashed #2a3144;
+      background: #0e1119;
+      color: #8b93a7;
+      transition: border-color 0.15s, color 0.15s, background 0.15s;
+      white-space: nowrap;
+    }
+
+    .scene-copy-btn:hover {
+      border-color: #4d7cff;
+      color: #4d7cff;
+      background: #13233f;
+    }
+
+    .scene-copy-btn:active {
+      transform: scale(0.97);
+    }
+
     /* Scene overview strip */
     .scene-overview {
       display: flex;
@@ -1633,11 +1659,13 @@
     let displayMode = 'separate';  // 'together' or 'separate'
 
     // Advanced mode state
-    const SCENES = ['hosts', 'guests', 'wide', 'obsbot1', 'obsbot2', 'misc'];
-    const SCENE_LABELS = { hosts: 'Hosts', guests: 'Guests', wide: 'Wide', obsbot1: 'OBSBOT 1', obsbot2: 'OBSBOT 2', misc: 'Misc' };
+    // Scenes are plain letters A–G; the lowercase key is what OBS browser
+    // sources filter on (?scene=a … ?scene=g), the uppercase is the label.
+    const SCENES = ['a', 'b', 'c', 'd', 'e', 'f', 'g'];
+    const SCENE_LABELS = { a: 'A', b: 'B', c: 'C', d: 'D', e: 'E', f: 'F', g: 'G' };
     let advancedMode = false;
-    let advancedQueues = { hosts: [], guests: [], wide: [], obsbot1: [], obsbot2: [], misc: [] };
-    let selectedScene = 'hosts';
+    let advancedQueues = { a: [], b: [], c: [], d: [], e: [], f: [], g: [] };
+    let selectedScene = 'a';
     let sceneLiveStatus = {};
 
     function connectWs() {
@@ -2175,7 +2203,31 @@
           `${escHtml(SCENE_LABELS[scene])}` +
           `<span class="scene-count">${count}</span>` +
         `</button>`;
-      }).join('');
+      }).join('') +
+        `<button class="scene-copy-btn" onclick="copySceneUrl()" title="Copy the OBS browser-source URL for scene ${escHtml(SCENE_LABELS[selectedScene])}">` +
+          `&#9106; Copy ${escHtml(SCENE_LABELS[selectedScene])} URL</button>`;
+    }
+
+    // Quick-setup helper: copy the OBS source URL for the selected scene
+    // (e.g. https://lowerthird.skenmy.com/source.html?scene=a).
+    function copySceneUrl() {
+      const url = `${location.origin}/source.html?scene=${selectedScene}`;
+      const ok = () => showToast(`Copied source URL for scene ${SCENE_LABELS[selectedScene]}`);
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(url).then(ok, () => fallbackCopyUrl(url, ok));
+      } else {
+        fallbackCopyUrl(url, ok);
+      }
+    }
+    function fallbackCopyUrl(url, ok) {
+      try {
+        const ta = document.createElement('textarea');
+        ta.value = url; ta.style.position = 'fixed'; ta.style.opacity = '0';
+        document.body.appendChild(ta); ta.select();
+        document.execCommand('copy'); document.body.removeChild(ta); ok();
+      } catch (e) {
+        window.prompt('Copy this OBS source URL:', url);
+      }
     }
 
     function renderSceneOverview() {
