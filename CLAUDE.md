@@ -30,8 +30,8 @@ Five hand-written files. No build step, no bundler, no framework.
 - `control.html` (~3k lines) — operator panel ("Studio Control").
   Single-file app with presets, queues, Tiltify browser, fun-tools tabs,
   live Program/Host preview iframes, and a Confidence section (studio
-  state, feature-large pushes, producer-message composer) plus a global
-  Mirror toggle. Heavy.
+  state, feature-large pushes, producer-message composer) plus a
+  Program/Both/Confidence send-target selector. Heavy.
 - `confidence.html` (~500 lines) — NEW host confidence monitor.
   Listen-only (`?scene=confidence`), self-scales its fixed 1920×1080
   stage to fit. Reads the same `tiltify_data` / `schedule_data` feeds for
@@ -100,12 +100,13 @@ State buttons (`syncStudioStateUI`) so the panel stays in step.
 
 Confidence-monitor messages (dispatched by `confidence.html`, sent by
 `control.html`, cached + replayed by `relay.js`):
-`confidence_state { state: standby|air|wrap }`,
+`confidence_state { state: clear|standby|air|recording|wrap }`,
 `confidence_feature { feature: total|incentive|bidwar|schedule|none, ... }`,
-`producer_msg { text, level: info|urgent, active }`. With the control
-panel's **Mirror** toggle on, showing total / target / poll / schedule on
-Program also emits the matching `confidence_feature` (with the item index)
-so the host monitor features it large. Runner cards never mirror.
+`producer_msg { text, level: info|urgent, active }`. When the control
+panel's send target is **Both** or **Confidence**, showing total / target /
+poll / schedule on Program also emits the matching `confidence_feature`
+(with the item index) so the host monitor features it large. Runner cards
+never mirror.
 
 Tiltify cache exposes nested types via `tiltify_data` payloads —
 control.html has a sub-switch on item type around line 1097

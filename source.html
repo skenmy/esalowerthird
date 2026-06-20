@@ -921,7 +921,8 @@
       ws = new WebSocket(wsUrl);
       ws.onopen = () => ws.send(JSON.stringify({ type: 'pong' }));
       ws.onmessage = (event) => {
-        const data = JSON.parse(event.data);
+        let data;
+        try { data = JSON.parse(event.data); } catch { return; }
         switch (data.type) {
           case 'update':
             if (data.scene && myScene && data.scene !== myScene) break;
@@ -1004,10 +1005,26 @@
       if (ws && ws.readyState === 1) ws.send(JSON.stringify(obj));
     }
 
+    // Escapes for both element text AND double/single-quoted attribute values
+    // (so `src="${escHtml(url)}"` can't break out of the attribute).
     function escHtml(str) {
-      const d = document.createElement('div');
-      d.textContent = str;
-      return d.innerHTML;
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // Show new overlay content. If something is already up, play its hide
+    // animation first (450ms) so the new thing doesn't pop in over it.
+    function showAfterHide(isVisible, hide, build) {
+      if (isVisible) {
+        hide();
+        setTimeout(build, 450);
+      } else {
+        build();
+      }
     }
 
     function formatCurrency(val) {
@@ -1026,7 +1043,7 @@
     }
 
     function logoHtml() {
-      return `<div class="logo-container"><img src="${logoUrl}" alt="ESA"></div>`;
+      return `<div class="logo-container"><img src="${escHtml(logoUrl)}" alt="ESA"></div>`;
     }
 
     function buildTogether(items) {
@@ -1057,15 +1074,7 @@
       }
 
       currentMode = mode;
-
-      if (isVisible) {
-        triggerHide();
-        setTimeout(() => {
-          buildAndShow(items, mode);
-        }, 450);
-      } else {
-        buildAndShow(items, mode);
-      }
+      showAfterHide(isVisible, triggerHide, () => buildAndShow(items, mode));
     }
 
     function buildAndShow(items, mode) {
@@ -1149,14 +1158,7 @@
       const displayType = data.display;
       const index = data.donationIndex ?? data.targetIndex ?? data.milestoneIndex ?? data.pollIndex ?? data.matchIndex ?? 0;
 
-      if (tiltifyVisible) {
-        triggerTiltifyHide();
-        setTimeout(() => {
-          buildAndShowTiltify(displayType, index);
-        }, 450);
-      } else {
-        buildAndShowTiltify(displayType, index);
-      }
+      showAfterHide(tiltifyVisible, triggerTiltifyHide, () => buildAndShowTiltify(displayType, index));
     }
 
     function buildAndShowTiltify(displayType, index) {
@@ -1539,13 +1541,10 @@
       const mode = data.mode || 'next';
       const list = data.list || 'up';
 
-      if (scheduleVisible) {
+      showAfterHide(scheduleVisible, () => {
         const bar = scheduleDisplay.querySelector('.tiltify-bar');
         if (bar) bar.classList.add('hide');
-        setTimeout(() => buildAndShowSchedule(runIndex, mode, list), 450);
-      } else {
-        buildAndShowSchedule(runIndex, mode, list);
-      }
+      }, () => buildAndShowSchedule(runIndex, mode, list));
     }
 
     function buildAndShowSchedule(runIndex, mode, list) {
@@ -1602,14 +1601,7 @@
       const message = data.message || '';
       const imageUrl = data.imageUrl || '';
 
-      if (tiltifyVisible) {
-        triggerTiltifyHide();
-        setTimeout(() => {
-          buildAndShowCustom(heading, message, imageUrl);
-        }, 450);
-      } else {
-        buildAndShowCustom(heading, message, imageUrl);
-      }
+      showAfterHide(tiltifyVisible, triggerTiltifyHide, () => buildAndShowCustom(heading, message, imageUrl));
     }
 
     function buildAndShowCustom(heading, message, imageUrl) {
@@ -1808,12 +1800,7 @@
     // ===== Counter =====
 
     function handleCounterShow(data) {
-      if (tiltifyVisible) {
-        triggerTiltifyHide();
-        setTimeout(() => buildAndShowCounter(data.label, data.value), 450);
-      } else {
-        buildAndShowCounter(data.label, data.value);
-      }
+      showAfterHide(tiltifyVisible, triggerTiltifyHide, () => buildAndShowCounter(data.label, data.value));
     }
 
     function buildAndShowCounter(label, value) {
@@ -1846,12 +1833,7 @@
     // ===== Quote =====
 
     function handleQuoteShow(data) {
-      if (tiltifyVisible) {
-        triggerTiltifyHide();
-        setTimeout(() => buildAndShowQuote(data.quote, data.attribution), 450);
-      } else {
-        buildAndShowQuote(data.quote, data.attribution);
-      }
+      showAfterHide(tiltifyVisible, triggerTiltifyHide, () => buildAndShowQuote(data.quote, data.attribution));
     }
 
     function buildAndShowQuote(quote, attribution) {
@@ -1880,12 +1862,7 @@
 
     function handleSleepShow(data) {
       sleepPeople = data.people || [];
-      if (tiltifyVisible) {
-        triggerTiltifyHide();
-        setTimeout(() => buildAndShowSleep(), 450);
-      } else {
-        buildAndShowSleep();
-      }
+      showAfterHide(tiltifyVisible, triggerTiltifyHide, () => buildAndShowSleep());
     }
 
     function buildAndShowSleep() {
@@ -1947,12 +1924,7 @@
     // ===== Stat Card =====
 
     function handleStatCardShow(data) {
-      if (tiltifyVisible) {
-        triggerTiltifyHide();
-        setTimeout(() => buildAndShowStatCard(data), 450);
-      } else {
-        buildAndShowStatCard(data);
-      }
+      showAfterHide(tiltifyVisible, triggerTiltifyHide, () => buildAndShowStatCard(data));
     }
 
     function buildAndShowStatCard(data) {
@@ -2110,22 +2082,13 @@
       }
     }
 
-    // ===== Fun Title Rotation =====
-
     // ===== Image Display =====
 
     function handleImageShow(data) {
       const { url, title, position } = data;
       if (!url) return;
 
-      if (imageVisible) {
-        triggerImageHide();
-        setTimeout(() => {
-          buildAndShowImage(url, title, position || 'left');
-        }, 450);
-      } else {
-        buildAndShowImage(url, title, position || 'left');
-      }
+      showAfterHide(imageVisible, triggerImageHide, () => buildAndShowImage(url, title, position || 'left'));
     }
 
     function buildAndShowImage(url, title, position) {

@@ -1,14 +1,29 @@
 {
   "name": "esalowerthird",
   "version": "1.0.0",
-  "description": "",
+  "description": "Browser-source overlay system + WebSocket relay for ESA marathon streams (lower-thirds, Tiltify, schedule, host confidence monitor).",
   "main": "relay.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node relay.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "keywords": [
+    "obs",
+    "overlay",
+    "lower-third",
+    "websocket",
+    "tiltify",
+    "streaming",
+    "speedrun"
+  ],
+  "author": "Paul Williams",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/skenmy/esalowerthird.git"
+  },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "ws": "^8.19.0"
   }

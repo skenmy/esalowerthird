@@ -237,10 +237,14 @@
     let feature = { feature: 'none' };
     let producer = { active: false, text: '', level: 'info' };
 
+    // Escapes for element text AND quoted attribute values.
     function escHtml(str) {
-      const d = document.createElement('div');
-      d.textContent = str == null ? '' : str;
-      return d.innerHTML;
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
 
     // ===== Scale-to-fit =====
@@ -356,38 +360,7 @@
       ).join('');
     }
 
-    // ===== Secondary module (bid war / incentive) =====
-    function pollBars(poll, big) {
-      const options = (poll.options || []).slice().sort((a, b) =>
-        parseFloat(b.total_amount_raised?.value || b.amount_raised?.value || 0) -
-        parseFloat(a.total_amount_raised?.value || a.amount_raised?.value || 0));
-      const top = options;
-      const max = Math.max(...top.map(o => parseFloat(o.total_amount_raised?.value || o.amount_raised?.value || 0)), 1);
-      return top.map((o, i) => {
-        const amt = parseFloat(o.total_amount_raised?.value || o.amount_raised?.value || 0);
-        const pct = Math.round((amt / max) * 100);
-        const lead = i === 0;
-        return '<div class="bar-block">' +
-          '<div class="bar-head"><span class="bar-name">' + escHtml(o.name) + '</span>' +
-          '<span class="bar-amt" style="color:' + (lead ? 'var(--accent)' : '#cfd5e3') + '">' + moneyBig(amt) + '</span></div>' +
-          '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:' + (lead ? 'var(--accent)' : '#5d6478') + '"></div></div>' +
-        '</div>';
-      }).join('');
-    }
-    function targetBars(t) {
-      const raised = parseFloat(t.amount_raised?.value || t.current_amount?.value || 0);
-      const goal = parseFloat(t.amount?.value || t.goal?.value || 1);
-      const pct = Math.min(100, Math.round((raised / goal) * 100));
-      return '<div class="bar-block">' +
-        '<div class="bar-head"><span class="bar-name">' + escHtml(t.name || 'Incentive') + '</span>' +
-        '<span class="bar-amt" style="color:var(--accent)">' + pct + '%</span></div>' +
-        '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:var(--accent)"></div></div>' +
-        '<div style="display:flex;justify-content:space-between;margin-top:10px;" class="mono">' +
-          '<span style="color:var(--muted-2);font-size:21px;">' + moneyBig(raised) + '</span>' +
-          '<span style="color:var(--muted-2);font-size:21px;">' + moneyBig(goal) + ' goal</span></div>' +
-      '</div>';
-    }
-    // Latest donations — newest at top, new ones fade in (no rotation).
+    // ===== Secondary module: latest donations — newest at top, new ones fade in (no rotation).
     const seenDonations = new Set();
     let donationsSeeded = false;
     function donationKey(d) {

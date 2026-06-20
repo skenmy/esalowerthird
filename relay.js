@@ -8,6 +8,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 const { WebSocketServer } = require('ws');
 
 // Static-file serving. STATIC_DIR holds source.html / control.html / index.html
@@ -44,11 +45,14 @@ const horaroEnabled = !!HORARO_SCHEDULE;
 const twitchEnabled = !!(TWITCH_CLIENT_ID && TWITCH_CLIENT_SECRET);
 const authEnabled = !!RELAY_TOKEN;
 
-// Constant-ish-time token check: accept the token from the query string or a
-// header so both browser WS clients (?token=) and Companion's HTTP module
-// (header) work. Returns true when auth is disabled.
+// Token check, accepted from the query string or a header so both browser WS
+// clients (?token=) and Companion's HTTP module (header) work. Compared in
+// constant time so a wrong token can't be guessed byte-by-byte via timing.
 function tokenValid(token) {
-  return !!token && token === RELAY_TOKEN;
+  if (!token || typeof token !== 'string') return false;
+  const a = Buffer.from(token);
+  const b = Buffer.from(RELAY_TOKEN);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
 function authOk(req, url) {
   if (!authEnabled) return true;
@@ -71,6 +75,7 @@ let tiltifyCache = {
   campaign: null,
   donations: [],
   targets: [],
+  polls: [],
   milestones: [],
   incentives: {},  // { targets: {id: {name, raised, goal}}, polls: {id: {name, options: {optId: name}}} }
   donationMatches: [],
@@ -471,7 +476,7 @@ function broadcastSchedule() {
 const CORS_HEADERS = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
+  'Access-Control-Allow-Headers': 'Content-Type, X-Relay-Token, Authorization',
 };
 
 function broadcastToAll(data) {
@@ -661,6 +666,10 @@ wss.on('connection', (ws, req) => {
   // path (X-Forwarded-User injected, see the lowerthird Caddyfile) or it
   // presented a valid ?token= (Companion-over-WS / scripts). When auth is
   // disabled the relay is fully open (legacy behaviour).
+  // NB: X-Forwarded-User is trusted as proof of a Caddy-authenticated operator.
+  // That is only safe because the edge strips any client-supplied value before
+  // re-injecting it (see the lowerthird Caddyfile) and the relay port is never
+  // published directly — only Caddy can reach it. Don't expose the port raw.
   const u = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   ws.canWrite = !authEnabled
     || !!req.headers['x-forwarded-user']
@@ -760,7 +769,7 @@ server.listen(PORT, () => {
   if (tiltifyEnabled) {
     console.log(`[Tiltify] Integration enabled (campaign ${TILTIFY_CAMPAIGN_ID})`);
     // Initial poll, then every 15s
-    pollTiltify();
+    pollTiltify().catch(err => console.error('[Tiltify] Initial poll error:', err.message));
     setInterval(pollTiltify, POLL_INTERVAL);
   } else {
     console.log('[Tiltify] Integration disabled (missing env vars)');
@@ -768,7 +777,7 @@ server.listen(PORT, () => {
 
   if (horaroEnabled) {
     console.log(`[Horaro] Schedule enabled (${HORARO_SCHEDULE})`);
-    pollHoraro();
+    pollHoraro().catch(err => console.error('[Horaro] Initial poll error:', err.message));
     setInterval(pollHoraro, HORARO_POLL_INTERVAL);
   } else {
     console.log('[Horaro] Schedule disabled (no HORARO_SCHEDULE env var)');

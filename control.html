@@ -1062,27 +1062,6 @@
       margin-left: 8px;
     }
 
-    /* ===== Mirror toggle ===== */
-    .mirror-toggle {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-family: 'Barlow Semi Condensed', sans-serif;
-      font-weight: 700;
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.06em;
-      padding: 7px 13px;
-      border-radius: 8px;
-      cursor: pointer;
-      background: #0e1119;
-      border: 1px solid #2a3144;
-      color: #8b93a7;
-      transition: border-color 0.15s, color 0.15s;
-    }
-    .mirror-toggle .mdot { width: 8px; height: 8px; border-radius: 50%; background: #5d6478; }
-    .mirror-toggle.on { color: #2ee6a0; border-color: rgba(46,230,160,0.45); background: rgba(46,230,160,0.1); }
-    .mirror-toggle.on .mdot { background: #2ee6a0; }
 
     /* ===== Send target selector (Program / Both / Confidence) ===== */
     .target-seg {
@@ -1186,7 +1165,6 @@
     .state-btn.recording { background: #e11d48; }
     .state-btn.wrap { background: #ffb02e; color: #1a1205; }
     .state-btn.active { opacity: 1; }
-    .feat-row { display: flex; gap: 8px; flex-wrap: wrap; }
     .feat-btn {
       font-family: 'Barlow Semi Condensed', sans-serif;
       font-weight: 700; font-size: 13px; letter-spacing: 0.04em;
@@ -1222,14 +1200,6 @@
       border: none; border-radius: 9px; padding: 0 18px; cursor: pointer;
       background: #2ee6a0; color: #08130d;
     }
-    .cue-row { display: flex; gap: 7px; flex-wrap: wrap; }
-    .cue-btn {
-      font-family: 'Barlow Semi Condensed', sans-serif;
-      font-weight: 600; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase;
-      border-radius: 8px; padding: 7px 10px; cursor: pointer; background: #0e1119;
-    }
-    .cue-btn.info { border: 1px solid rgba(77,124,255,0.4); color: #9fb4ff; }
-    .cue-btn.urgent { border: 1px solid rgba(255,65,54,0.4); color: #ff8a82; }
 
     /* ===================== Studio Control dashboard ===================== */
     html, body { height: 100%; }
@@ -1274,6 +1244,9 @@
     .sc-rail .state-row { flex-wrap: wrap; }
     .sc-rail .state-btn { flex: 1 1 30%; min-width: 0; padding: 11px 4px; font-size: 12px; }
   </style>
+  <!-- Author's self-hosting auth integration (tools.skenmy.com Twitch sign-in).
+       Forking? Remove this line or point it at your own gate — it's not required
+       for the panel to function. -->
   <script src="https://tools.skenmy.com/embed.js" data-app="lowerthird" data-role="admin"></script>
 </head>
 <body>
@@ -1647,7 +1620,7 @@
     // setups without the Caddy edge (local dev, scripts).
     const relayToken = (() => {
       const q = new URLSearchParams(location.search).get('token');
-      if (q) { try { localStorage.setItem('esa-lt-token', q); } catch (e) {} return q; }
+      if (q) { lsSet('esa-lt-token', q); return q; }
       try { return localStorage.getItem('esa-lt-token') || ''; } catch (e) { return ''; }
     })();
     const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/adminws'
@@ -1723,7 +1696,7 @@
     }
     function setConfTarget(t) {
       confTarget = t;
-      try { localStorage.setItem('esa-lt-conf-target', t); } catch (e) {}
+      lsSet('esa-lt-conf-target', t);
       updateTargetUI();
       const msg = { program: 'Shows go to Program only', both: 'Shows go to Program + Host monitor', confidence: 'Host monitor only — hosts read before it hits stream' };
       showToast(msg[t] || '');
@@ -1756,6 +1729,13 @@
       setFeatureUI('none');
     }
 
+    // Milestones sorted low→high by amount. The Tiltify browser, the show
+    // action, and buildFeat must ALL sort via this so list indices line up.
+    function sortedMilestones(list) {
+      const amt = m => parseFloat(m.amount?.value || m.value || 0);
+      return [...(list || [])].sort((a, b) => amt(a) - amt(b));
+    }
+
     // Build a confidence feature payload from the same data the Program show uses.
     function buildFeat(kind, idx, list, mode) {
       const td = tiltifyData;
@@ -1771,7 +1751,7 @@
           return { feature: 'incentive', t: { name: t.name || 'Incentive', raised: t.amount_raised?.value ?? t.current_amount?.value ?? 0, goal: t.amount?.value ?? t.goal?.value ?? 0 } };
         }
         case 'milestone': {
-          const ms = [...(td.milestones || [])].sort((a, b) => parseFloat(a.amount?.value || a.value || 0) - parseFloat(b.amount?.value || b.value || 0));
+          const ms = sortedMilestones(td.milestones);
           const m = ms[idx]; if (!m) return null;
           const raised = parseFloat(td.campaign?.total_amount_raised?.value ?? td.campaign?.amount_raised?.value ?? 0);
           const thr = parseFloat(m.amount?.value || m.value || 0);
@@ -1807,18 +1787,6 @@
       document.querySelectorAll('.state-btn').forEach(b => b.classList.toggle('active', b.dataset.state === state));
     }
 
-    // Manual "Feature Large" buttons in the Confidence deck — always push to the host monitor.
-    function setFeatureLarge(kind) {
-      let payload = { feature: 'none' };
-      if (kind === 'total') payload = buildFeat('total');
-      else if (kind === 'incentive') payload = buildFeat('target', 0);
-      else if (kind === 'bidwar') payload = buildFeat('poll', 0);
-      else if (kind === 'schedule') payload = buildFeat('schedule', 0, 'up', 'next');
-      if (!payload) { showToast('Nothing to feature yet'); return; }
-      wsSend(Object.assign({ type: 'confidence_feature' }, payload));
-      setFeatureUI(payload.feature);
-      showToast(payload.feature === 'none' ? 'Host feature cleared' : 'Featuring on host monitor');
-    }
     function setFeatureUI(feature) {
       const map = { total: 'featTotal', incentive: 'featIncentive', bidwar: 'featBidwar', schedule: 'featSchedule' };
       document.querySelectorAll('.feat-row .feat-btn').forEach(b => b.classList.remove('active'));
@@ -1872,7 +1840,7 @@
     }
 
     function savePresets() {
-      localStorage.setItem('esa-lt-presets', JSON.stringify(presets));
+      lsSet('esa-lt-presets', JSON.stringify(presets));
     }
 
     function genId() {
@@ -1896,9 +1864,9 @@
     }
 
     function saveAdvancedState() {
-      localStorage.setItem('esa-lt-advancedMode', advancedMode);
-      localStorage.setItem('esa-lt-advancedQueues', JSON.stringify(advancedQueues));
-      localStorage.setItem('esa-lt-selectedScene', selectedScene);
+      lsSet('esa-lt-advancedMode', advancedMode);
+      lsSet('esa-lt-advancedQueues', JSON.stringify(advancedQueues));
+      lsSet('esa-lt-selectedScene', selectedScene);
     }
 
     // --- Rendering ---
@@ -2014,10 +1982,25 @@
       }).join('');
     }
 
+    // Escapes for element text AND quoted attribute values.
     function escHtml(str) {
-      const div = document.createElement('div');
-      div.textContent = str || '';
-      return div.innerHTML;
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // localStorage write that won't throw in private-mode / quota-exceeded
+    // (reads already degrade gracefully; writes shouldn't break the action).
+    function lsSet(key, value) {
+      try { localStorage.setItem(key, value); } catch (e) {}
+    }
+
+    // Muted "nothing here" placeholder row used by the Tiltify browser + fun-tool lists.
+    function emptyRow(msg, pad) {
+      return `<div style="color: #5d6478; font-size: 12px; padding: ${pad || '8px'};">${msg}</div>`;
     }
 
     // --- Actions ---
@@ -2161,13 +2144,6 @@
       if (cmd === 'go') goLive();
       else if (cmd === 'hide') hideAll();
       else if (cmd === 'total') tiltifyShowDisplay('total');
-    }
-
-    function hideScene(scene) {
-      wsSend({ type: 'hide', scene });
-      sceneLiveStatus[scene] = false;
-      render();
-      showToast(`${SCENE_LABELS[scene]} hidden`);
     }
 
     // --- Advanced Mode ---
@@ -2387,8 +2363,7 @@
       const donations = tiltifyData.donations;
       const targets = tiltifyData.targets || [];
       const polls = tiltifyData.polls || [];
-      let milestones = [...(tiltifyData.milestones || [])];
-      milestones.sort((a, b) => parseFloat(a.amount?.value || 0) - parseFloat(b.amount?.value || 0));
+      let milestones = sortedMilestones(tiltifyData.milestones);
       const campaignRaised = tiltifyData.campaign
         ? parseFloat(tiltifyData.campaign.total_amount_raised?.value || tiltifyData.campaign.amount_raised?.value || 0)
         : 0;
@@ -2419,7 +2394,7 @@
         : donations;
       const donList = document.getElementById('listDonations');
       if (filteredDonations.length === 0) {
-        donList.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">' + (donations.length ? 'No matches' : 'No donations yet') + '</div>';
+        donList.innerHTML = emptyRow(donations.length ? 'No matches' : 'No donations yet');
       } else {
         donList.innerHTML = filteredDonations.map((d) => {
           const origIndex = donations.indexOf(d);
@@ -2447,7 +2422,7 @@
         : targets;
       const tgtList = document.getElementById('listTargets');
       if (filteredTargets.length === 0) {
-        tgtList.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">' + (targets.length ? 'No matches' : 'No targets') + '</div>';
+        tgtList.innerHTML = emptyRow(targets.length ? 'No matches' : 'No targets');
       } else {
         tgtList.innerHTML = filteredTargets.map((t) => {
           const origIndex = targets.indexOf(t);
@@ -2474,7 +2449,7 @@
         : polls;
       const pollList = document.getElementById('listPolls');
       if (filteredPolls.length === 0) {
-        pollList.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">' + (polls.length ? 'No matches' : 'No polls') + '</div>';
+        pollList.innerHTML = emptyRow(polls.length ? 'No matches' : 'No polls');
       } else {
         pollList.innerHTML = filteredPolls.map((p) => {
           const origIndex = polls.indexOf(p);
@@ -2498,7 +2473,7 @@
         : milestones;
       const msList = document.getElementById('listMilestones');
       if (filteredMs.length === 0) {
-        msList.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">' + (milestones.length ? 'No matches' : 'No milestones') + '</div>';
+        msList.innerHTML = emptyRow(milestones.length ? 'No matches' : 'No milestones');
       } else {
         msList.innerHTML = filteredMs.map((m) => {
           const origIndex = milestones.indexOf(m);
@@ -2519,7 +2494,7 @@
       // Donation matches list
       const matchList = document.getElementById('listMatches');
       if (donationMatches.length === 0) {
-        matchList.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">No donation matches</div>';
+        matchList.innerHTML = emptyRow('No donation matches');
       } else {
         matchList.innerHTML = donationMatches.map((m, i) => {
           const raised = parseFloat(m.total_amount_raised?.value || 0);
@@ -2561,9 +2536,7 @@
     }
 
     function tiltifyShowMilestone(index) {
-      // milestones are sorted in renderTiltifyLists, sort the same way here
-      let milestones = [...(tiltifyData.milestones || [])];
-      milestones.sort((a, b) => parseFloat(a.amount?.value || 0) - parseFloat(b.amount?.value || 0));
+      let milestones = sortedMilestones(tiltifyData.milestones);
       if (progAllowed()) wsSend({ type: 'tiltify_show', display: 'milestone', milestoneIndex: index });
       confShow(buildFeat('milestone', index));
       const m = milestones[index];
@@ -2676,7 +2649,7 @@
 
       const listEl = document.getElementById('listSchedule');
       if (filteredPrev.length === 0 && filteredUp.length === 0) {
-        listEl.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">' + (totalCount ? 'No matches' : 'No runs') + '</div>';
+        listEl.innerHTML = emptyRow(totalCount ? 'No matches' : 'No runs');
       } else {
         const prevHtml = filteredPrev.map((run) => {
           const origIndex = previous.indexOf(run);
@@ -2893,7 +2866,7 @@
       const el = document.getElementById('quoteLog');
       if (!el) return;
       if (quoteLog.length === 0) {
-        el.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 4px;">No quotes yet</div>';
+        el.innerHTML = emptyRow('No quotes yet', '4px');
         return;
       }
       el.innerHTML = quoteLog.slice().reverse().map((q, ri) => {
@@ -2932,7 +2905,7 @@
       const el = document.getElementById('sleepList');
       if (!el) return;
       if (sleepPeopleList.length === 0) {
-        el.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 4px;">No people added</div>';
+        el.innerHTML = emptyRow('No people added', '4px');
         return;
       }
       el.innerHTML = sleepPeopleList.map((p, i) => {
@@ -2965,7 +2938,7 @@
       const sel = document.getElementById('statPresetSelect');
       if (!sel) return;
       sel.innerHTML = '<option value="">-- Select preset --</option>' +
-        presets.map(p => `<option value="${p.id}">${escHtml(p.name || 'Unnamed')}</option>`).join('');
+        presets.map(p => `<option value="${escHtml(p.id)}">${escHtml(p.name || 'Unnamed')}</option>`).join('');
     }
 
     function loadStatCardPreset() {
@@ -3093,7 +3066,7 @@
       const el = document.getElementById('wheelHistory');
       if (!el) return;
       if (wheelHistory.length === 0) {
-        el.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 4px;">No spins yet</div>';
+        el.innerHTML = emptyRow('No spins yet', '4px');
         return;
       }
       el.innerHTML = wheelHistory.slice().reverse().map(h => {
@@ -3130,15 +3103,15 @@
     }
 
     function saveImagePresets() {
-      localStorage.setItem('esa-lt-image-presets', JSON.stringify(imagePresets));
+      lsSet('esa-lt-image-presets', JSON.stringify(imagePresets));
     }
 
     function saveImageQueue() {
-      localStorage.setItem('esa-lt-image-queue', JSON.stringify(imageQueue));
+      lsSet('esa-lt-image-queue', JSON.stringify(imageQueue));
     }
 
     function saveImageDefaultPos() {
-      localStorage.setItem('esa-lt-image-default-pos', imageDefaultPos);
+      lsSet('esa-lt-image-default-pos', imageDefaultPos);
     }
 
     function setImageDefaultPos(pos) {
@@ -3235,7 +3208,7 @@
       const el = document.getElementById('imagePresetList');
       if (!el) return;
       if (imagePresets.length === 0) {
-        el.innerHTML = '<div style="color: #5d6478; font-size: 12px; padding: 8px;">No image presets. Click + Add to create one.</div>';
+        el.innerHTML = emptyRow('No image presets. Click + Add to create one.');
         return;
       }
       el.innerHTML = imagePresets.map(preset => {
@@ -3319,19 +3292,19 @@
     function saveFunToolsState(type) {
       switch (type) {
         case 'counter':
-          localStorage.setItem('esa-lt-counter', JSON.stringify(counterState));
+          lsSet('esa-lt-counter', JSON.stringify(counterState));
           break;
         case 'quotes':
-          localStorage.setItem('esa-lt-quotes', JSON.stringify(quoteLog));
+          lsSet('esa-lt-quotes', JSON.stringify(quoteLog));
           break;
         case 'sleep':
-          localStorage.setItem('esa-lt-sleep', JSON.stringify(sleepPeopleList));
+          lsSet('esa-lt-sleep', JSON.stringify(sleepPeopleList));
           break;
         case 'wheel':
-          localStorage.setItem('esa-lt-wheel', JSON.stringify({ options: document.getElementById('wheelOptions').value, history: wheelHistory }));
+          lsSet('esa-lt-wheel', JSON.stringify({ options: document.getElementById('wheelOptions').value, history: wheelHistory }));
           break;
         case 'statcards':
-          localStorage.setItem('esa-lt-statcards', JSON.stringify(statCards));
+          lsSet('esa-lt-statcards', JSON.stringify(statCards));
           break;
       }
     }

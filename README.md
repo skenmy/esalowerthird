@@ -13,8 +13,9 @@ marathon streams. Four surfaces, one tiny WebSocket relay:
   Sends commands over WebSocket to show / hide overlays, manage presets,
   queue runners, browse live Tiltify data, trigger the fun tools, and
   drive the host confidence monitor (studio state, feature-large pushes,
-  producer messages, and a global **Mirror** toggle). Includes live
-  Program + Host preview iframes. Heavy single-file app.
+  producer messages, and a Program / Both / Confidence send-target
+  selector). Includes live Program + Host preview iframes. Heavy
+  single-file app.
 - **`/confidence.html`** — the host confidence monitor for studio hosts
   during intermissions. Always-on board (live total, up next, bid war,
   studio state, producer banner) that surfaces what viewers see large so
@@ -66,7 +67,7 @@ either a server-originated broadcast or a request the relay handles.
 | `src_result` | server → control | `{ username, gamesRun, totalPBs, worldRecords }` |
 | `twitch_lookup` | control → server | `{ username }` |
 | `twitch_result` | server → control | `{ username, followers, broadcasterType }` |
-| `confidence_state` | control → confidence | `{ state: standby\|air\|wrap }` |
+| `confidence_state` | control → confidence | `{ state: clear\|standby\|air\|recording\|wrap }` |
 | `confidence_feature` | control → confidence | `{ feature: total\|incentive\|bidwar\|schedule\|none, … }` |
 | `producer_msg` | control → confidence | `{ text, level: info\|urgent, active }` |
 | `ping` / `pong` | both | `{}` (server pings every 30s) |
@@ -75,10 +76,10 @@ either a server-originated broadcast or a request the relay handles.
 
 The relay caches the last `confidence_state` / `confidence_feature` /
 `producer_msg` and replays them to clients that connect later, so a host
-monitor opened mid-show still syncs. With the control panel's **Mirror**
-toggle on, showing the donation total / target / poll / schedule on
-Program also emits the matching `confidence_feature` so the host monitor
-features it large — runner cards never mirror.
+monitor opened mid-show still syncs. When the control panel's send target
+is **Both** or **Confidence**, showing the donation total / target / poll
+/ schedule on Program also emits the matching `confidence_feature` so the
+host monitor features it large — runner cards never mirror.
 
 Scene filtering: `source.html?scene=<name>` makes that instance only
 react to messages with `scene === <name>`. `confidence.html` defaults to
