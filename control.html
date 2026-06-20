@@ -1145,6 +1145,20 @@
       text-transform: uppercase; color: #cfd5e3;
     }
     .monitor-label .meta { font-size: 12px; color: #8b93a7; }
+    .monitor-label .monitor-src {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 700; font-size: 12px; letter-spacing: 0.04em;
+      color: #cfd5e3; background: #0e1119;
+      border: 1px solid #2a3144; border-radius: 6px;
+      padding: 3px 8px; cursor: pointer; max-width: 220px;
+    }
+    .monitor-label .monitor-src:focus { outline: none; border-color: #4d7cff; }
+    .monitor-label .monitor-cog {
+      font-size: 13px; line-height: 1; color: #8b93a7;
+      background: #0e1119; border: 1px solid #2a3144; border-radius: 6px;
+      padding: 4px 7px; cursor: pointer; transition: color 0.15s, border-color 0.15s;
+    }
+    .monitor-label .monitor-cog:hover { color: #4d7cff; border-color: #4d7cff; }
     .monitor-frame {
       width: 100%;
       aspect-ratio: 16 / 9;
@@ -1369,11 +1383,11 @@
           <div class="monitor">
             <div class="monitor-label">
               <span class="pill program">Program</span>
-              <span class="name">OBS Overlay</span>
-              <span class="meta">source.html</span>
+              <select class="monitor-src" id="programSrc" onchange="setProgramSource(this.value)" title="Choose what the Program preview shows"></select>
+              <button class="monitor-cog" onclick="configureNdiUrl()" title="Set the NDI bridge URL for the Program feed">&#9881;</button>
             </div>
             <div class="monitor-frame">
-              <iframe src="source.html" title="Program overlay preview" onload="scalePreviews()" scrolling="no"></iframe>
+              <iframe id="programFrame" src="source.html" title="Program preview" onload="scalePreviews()" scrolling="no" allow="autoplay; fullscreen; picture-in-picture"></iframe>
             </div>
           </div>
           <div class="monitor">
@@ -1401,7 +1415,7 @@
         </div>
 
         <!-- QUEUE -->
-        <div class="sc-panel" style="flex:0 0 auto; max-height:148px;">
+        <div class="sc-panel" style="flex:0 0 auto;">
           <div class="sc-panel-head">
             <span class="sc-panel-title">Queue</span>
             <div class="mode-toggle sm">
@@ -1419,7 +1433,7 @@
         </div>
 
         <!-- PRESETS -->
-        <div class="sc-panel" style="flex:1 1 auto; min-height:320px;">
+        <div class="sc-panel" style="flex:1 1 auto; min-height:0;">
           <div class="sc-panel-head">
             <span class="sc-panel-title">Presets</span>
             <button class="btn-add sm" onclick="addPreset()">+ Add</button>
@@ -1851,6 +1865,75 @@
       });
     }
     window.addEventListener('resize', scalePreviews);
+
+    // --- Program preview source picker ---
+    // The Program pane can show an overlay scene (source.html?scene=<x>, which
+    // the browser renders natively) or the real composited Program via NDI.
+    // A browser can't read NDI directly, so "Program (NDI)" points the iframe
+    // at a bridge URL (a WebRTC/HLS viewer page) the operator configures once.
+    function ndiUrl() { try { return localStorage.getItem('esa-lt-ndi-url') || ''; } catch (e) { return ''; } }
+
+    function initProgramSourcePicker() {
+      const sel = document.getElementById('programSrc');
+      if (!sel) return;
+      sel.innerHTML =
+        '<option value="overlay">Overlay &mdash; all scenes</option>' +
+        SCENES.map(s => `<option value="scene:${s}">Overlay &mdash; Scene ${escHtml(SCENE_LABELS[s])}</option>`).join('') +
+        '<option value="ndi">Program (NDI)</option>';
+      let saved = 'overlay';
+      try { saved = localStorage.getItem('esa-lt-program-src') || 'overlay'; } catch (e) {}
+      sel.value = [...sel.options].some(o => o.value === saved) ? saved : 'overlay';
+      applyProgramSource(sel.value, false);
+    }
+
+    function setProgramSource(val) {
+      lsSet('esa-lt-program-src', val);
+      applyProgramSource(val, true);
+    }
+
+    function applyProgramSource(val, interactive) {
+      const frame = document.getElementById('programFrame');
+      const sel = document.getElementById('programSrc');
+      if (!frame) return;
+      let src = 'source.html';
+      if (val === 'overlay') {
+        src = 'source.html';
+      } else if (val.startsWith('scene:')) {
+        src = 'source.html?scene=' + encodeURIComponent(val.slice(6));
+      } else if (val === 'ndi') {
+        let url = ndiUrl();
+        if (!url && interactive) url = configureNdiUrl();
+        if (!url) {
+          if (interactive) showToast('Set an NDI bridge URL first (gear icon)');
+          if (sel) sel.value = 'overlay';
+          lsSet('esa-lt-program-src', 'overlay');
+          src = 'source.html';
+        } else {
+          src = url;
+        }
+      }
+      if (frame.getAttribute('src') !== src) {
+        frame.setAttribute('src', src);
+        setTimeout(scalePreviews, 60);
+      }
+    }
+
+    function configureNdiUrl() {
+      const cur = ndiUrl();
+      const url = window.prompt(
+        'NDI bridge URL for the Program feed.\n\n' +
+        'A browser can\'t read NDI directly, so point this at a viewer page from\n' +
+        'your NDI→WebRTC bridge, e.g. a VDO.Ninja view URL, or MediaMTX at\n' +
+        'https://<host>/program. Must be HTTPS (this panel is served over HTTPS).',
+        cur);
+      if (url === null) return cur; // cancelled
+      const trimmed = url.trim();
+      lsSet('esa-lt-ndi-url', trimmed);
+      showToast(trimmed ? 'NDI bridge URL saved' : 'NDI bridge URL cleared');
+      const sel = document.getElementById('programSrc');
+      if (sel && sel.value === 'ndi') applyProgramSource('ndi', false);
+      return trimmed;
+    }
 
     // --- Persistence ---
 
@@ -3372,6 +3455,7 @@
     loadFunToolsState();
     loadImagePresets();
     loadConfTarget();
+    initProgramSourcePicker();
     scalePreviews();
     setTimeout(scalePreviews, 120);
     setTimeout(scalePreviews, 450);
