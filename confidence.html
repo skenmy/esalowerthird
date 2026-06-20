@@ -110,6 +110,9 @@
     #feature .fhd { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
     #feature .live-tag { font: 800 16px 'Barlow Semi Condensed'; letter-spacing: .14em; text-transform: uppercase; color: var(--bg); background: var(--accent); border-radius: 8px; padding: 7px 14px; display: flex; align-items: center; gap: 9px; }
     #feature .live-tag .b { width: 11px; height: 11px; border-radius: 50%; background: var(--bg); animation: ccblink 1s steps(1) infinite; }
+    /* Confidence-only push (not on Program): amber "preview" chip, no blink. */
+    #feature .live-tag.preview { background: var(--wrap); }
+    #feature .live-tag.preview .b { animation: none; }
     #feature .ftitle { font: 800 30px 'Barlow Semi Condensed'; color: #fff; letter-spacing: .02em; }
     #feature .react { font: 600 17px 'Barlow Semi Condensed'; letter-spacing: .1em; text-transform: uppercase; color: #9fb4ff; }
     #featureBody { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
@@ -141,6 +144,16 @@
     .feat-poll-track { flex: 1; height: 28px; background: var(--bg); border-radius: 8px; overflow: hidden; }
     .feat-poll-fill { height: 100%; border-radius: 8px; transition: width .6s ease; }
     .feat-poll-amt { font: 800 38px 'Barlow Semi Condensed'; font-variant-numeric: tabular-nums; min-width: 150px; text-align: right; }
+    /* Tiers shrink rows so longer bid wars don't overflow the feature box. */
+    .feat-poll.poll-md { gap: 12px; }
+    .feat-poll.poll-md .feat-poll-name { font-size: 30px; min-width: 240px; }
+    .feat-poll.poll-md .feat-poll-track { height: 22px; }
+    .feat-poll.poll-md .feat-poll-amt { font-size: 30px; min-width: 124px; }
+    .feat-poll.poll-sm { gap: 9px; }
+    .feat-poll.poll-sm .feat-poll-name { font-size: 24px; min-width: 200px; }
+    .feat-poll.poll-sm .feat-poll-track { height: 17px; }
+    .feat-poll.poll-sm .feat-poll-amt { font-size: 24px; min-width: 104px; }
+    .feat-poll-more { font: 700 19px 'Barlow Semi Condensed'; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-top: 2px; }
     .feat-statgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 40px; }
     .feat-statgrid .sv { font: 800 56px 'Barlow Semi Condensed'; color: #fff; font-variant-numeric: tabular-nums; line-height: 1; }
     .feat-statgrid .sl { font: 600 17px 'Barlow Semi Condensed'; letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
@@ -205,7 +218,7 @@
       <!-- feature takeover (replaces modules when active) -->
       <div id="feature">
         <div class="fhd">
-          <span class="live-tag"><span class="b"></span>Live on Stream</span>
+          <span class="live-tag" id="featureTag"><span class="b"></span>Live on Stream</span>
           <span class="ftitle" id="featureTitle"></span>
         </div>
         <div id="featureBody"></div>
@@ -405,17 +418,26 @@
         '<div class="feat-track"><div class="feat-fill" style="width:' + pct + '%"></div></div>';
     }
     function pollColsFrom(options) {
-      const opts = (options || []).slice().sort((a, b) => (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0));
-      if (!opts.length) return '<div class="empty">No options.</div>';
-      const max = Math.max(...opts.map(o => parseFloat(o.amount) || 0), 1);
-      return '<div class="feat-poll">' + opts.map((o, i) => {
+      const all = (options || []).slice().sort((a, b) => (parseFloat(b.amount) || 0) - (parseFloat(a.amount) || 0));
+      if (!all.length) return '<div class="empty">No options.</div>';
+      // The feature box is a fixed height, so a bid war with many options
+      // overflows. Cap the rows and shrink the type as the count grows so the
+      // leading options always stay on screen.
+      const MAX = 11;
+      const opts = all.slice(0, MAX);
+      const hidden = all.length - opts.length;
+      const max = Math.max(...all.map(o => parseFloat(o.amount) || 0), 1);
+      const tier = opts.length <= 5 ? '' : (opts.length <= 8 ? ' poll-md' : ' poll-sm');
+      return '<div class="feat-poll' + tier + '">' + opts.map((o, i) => {
         const amt = parseFloat(o.amount) || 0, pct = Math.round((amt / max) * 100), lead = i === 0;
         const c = lead ? 'var(--accent)' : '#5d6478', tc = lead ? 'var(--accent)' : '#cfd5e3';
         return '<div class="feat-poll-row">' +
           '<span class="feat-poll-name">' + escHtml(o.name) + '</span>' +
           '<div class="feat-poll-track"><div class="feat-poll-fill" style="width:' + pct + '%;background:' + c + '"></div></div>' +
           '<span class="feat-poll-amt" style="color:' + tc + '">' + moneyBig(amt) + '</span></div>';
-      }).join('') + '</div>';
+      }).join('') +
+        (hidden > 0 ? '<div class="feat-poll-more">+' + hidden + ' more option' + (hidden > 1 ? 's' : '') + '</div>' : '') +
+      '</div>';
     }
 
     function renderFeature() {
@@ -424,6 +446,13 @@
       const modEl = document.getElementById('modules');
       if (f === 'none') { featEl.style.display = 'none'; modEl.style.display = 'grid'; return; }
       featEl.style.display = 'flex'; modEl.style.display = 'none';
+      // Relabel the chip: only claim "Live on Stream" when the control panel
+      // says this push is also on Program. Confidence-only pushes get a
+      // "Preview" chip so hosts know it isn't on air yet.
+      const tag = document.getElementById('featureTag');
+      const isLive = feature.live !== false;
+      tag.classList.toggle('preview', !isLive);
+      tag.innerHTML = '<span class="b"></span>' + (isLive ? 'Live on Stream' : 'Preview — Not Live');
       const title = document.getElementById('featureTitle');
       const body = document.getElementById('featureBody');
       let html = '', t = '';

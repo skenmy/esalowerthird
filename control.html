@@ -1375,7 +1375,7 @@
         </div>
 
         <!-- QUEUE -->
-        <div class="sc-panel" style="flex:1;">
+        <div class="sc-panel" style="flex:0 0 auto; max-height:148px;">
           <div class="sc-panel-head">
             <span class="sc-panel-title">Queue</span>
             <div class="mode-toggle sm">
@@ -1393,7 +1393,7 @@
         </div>
 
         <!-- PRESETS -->
-        <div class="sc-panel" style="flex:1.5;">
+        <div class="sc-panel" style="flex:1 1 auto; min-height:320px;">
           <div class="sc-panel-head">
             <span class="sc-panel-title">Presets</span>
             <button class="btn-add sm" onclick="addPreset()">+ Add</button>
@@ -1720,7 +1720,10 @@
     // Send a confidence feature payload (respecting the send target). Runner cards never call this.
     function confShow(payload) {
       if (!payload || !confAllowed()) return;
-      wsSend(Object.assign({ type: 'confidence_feature' }, payload));
+      // live = also going to Program right now; the host monitor relabels its
+      // chip ("Live on Stream" vs "Preview") off this so Confidence-only pushes
+      // don't claim to be on air.
+      wsSend(Object.assign({ type: 'confidence_feature', live: progAllowed() }, payload));
       setFeatureUI(payload.feature);
     }
     function confClear() {
@@ -2587,7 +2590,8 @@
         const maxDonations = Math.min(tiltifyData.donations.length, 10);
         if (maxDonations === 0) return;
         autoCycleIndex = (autoCycleIndex + 1) % maxDonations;
-        wsSend({ type: 'tiltify_show', display: 'donation', donationIndex: autoCycleIndex });
+        if (progAllowed()) wsSend({ type: 'tiltify_show', display: 'donation', donationIndex: autoCycleIndex });
+        confShow(buildFeat('donation', autoCycleIndex));
       }, 8000);
     }
 
