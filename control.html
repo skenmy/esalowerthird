@@ -1273,6 +1273,16 @@
     /* tiltify rail: fixed head + scrolling list */
     .sc-tilt-head { flex-shrink: 0; padding: 12px 14px 9px; border-bottom: 1px solid rgba(255,255,255,.06); }
 
+    /* Tiltify list fills the full panel height: the body is a flex column,
+       the active tab fills it, the filter stays pinned, and only the list
+       itself scrolls (and only when the donations genuinely overflow).
+       Scoped to #tiltifySection so the Fun Tools tabs keep their own sizing. */
+    #tiltifySection > .sc-panel-body { display: flex; flex-direction: column; overflow: hidden; }
+    #tiltifySection .tiltify-tab-panel { max-height: none; overflow: visible; }
+    #tiltifySection .tiltify-tab-panel.active { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+    #tiltifySection .tiltify-tab-panel.active > input.tab-filter { flex-shrink: 0; }
+    #tiltifySection .tiltify-tab-panel.active > div { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+
     /* reuse-component overrides inside the dashboard */
     .sc-col .monitor-bus, .sc-col .action-buttons { margin-bottom: 0; flex-shrink: 0; }
     .sc-panel-body .preset-list { margin-bottom: 0; }
