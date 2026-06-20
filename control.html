@@ -1252,7 +1252,7 @@
     .sc-div { width: 1px; height: 26px; background: rgba(255,255,255,.1); flex-shrink: 0; }
     .sc-route-label { font: 700 10px 'Barlow Semi Condensed', sans-serif; letter-spacing: .14em; text-transform: uppercase; color: #6c7488; }
 
-    .sc-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 320px minmax(0,1fr) 408px; gap: 12px; padding: 12px; }
+    .sc-grid { flex: 1; min-height: 0; display: grid; grid-template-columns: 320px minmax(0,1fr) 408px; grid-template-rows: minmax(0, 1fr); gap: 12px; padding: 12px; overflow: hidden; }
     @media (max-width: 1320px) { .sc-grid { grid-template-columns: 280px minmax(0,1fr) 360px; } }
     .sc-rail, .sc-col { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
 
@@ -1384,7 +1384,7 @@
             <div class="monitor-label">
               <span class="pill program">Program</span>
               <select class="monitor-src" id="programSrc" onchange="setProgramSource(this.value)" title="Choose what the Program preview shows"></select>
-              <button class="monitor-cog" onclick="configureNdiUrl()" title="Set the NDI bridge URL for the Program feed">&#9881;</button>
+              <button class="monitor-cog" onclick="configureNdiUrl()" title="Set the NDI bridge URL for the Program feed (power user)">&#9881;</button>
             </div>
             <div class="monitor-frame">
               <iframe id="programFrame" src="source.html" title="Program preview" onload="scalePreviews()" scrolling="no" allow="autoplay; fullscreen; picture-in-picture"></iframe>
@@ -1867,17 +1867,18 @@
     window.addEventListener('resize', scalePreviews);
 
     // --- Program preview source picker ---
-    // The Program pane can show an overlay scene (source.html?scene=<x>, which
-    // the browser renders natively) or the real composited Program via NDI.
-    // A browser can't read NDI directly, so "Program (NDI)" points the iframe
-    // at a bridge URL (a WebRTC/HLS viewer page) the operator configures once.
+    // The Program pane normally previews an overlay scene (source.html?scene=<x>,
+    // which the browser renders natively). As a power-user option it can instead
+    // show the real composited Program via NDI — a browser can't read NDI, so
+    // "Program (NDI)" points the iframe at a bridge URL (a WebRTC/HLS viewer page)
+    // the operator configures once with the gear. See README "Program (NDI)".
     function ndiUrl() { try { return localStorage.getItem('esa-lt-ndi-url') || ''; } catch (e) { return ''; } }
 
     function initProgramSourcePicker() {
       const sel = document.getElementById('programSrc');
       if (!sel) return;
       sel.innerHTML =
-        '<option value="overlay">Overlay &mdash; all scenes</option>' +
+        '<option value="overlay">Overlay &mdash; live (unfiltered)</option>' +
         SCENES.map(s => `<option value="scene:${s}">Overlay &mdash; Scene ${escHtml(SCENE_LABELS[s])}</option>`).join('') +
         '<option value="ndi">Program (NDI)</option>';
       let saved = 'overlay';
@@ -1921,7 +1922,7 @@
     function configureNdiUrl() {
       const cur = ndiUrl();
       const url = window.prompt(
-        'NDI bridge URL for the Program feed.\n\n' +
+        'NDI bridge URL for the Program feed (power-user option).\n\n' +
         'A browser can\'t read NDI directly, so point this at a viewer page from\n' +
         'your NDI→WebRTC bridge, e.g. a VDO.Ninja view URL, or MediaMTX at\n' +
         'https://<host>/program. Must be HTTPS (this panel is served over HTTPS).',
