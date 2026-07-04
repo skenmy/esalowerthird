@@ -535,6 +535,71 @@
       opacity: 1;
     }
 
+    /* Role chooser (schedule → presets) */
+    .role-chooser {
+      position: fixed;
+      inset: 0;
+      background: rgba(3, 5, 10, 0.72);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    .role-chooser.visible { display: flex; }
+    .role-chooser-box {
+      background: #141823;
+      border: 2px solid #5d6478;
+      border-radius: 10px;
+      padding: 20px 24px;
+      width: calc(100% - 48px);
+      max-width: 380px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.55);
+    }
+    .role-chooser-box h3 {
+      margin: 0;
+      font-size: 15px;
+      font-weight: 600;
+      color: #e8ebf2;
+    }
+    .role-chooser-game { color: #4d7cff; }
+    .role-chooser-names {
+      font-size: 12px;
+      color: #5d6478;
+      margin: 6px 0 16px;
+      word-break: break-word;
+    }
+    .role-chooser-actions { display: flex; gap: 8px; }
+    .role-chooser-actions button {
+      flex: 1;
+      padding: 11px 8px;
+      border-radius: 6px;
+      background: #0e1119;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+    }
+    .role-chooser-actions button.runner {
+      border: 2px solid #4d7cff;
+      color: #4d7cff;
+    }
+    .role-chooser-actions button.runner:hover { background: #4d7cff; color: #fff; }
+    .role-chooser-actions button.comm {
+      border: 2px solid #2ee6a0;
+      color: #2ee6a0;
+    }
+    .role-chooser-actions button.comm:hover { background: #2ee6a0; color: #0b0d13; }
+    .role-chooser-cancel {
+      margin-top: 12px;
+      width: 100%;
+      background: none;
+      border: none;
+      color: #5d6478;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .role-chooser-cancel:hover { color: #e8ebf2; }
+
     .empty-state {
       text-align: center;
       padding: 40px 20px;
@@ -1667,6 +1732,18 @@
 
   <div class="toast" id="toast"></div>
 
+  <div class="role-chooser" id="roleChooser" onclick="if (event.target === this) closeRoleChooser()">
+    <div class="role-chooser-box">
+      <h3>Add presets for <span class="role-chooser-game" id="roleChooserGame"></span></h3>
+      <div class="role-chooser-names" id="roleChooserNames"></div>
+      <div class="role-chooser-actions">
+        <button class="runner" onclick="applyScheduleAddPresets('Runner')">Runner</button>
+        <button class="comm" onclick="applyScheduleAddPresets('Commentator')">Commentator</button>
+      </div>
+      <button class="role-chooser-cancel" onclick="closeRoleChooser()">Cancel</button>
+    </div>
+  </div>
+
   <script>
     // The control panel writes to the overlay, so it connects on the
     // Twitch-gated /adminws path: Caddy verifies the operator's login and
@@ -2385,6 +2462,13 @@
     document.addEventListener('keydown', (e) => {
       if (e.target.tagName === 'INPUT') return;
 
+      // Role chooser open: Escape closes it, swallow everything else so the
+      // global shortcuts (Enter → Go Live, etc.) don't fire behind the modal.
+      if (document.getElementById('roleChooser').classList.contains('visible')) {
+        if (e.code === 'Escape') { e.preventDefault(); closeRoleChooser(); }
+        return;
+      }
+
       // 1-9: Toggle queue
       if (e.code >= 'Digit1' && e.code <= 'Digit9' && !e.ctrlKey && !e.altKey && !e.metaKey) {
         e.preventDefault();
@@ -2823,6 +2907,7 @@
             `<div style="display: flex; gap: 4px; flex-shrink: 0;">` +
               `<button class="tiltify-donation-show" onclick="scheduleShowRun(${origIndex},'next','prev')" style="font-size: 10px; padding: 4px 8px;">Up Next</button>` +
               `<button class="tiltify-donation-show" onclick="scheduleShowRun(${origIndex},'coming','prev')" style="font-size: 10px; padding: 4px 8px;">Coming Up</button>` +
+              `<button class="tiltify-donation-show" onclick="scheduleAddPresets(${origIndex},'prev')" style="font-size: 10px; padding: 4px 8px;" title="Add this run's runners to presets">+ Presets</button>` +
             `</div>` +
           `</div>`;
         }).join('');
@@ -2845,6 +2930,7 @@
             `<div style="display: flex; gap: 4px; flex-shrink: 0;">` +
               `<button class="tiltify-donation-show" onclick="scheduleShowRun(${origIndex},'next','up')" style="font-size: 10px; padding: 4px 8px;">Up Next</button>` +
               `<button class="tiltify-donation-show" onclick="scheduleShowRun(${origIndex},'coming','up')" style="font-size: 10px; padding: 4px 8px;">Coming Up</button>` +
+              `<button class="tiltify-donation-show" onclick="scheduleAddPresets(${origIndex},'up')" style="font-size: 10px; padding: 4px 8px;" title="Add this run's runners to presets">+ Presets</button>` +
             `</div>` +
           `</div>`;
         }).join('');
@@ -2860,6 +2946,65 @@
       const run = runs[index];
       const label = mode === 'next' ? 'Up Next' : 'Coming Up';
       showToast(`${label}: ${run ? run.game : 'Run'}`);
+    }
+
+    // Split a Horaro "players" string into individual runner names. Handles the
+    // common separators (comma, "vs"/"versus", ampersand, slash) so both solo
+    // runs and races/co-op split sensibly.
+    function parseRunners(playersStr) {
+      return String(playersStr || '')
+        .split(/\s*(?:,|&|\/|\bvs\b\.?|\bversus\b)\s*/i)
+        .map(s => s.trim())
+        .filter(Boolean);
+    }
+
+    // Add a run's runners to the presets. Opens the role chooser so the operator
+    // tags the title as "Runner: <Game>" or "Commentator: <Game>" before adding.
+    let pendingSchedulePreset = null; // { index, list }
+
+    function scheduleAddPresets(index, list) {
+      const runs = list === 'prev' ? scheduleDataCache.previous : scheduleDataCache.upcoming;
+      const run = runs && runs[index];
+      if (!run) return;
+      const runners = parseRunners(run.players);
+      if (runners.length === 0) { showToast('No runners on this run'); return; }
+      pendingSchedulePreset = { index, list };
+      document.getElementById('roleChooserGame').textContent = run.game || 'this run';
+      document.getElementById('roleChooserNames').textContent = runners.join(', ');
+      document.getElementById('roleChooser').classList.add('visible');
+    }
+
+    function closeRoleChooser() {
+      document.getElementById('roleChooser').classList.remove('visible');
+      pendingSchedulePreset = null;
+    }
+
+    // Commit the pending runners as presets with a "<Role>: <Game>" title.
+    // Skips names that already have a preset (case-insensitive) so repeated
+    // clicks don't pile up duplicates.
+    function applyScheduleAddPresets(role) {
+      if (!pendingSchedulePreset) return;
+      const { index, list } = pendingSchedulePreset;
+      closeRoleChooser();
+      const runs = list === 'prev' ? scheduleDataCache.previous : scheduleDataCache.upcoming;
+      const run = runs && runs[index];
+      if (!run) return;
+      const runners = parseRunners(run.players);
+      const game = (run.game || '').trim();
+      const title = game ? `${role}: ${game}` : role;
+      const existing = new Set(presets.map(p => (p.name || '').trim().toLowerCase()));
+      let added = 0;
+      for (const runner of runners) {
+        if (existing.has(runner.toLowerCase())) continue;
+        presets.push({ id: genId(), name: runner, pronouns: '', title });
+        existing.add(runner.toLowerCase());
+        added++;
+      }
+      if (added === 0) { showToast('Runners already in presets'); return; }
+      savePresets();
+      render();
+      const skipped = runners.length - added;
+      showToast(`Added ${added} preset${added > 1 ? 's' : ''}${skipped ? ` (${skipped} already present)` : ''}`);
     }
 
     // --- Drag and Drop ---
