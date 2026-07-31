@@ -24,14 +24,17 @@ Five hand-written files. No build step, no bundler, no framework.
   connect later (so a host monitor opened mid-show still syncs).
 - `source.html` (~2.2k lines) — OBS browser source. Listens only,
   never sends commands (except status pings). Dispatches incoming WS
-  messages via a `switch` on `data.type`. Overlays use the "Cube System"
-  skin driven by CSS variables; `?theme=mono` swaps the heritage
-  purple/gold palette for graphite/blue.
+  messages via a `switch` on `data.type`. Overlays follow the ESA
+  Marathon brand guide (`~/code/esa-marathon-brand-guide`): plum glass
+  panels, gold = moving values, cream = static reference, all driven by
+  CSS variables on `:root`; `?theme=mono` swaps to graphite/blue. The
+  logo tab uses `esa-marathon-cube.svg` (transparent cut extracted from
+  the kit — the kit's `Cube_Light.svg` has a baked-in light background).
 - `control.html` (~3k lines) — operator panel ("Studio Control").
   Single-file app with presets, queues, Tiltify browser, fun-tools tabs,
-  live Program/Host preview iframes, and a Confidence section (studio
-  state, feature-large pushes, producer-message composer) plus a
-  Program/Both/Confidence send-target selector. Heavy.
+  and a Confidence section (studio state, feature-large pushes,
+  producer-message composer) plus a Program/Both/Confidence send-target
+  selector. Heavy.
 - `confidence.html` (~500 lines) — NEW host confidence monitor.
   Listen-only (`?scene=confidence`), self-scales its fixed 1920×1080
   stage to fit. Reads the same `tiltify_data` / `schedule_data` feeds for

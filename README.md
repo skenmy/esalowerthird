@@ -14,8 +14,7 @@ marathon streams. Four surfaces, one tiny WebSocket relay:
   queue runners, browse live Tiltify data, trigger the fun tools, and
   drive the host confidence monitor (studio state, feature-large pushes,
   producer messages, and a Program / Both / Confidence send-target
-  selector). Includes live Program + Host preview iframes. Heavy
-  single-file app.
+  selector). Heavy single-file app.
 - **`/confidence.html`** — the host confidence monitor for studio hosts
   during intermissions. Always-on board (live total, up next, bid war,
   studio state, producer banner) that surfaces what viewers see large so
@@ -85,34 +84,8 @@ Scene filtering: `source.html?scene=<name>` makes that instance only
 react to messages with `scene === <name>`. `confidence.html` defaults to
 `scene=confidence`.
 
-### Program preview picker
-
-The control panel's **Program** preview pane has a dropdown to choose what
-it shows:
-
-- **Overlay — live (unfiltered)** — `source.html` with no scene filter.
-  Reacts to every overlay message regardless of scene, so it mirrors
-  Together-mode sends (or, in Separate mode, whichever scene was sent
-  last). A single overlay only ever renders one thing — it does **not**
-  composite all scenes.
-- **Overlay — Scene A … G** — `source.html?scene=<a…g>`, previewing one
-  specific Separate-mode scene.
-- **Program (NDI)** — *power-user option.* Shows the real composited
-  Program instead of the overlay. A browser can't read NDI directly, so
-  this points the iframe at a **bridge URL** you set via the gear icon
-  (stored in `localStorage['esa-lt-ndi-url']`). The bridge must convert
-  NDI to something a browser can play and be served over **HTTPS** (the
-  panel is HTTPS, so a plain-`http://` viewer is blocked as mixed
-  content). Two common bridges: a **VDO.Ninja** `?view=<id>` URL
-  (HTTPS-hosted, WebRTC P2P on your LAN), or a self-hosted **MediaMTX**
-  WebRTC/WHEP endpoint behind a TLS reverse proxy. Expect ~0.2–0.5 s of
-  WebRTC latency, so treat it as a confidence monitor, not a
-  frame-accurate reference.
-
-  For most setups it's simpler to **skip embedding** and watch the real
-  Program in a native NDI viewer (NDI Studio Monitor, or an OBS windowed
-  projector) beside the panel — zero transcode, zero TLS, zero latency.
-  The NDI option exists for operators who specifically want it in-tab.
+To watch the real Program while operating, use a native NDI viewer (NDI
+Studio Monitor, or an OBS windowed projector) beside the panel.
 
 ## Conventions in `source.html` / `control.html`
 
@@ -140,7 +113,7 @@ All optional — the relay degrades gracefully when a section is unset.
 | `TILTIFY_CLIENT_ID` / `TILTIFY_CLIENT_SECRET` | OAuth client credentials (Tiltify dashboard → Apps). |
 | `TILTIFY_CAMPAIGN_ID` | the campaign UUID. |
 | `TILTIFY_CAMPAIGN_TYPE` | `team_campaigns` (default) or `campaigns`. |
-| `HORARO_SCHEDULE` | e.g. `esa/2026-winter1` (event-slug/schedule-slug). |
+| `HORARO_SCHEDULE` | e.g. `esa/2026-summer1` (event-slug/schedule-slug; stream 2 is `esa/2026-summer2`). |
 | `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET` | optional — enables `twitch_lookup`. |
 | `RELAY_TOKEN` | optional shared secret. When set, `/ws` writes need Caddy auth or `?token=`, and `/api/*` needs the token (see [Auth](#auth)). Unset = fully open. |
 
