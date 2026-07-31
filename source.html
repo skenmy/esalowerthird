@@ -934,7 +934,7 @@
     let tiltifyData = { campaign: null, donations: [], targets: [], polls: [], milestones: [], donationMatches: [], incentives: {}, lastUpdated: 0 };
 
     // Schedule state
-    let scheduleData = { schedule: null, upcoming: [], previous: [], lastUpdated: 0 };
+    let scheduleData = { schedule: null, upcoming: [], previous: [], stream2: null, lastUpdated: 0 };
     let scheduleVisible = false;
     let tiltifyVisible = false;
     let tiltifyCurrentDisplay = null; // 'totalizer', 'donation', 'targets', 'milestones', 'matching'
@@ -986,6 +986,7 @@
               schedule: data.schedule,
               upcoming: data.upcoming || [],
               previous: data.previous || [],
+              stream2: data.stream2 || null,
               lastUpdated: data.lastUpdated || Date.now(),
             };
             break;
@@ -1579,24 +1580,27 @@
       const runIndex = data.runIndex ?? 0;
       const mode = data.mode || 'next';
       const list = data.list || 'up';
+      const stream = data.stream === 2 ? 2 : 1;
 
       showAfterHide(scheduleVisible, () => {
         const bar = scheduleDisplay.querySelector('.tiltify-bar');
         if (bar) bar.classList.add('hide');
-      }, () => buildAndShowSchedule(runIndex, mode, list));
+      }, () => buildAndShowSchedule(runIndex, mode, list, stream));
     }
 
-    function buildAndShowSchedule(runIndex, mode, list) {
-      const runs = list === 'prev' ? (scheduleData.previous || []) : (scheduleData.upcoming || []);
+    function buildAndShowSchedule(runIndex, mode, list, stream) {
+      const source = stream === 2 ? (scheduleData.stream2 || {}) : scheduleData;
+      const runs = list === 'prev' ? (source.previous || []) : (source.upcoming || []);
       if (!runs.length) {
         scheduleDisplay.innerHTML = '';
         return;
       }
 
       const run = runs[Math.min(runIndex, runs.length - 1)];
+      const onStream2 = stream === 2 ? ' on Stream 2' : '';
       const label = mode === 'coming'
-        ? `Coming Up &mdash; ${formatRunTime(run.scheduled)}`
-        : 'Up Next';
+        ? `Coming Up${onStream2} &mdash; ${formatRunTime(run.scheduled)}`
+        : `Up Next${onStream2}`;
 
       const detailParts = [];
       if (run.players) detailParts.push(escHtml(run.players));

@@ -1284,6 +1284,8 @@
     #tiltifySection .tiltify-tab-panel.active { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
     #tiltifySection .tiltify-tab-panel.active > input.tab-filter { flex-shrink: 0; }
     #tiltifySection .tiltify-tab-panel.active > div { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+    /* Stream toggle is a control, not a list — don't let the panel flex squash it */
+    #tiltifySection .tiltify-tab-panel.active > #schedStreamRow { flex: 0 0 auto; overflow: visible; align-self: flex-start; }
 
     /* Custom Message: the stacked inputs use the flex gap for spacing, so drop
        the global .tab-filter margin that pushed content past the bottom strip
@@ -1478,6 +1480,10 @@
             <div id="listMilestones"></div>
           </div>
           <div class="tiltify-tab-panel" id="tiltifyPanelSchedule">
+            <div class="mode-toggle sm" id="schedStreamRow" style="display: none; margin-bottom: 8px;">
+              <button class="mode-btn active" id="schedStreamBtn1" onclick="setSchedStream(1)">Stream 1</button>
+              <button class="mode-btn" id="schedStreamBtn2" onclick="setSchedStream(2)">Stream 2</button>
+            </div>
             <input class="tab-filter" type="text" placeholder="Filter runs..." oninput="onFilterInput('schedule', this.value)" onkeydown="event.stopPropagation()">
             <div id="listSchedule"></div>
           </div>
@@ -1817,9 +1823,10 @@
           return { feature: 'match', mm: { matchedBy: mm.matched_by || 'Anonymous', raised, pledged, complete: pledged > 0 && raised >= pledged } };
         }
         case 'schedule': {
-          const runs = (list === 'prev') ? (scheduleDataCache.previous || []) : (scheduleDataCache.upcoming || []);
+          const sc = activeSchedCache();
+          const runs = (list === 'prev') ? (sc.previous || []) : (sc.upcoming || []);
           const r = runs[idx]; if (!r) return null;
-          return { feature: 'schedule', run: { game: r.game, category: r.category, players: r.players, scheduled: r.scheduled, scheduled_t: r.scheduled_t, length_t: r.length_t, mode: mode || 'next' } };
+          return { feature: 'schedule', run: { game: r.game, category: r.category, players: r.players, scheduled: r.scheduled, scheduled_t: r.scheduled_t, length_t: r.length_t, mode: mode || 'next', stream: schedStream } };
         }
         case 'counter': return { feature: 'counter', c: { label: counterState.label, value: counterState.value } };
         case 'quote': return { feature: 'quote', q: { quote: document.getElementById('quoteText').value, attribution: document.getElementById('quoteAttribution').value } };
@@ -2442,7 +2449,7 @@
         : 0;
 
       // Tabs
-      const scheduleCount = (scheduleDataCache.upcoming || []).length;
+      const scheduleCount = (activeSchedCache().upcoming || []).length;
       const tabsEl = document.getElementById('tiltifyTabs');
       const donationMatches = tiltifyData.donationMatches || [];
       tabsEl.innerHTML =
@@ -2684,6 +2691,22 @@
     // --- Schedule ---
 
     let scheduleDataCache = { schedule: null, upcoming: [], previous: [], lastUpdated: 0 };
+    let scheduleDataCache2 = null; // stream 2, present only when the relay polls a second schedule
+    let schedStream = 1;
+    try { schedStream = localStorage.getItem('esa-lt-sched-stream') === '2' ? 2 : 1; } catch (e) {}
+
+    // Which stream's schedule the tab is browsing. Falls back to stream 1 if
+    // stream 2 data isn't (or stops being) available.
+    function activeSchedCache() {
+      return (schedStream === 2 && scheduleDataCache2) ? scheduleDataCache2 : scheduleDataCache;
+    }
+
+    function setSchedStream(n) {
+      schedStream = n === 2 ? 2 : 1;
+      lsSet('esa-lt-sched-stream', String(schedStream));
+      renderTiltifyLists();
+      renderScheduleTab();
+    }
 
     function handleScheduleData(data) {
       scheduleDataCache = {
@@ -2692,6 +2715,7 @@
         previous: data.previous || [],
         lastUpdated: data.lastUpdated || Date.now(),
       };
+      scheduleDataCache2 = data.stream2 || null;
       // Show the section if not yet visible (schedule can arrive before tiltify)
       document.getElementById('tiltifySection').classList.add('active');
       renderTiltifyLists();
@@ -2705,8 +2729,17 @@
     }
 
     function renderScheduleTab() {
-      const previous = scheduleDataCache.previous || [];
-      const upcoming = scheduleDataCache.upcoming || [];
+      // Stream toggle only appears when the relay is polling a second schedule
+      const row = document.getElementById('schedStreamRow');
+      if (row) {
+        row.style.display = scheduleDataCache2 ? 'flex' : 'none';
+        document.getElementById('schedStreamBtn1').classList.toggle('active', schedStream !== 2 || !scheduleDataCache2);
+        document.getElementById('schedStreamBtn2').classList.toggle('active', schedStream === 2 && !!scheduleDataCache2);
+      }
+
+      const cache = activeSchedCache();
+      const previous = cache.previous || [];
+      const upcoming = cache.upcoming || [];
       const totalCount = previous.length + upcoming.length;
 
       // Update tab count
@@ -2775,11 +2808,12 @@
     }
 
     function scheduleShowRun(index, mode, list) {
-      if (progAllowed()) wsSend({ type: 'schedule_show', runIndex: index, mode: mode, list: list });
+      if (progAllowed()) wsSend({ type: 'schedule_show', runIndex: index, mode: mode, list: list, stream: schedStream });
       confShow(buildFeat('schedule', index, list, mode));
-      const runs = list === 'prev' ? scheduleDataCache.previous : scheduleDataCache.upcoming;
+      const cache = activeSchedCache();
+      const runs = list === 'prev' ? cache.previous : cache.upcoming;
       const run = runs[index];
-      const label = mode === 'next' ? 'Up Next' : 'Coming Up';
+      const label = (mode === 'next' ? 'Up Next' : 'Coming Up') + (schedStream === 2 ? ' (Stream 2)' : '');
       showToast(`${label}: ${run ? run.game : 'Run'}`);
     }
 
@@ -2798,7 +2832,8 @@
     let pendingSchedulePreset = null; // { index, list }
 
     function scheduleAddPresets(index, list) {
-      const runs = list === 'prev' ? scheduleDataCache.previous : scheduleDataCache.upcoming;
+      const cache = activeSchedCache();
+      const runs = list === 'prev' ? cache.previous : cache.upcoming;
       const run = runs && runs[index];
       if (!run) return;
       const runners = parseRunners(run.players);

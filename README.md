@@ -60,8 +60,8 @@ either a server-originated broadcast or a request the relay handles.
 | `hide` | control → source | `{ scene }` |
 | `tiltify_show` / `tiltify_hide` | control → source | `{}` |
 | `tiltify_data` | server → all | `{ campaign, donations, targets, polls, milestones, donationMatches, … }` (every 15s) |
-| `schedule_show` / `schedule_hide` | control → source | `{}` |
-| `schedule_data` | server → all | `{ schedule, upcoming, previous }` (every 5m) |
+| `schedule_show` / `schedule_hide` | control → source | `{ runIndex, mode, list, stream? }` (`stream: 2` shows from the second schedule) |
+| `schedule_data` | server → all | `{ schedule, upcoming, previous, stream2? }` (every 5m; `stream2` only when `HORARO_SCHEDULE_2` is set) |
 | `src_lookup` | control → server | `{ username }` |
 | `src_result` | server → control | `{ username, gamesRun, totalPBs, worldRecords }` |
 | `twitch_lookup` | control → server | `{ username }` |
@@ -113,7 +113,8 @@ All optional — the relay degrades gracefully when a section is unset.
 | `TILTIFY_CLIENT_ID` / `TILTIFY_CLIENT_SECRET` | OAuth client credentials (Tiltify dashboard → Apps). |
 | `TILTIFY_CAMPAIGN_ID` | the campaign UUID. |
 | `TILTIFY_CAMPAIGN_TYPE` | `team_campaigns` (default) or `campaigns`. |
-| `HORARO_SCHEDULE` | e.g. `esa/2026-summer1` (event-slug/schedule-slug; stream 2 is `esa/2026-summer2`). |
+| `HORARO_SCHEDULE` | Stream 1 schedule, e.g. `esa/2026-summer1` (event-slug/schedule-slug). |
+| `HORARO_SCHEDULE_2` | Optional stream 2 schedule, e.g. `esa/2026-summer2`. When set, `schedule_data` carries it as `stream2` and the control panel's Schedule tab grows a Stream 1 / Stream 2 toggle; `schedule_show` accepts `stream: 2` and the overlay labels those runs "on Stream 2". |
 | `TWITCH_CLIENT_ID` / `TWITCH_CLIENT_SECRET` | optional — enables `twitch_lookup`. |
 | `RELAY_TOKEN` | optional shared secret. When set, `/ws` writes need Caddy auth or `?token=`, and `/api/*` needs the token (see [Auth](#auth)). Unset = fully open. |
 

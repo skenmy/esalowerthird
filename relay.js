@@ -26,7 +26,8 @@ const TILTIFY_API = 'https://v5api.tiltify.com';
 const POLL_INTERVAL = 15_000;
 const TOKEN_REFRESH_MARGIN = 5 * 60 * 1000; // refresh 5 min before expiry
 
-const HORARO_SCHEDULE = process.env.HORARO_SCHEDULE || ''; // e.g. "esa/2026-summer1" (stream 2 = "esa/2026-summer2")
+const HORARO_SCHEDULE = process.env.HORARO_SCHEDULE || ''; // stream 1, e.g. "esa/2026-summer1"
+const HORARO_SCHEDULE_2 = process.env.HORARO_SCHEDULE_2 || ''; // stream 2 (optional), e.g. "esa/2026-summer2"
 const HORARO_API = 'https://horaro.net/-/api/v1';
 const HORARO_POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
@@ -405,6 +406,7 @@ function broadcastTiltifyData() {
 // --- Horaro schedule ---
 
 let horaroCache = { schedule: null, upcoming: [], lastUpdated: 0 };
+let horaroCache2 = null; // stream 2, populated only when HORARO_SCHEDULE_2 is set
 
 // --- Host confidence state (last-known, replayed to new clients) ---
 let confidenceCache = {
@@ -413,57 +415,91 @@ let confidenceCache = {
   producer: null, // { type: 'producer_msg', text, level, active }
 };
 
+// Horaro cells can carry markdown — most commonly runner names as Twitch links,
+// "[name](https://twitch.tv/name)". Overlays want plain text, so unwrap links
+// (repeatedly, for multi-runner cells) and drop bold/italic markers.
+function stripMarkdown(value) {
+  let s = String(value ?? '');
+  let prev;
+  do {
+    prev = s;
+    s = s.replace(/\[([^\]]*)\]\([^)]*\)/g, '$1');
+  } while (s !== prev);
+  return s.replace(/\*\*([^*]+)\*\*/g, '$1').replace(/__([^_]+)__/g, '$1').trim();
+}
+
+async function fetchHoraro(slug) {
+  const [event, schedule] = slug.split('/');
+  const res = await fetch(`${HORARO_API}/events/${event}/schedules/${schedule}`, { redirect: 'follow' });
+  if (!res.ok) throw new Error(`Horaro fetch failed (${res.status})`);
+  const json = await res.json();
+  const data = json.data;
+
+  const now = Math.floor(Date.now() / 1000);
+  const columns = data.columns;
+  const gameIdx = columns.indexOf('Game');
+  const playerIdx = columns.indexOf('Player(s)');
+  const platformIdx = columns.indexOf('Platform');
+  const categoryIdx = columns.indexOf('Category');
+
+  const mapItem = item => ({
+    scheduled: item.scheduled,
+    scheduled_t: item.scheduled_t,
+    length_t: item.length_t,
+    game: stripMarkdown(item.data[gameIdx]),
+    players: stripMarkdown(item.data[playerIdx]),
+    platform: stripMarkdown(item.data[platformIdx]),
+    category: stripMarkdown(item.data[categoryIdx]),
+  });
+
+  const allItems = data.items || [];
+  // Runs not yet finished
+  const upcoming = allItems
+    .filter(item => item.scheduled_t + item.length_t > now)
+    .map(mapItem);
+  // Last 3 finished runs (most recent first, then reversed to chronological)
+  const previous = allItems
+    .filter(item => item.scheduled_t + item.length_t <= now)
+    .slice(-3)
+    .map(mapItem);
+
+  return {
+    schedule: { name: data.name, timezone: data.timezone },
+    upcoming,
+    previous,
+    lastUpdated: Date.now(),
+  };
+}
+
 async function pollHoraro() {
+  let changed = false;
   try {
-    const [event, schedule] = HORARO_SCHEDULE.split('/');
-    const res = await fetch(`${HORARO_API}/events/${event}/schedules/${schedule}`, { redirect: 'follow' });
-    if (!res.ok) throw new Error(`Horaro fetch failed (${res.status})`);
-    const json = await res.json();
-    const data = json.data;
-
-    const now = Math.floor(Date.now() / 1000);
-    const columns = data.columns;
-    const gameIdx = columns.indexOf('Game');
-    const playerIdx = columns.indexOf('Player(s)');
-    const platformIdx = columns.indexOf('Platform');
-    const categoryIdx = columns.indexOf('Category');
-
-    const mapItem = item => ({
-      scheduled: item.scheduled,
-      scheduled_t: item.scheduled_t,
-      length_t: item.length_t,
-      game: item.data[gameIdx] || '',
-      players: item.data[playerIdx] || '',
-      platform: item.data[platformIdx] || '',
-      category: item.data[categoryIdx] || '',
-    });
-
-    const allItems = data.items || [];
-    // Runs not yet finished
-    const upcoming = allItems
-      .filter(item => item.scheduled_t + item.length_t > now)
-      .map(mapItem);
-    // Last 3 finished runs (most recent first, then reversed to chronological)
-    const previous = allItems
-      .filter(item => item.scheduled_t + item.length_t <= now)
-      .slice(-3)
-      .map(mapItem);
-
-    horaroCache = {
-      schedule: { name: data.name, timezone: data.timezone },
-      upcoming,
-      previous,
-      lastUpdated: Date.now(),
-    };
-
-    broadcastSchedule();
+    horaroCache = await fetchHoraro(HORARO_SCHEDULE);
+    changed = true;
   } catch (err) {
     console.error('[Horaro] Poll error:', err.message);
   }
+  if (HORARO_SCHEDULE_2) {
+    try {
+      horaroCache2 = await fetchHoraro(HORARO_SCHEDULE_2);
+      changed = true;
+    } catch (err) {
+      console.error('[Horaro] Stream-2 poll error:', err.message);
+    }
+  }
+  if (changed) broadcastSchedule();
+}
+
+// Stream 1 stays at the top level so existing consumers (the confidence
+// monitor's "up next" board) keep working; stream 2 rides along as `stream2`.
+function scheduleMessage() {
+  const msg = { type: 'schedule_data', ...horaroCache };
+  if (horaroCache2 && horaroCache2.lastUpdated > 0) msg.stream2 = horaroCache2;
+  return JSON.stringify(msg);
 }
 
 function broadcastSchedule() {
-  const msg = JSON.stringify({ type: 'schedule_data', ...horaroCache });
+  const msg = scheduleMessage();
   for (const client of wss.clients) {
     if (client.readyState === 1) {
       client.send(msg);
@@ -684,7 +720,7 @@ wss.on('connection', (ws, req) => {
     ws.send(JSON.stringify({ type: 'tiltify_data', ...tiltifyCache }));
   }
   if (horaroEnabled && horaroCache.lastUpdated > 0) {
-    ws.send(JSON.stringify({ type: 'schedule_data', ...horaroCache }));
+    ws.send(scheduleMessage());
   }
   // Replay last-known confidence state so a host monitor opened late still syncs
   for (const cached of [confidenceCache.state, confidenceCache.feature, confidenceCache.producer]) {
@@ -776,7 +812,7 @@ server.listen(PORT, () => {
   }
 
   if (horaroEnabled) {
-    console.log(`[Horaro] Schedule enabled (${HORARO_SCHEDULE})`);
+    console.log(`[Horaro] Schedule enabled (${HORARO_SCHEDULE}${HORARO_SCHEDULE_2 ? ` + stream 2: ${HORARO_SCHEDULE_2}` : ''})`);
     pollHoraro().catch(err => console.error('[Horaro] Initial poll error:', err.message));
     setInterval(pollHoraro, HORARO_POLL_INTERVAL);
   } else {
