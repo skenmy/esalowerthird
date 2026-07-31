@@ -6,7 +6,10 @@
   <title>ESA Lower Third - Source</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Semi+Condensed:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <!-- Brand type stack (brand-guide.md §3): Bebas Neue Pro is Adobe-licensed and
+       must be installed locally on the OBS machine — the OFL Bebas Neue below is
+       the declared fallback (~10% narrower). Barlow Condensed + Cabin are OFL. -->
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Bebas+Neue&family=Cabin:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
     * {
       margin: 0;
@@ -14,42 +17,59 @@
       box-sizing: border-box;
     }
 
-    /* ===== Cube System theme (heritage = purple/gold; ?theme=mono = graphite/blue) ===== */
+    /* ===== ESA Marathon brand (default; ?theme=mono = graphite/blue alternate) =====
+       Tokens from esa-marathon-brand-guide brand-guide.md §1/§2/A.1. Colour carries
+       meaning: gold = the value that is moving, cream = static reference, lavender =
+       marks only (never text). Components reference the semantic vars, never hex. */
     :root {
-      --panel: linear-gradient(135deg, #2a1252 0%, #180a30 100%);
-      --tab: linear-gradient(135deg, #3a1a6e 0%, #1c0d38 100%);
-      --accent: #f5b13d;
-      --accent-2: #ffd27a;
-      --accent-text: #f5b13d;
-      --sub: #c9b3ec;
-      --name: #ffffff;
-      --hair: rgba(245, 177, 61, 0.4);
-      --track: rgba(0, 0, 0, 0.42);
-      --radius: 14px;
-      --iso:
-        repeating-linear-gradient(30deg, rgba(245, 177, 61, 0.06) 0 1px, transparent 1px 26px),
-        repeating-linear-gradient(150deg, rgba(245, 177, 61, 0.06) 0 1px, transparent 1px 26px);
+      --brand--ground:   #141118;
+      --brand--keyline:  #241b38;
+      --brand--plum:     #3a2657;
+      --brand--royal:    #734e9e;
+      --brand--gold:     #fdbb1c;
+      --brand--gold-2:   #ffd968;  /* gold gradient midpoint, from the kit wordmark */
+      --brand--cream:    #fff1c4;
+      --brand--lavender: #a44ee0;
+      --brand--ink:      #efeeec;
+      --brand--good:     #5cbd7d;
+      --brand--bad:      #fc1c67;
+      --brand--muted:    #a99cb8;
+      --brand--glass: linear-gradient(180deg, rgba(74, 50, 110, 0.46), rgba(36, 27, 56, 0.30));
+
+      /* Semantic mapping — theme=mono overrides these, not the brand tokens */
+      --panel: var(--brand--glass);
+      --tab: linear-gradient(180deg, rgba(58, 38, 87, 0.60), rgba(36, 27, 56, 0.44));
+      --accent: var(--brand--gold);
+      --accent-2: var(--brand--gold-2);
+      --kicker: var(--brand--cream);
+      --sub: var(--brand--muted);
+      --name: var(--brand--ink);
+      --good: var(--brand--good);
+      --bad: var(--brand--bad);
+      --hair: rgba(115, 78, 158, 0.5);
+      --sheen: inset 0 2px 0 rgba(255, 255, 255, 0.12);
+      --track: rgba(20, 17, 24, 0.55);
+      --radius: 0.75em;
       --bar-shadow: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.55));
     }
 
     body.theme-mono {
-      --panel: rgba(17, 20, 27, 0.95);
-      --tab: rgba(9, 11, 15, 0.97);
+      --panel: linear-gradient(180deg, rgba(17, 20, 27, 0.92), rgba(9, 11, 15, 0.85));
+      --tab: linear-gradient(180deg, rgba(13, 16, 22, 0.95), rgba(7, 9, 12, 0.90));
       --accent: #4d7cff;
       --accent-2: #6f97ff;
-      --accent-text: #9fb4ff;
+      --kicker: #9fb4ff;
       --sub: #9aa3b5;
       --name: #ffffff;
       --hair: rgba(255, 255, 255, 0.14);
+      --sheen: inset 0 2px 0 rgba(255, 255, 255, 0.08);
       --track: rgba(255, 255, 255, 0.08);
-      --iso:
-        repeating-linear-gradient(30deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 26px),
-        repeating-linear-gradient(150deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 26px);
     }
 
     body {
       background: transparent;
-      font-family: 'Barlow', system-ui, sans-serif;
+      font-family: 'Cabin', system-ui, sans-serif;
+      color: var(--name);
       overflow: hidden;
       -webkit-font-smoothing: antialiased;
     }
@@ -171,7 +191,8 @@
       border: 1px solid var(--hair);
       border-right: none;
       flex-shrink: 0;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--sheen);
     }
 
     .logo-container img {
@@ -182,24 +203,26 @@
 
     .names-container,
     .text-single {
-      background: var(--iso), var(--panel);
+      background: var(--panel);
       border-radius: 0 var(--radius) var(--radius) 0;
       border: 1px solid var(--hair);
       border-left: none;
       position: relative;
       overflow: hidden;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--sheen);
     }
 
+    /* Gold leading rule — the glass panel "names something" (brand-guide.md §4) */
     .names-container::before,
     .text-single::before {
       content: '';
       position: absolute;
       top: 0;
       left: 0;
-      width: 4px;
+      width: 6px;
       height: 100%;
-      background: linear-gradient(180deg, var(--accent-2) 0%, var(--accent) 100%);
+      background: var(--accent);
       z-index: 1;
     }
 
@@ -213,9 +236,9 @@
     }
 
     .name {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 34px;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--name);
       line-height: 1.1;
     }
@@ -228,10 +251,10 @@
     }
 
     .title {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 15px;
       font-weight: 700;
-      color: var(--accent-text);
+      color: var(--kicker);
       text-transform: uppercase;
       letter-spacing: 1.6px;
       margin-top: 3px;
@@ -304,7 +327,7 @@
     }
 
     .tiltify-content {
-      background: var(--iso), var(--panel);
+      background: var(--panel);
       border-radius: 0 var(--radius) var(--radius) 0;
       border: 1px solid var(--hair);
       border-left: none;
@@ -312,7 +335,8 @@
       overflow: hidden;
       padding: 16px 30px;
       min-width: 300px;
-      backdrop-filter: blur(10px);
+      backdrop-filter: blur(16px);
+      box-shadow: var(--sheen);
     }
 
     .tiltify-content::before {
@@ -320,9 +344,9 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: 4px;
+      width: 6px;
       height: 100%;
-      background: linear-gradient(180deg, var(--accent-2) 0%, var(--accent) 100%);
+      background: var(--accent);
       z-index: 1;
     }
 
@@ -331,10 +355,10 @@
     /* --- Totalizer --- */
 
     .totalizer-label {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 14px;
       font-weight: 700;
-      color: var(--accent-text);
+      color: var(--kicker);
       text-transform: uppercase;
       letter-spacing: 2px;
       margin-bottom: 4px;
@@ -343,9 +367,9 @@
     }
 
     .totalizer-amount {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 38px;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--name);
       font-variant-numeric: tabular-nums;
       line-height: 1.1;
@@ -356,8 +380,13 @@
 
     .totalizer-amount .goal {
       font-size: 22px;
-      color: var(--sub);
+      color: var(--kicker);
       font-weight: 600;
+    }
+
+    /* Gold marks the value that is moving — nothing else (brand-guide.md §2) */
+    .live {
+      color: var(--accent);
     }
 
     .totalizer-fill-track {
@@ -390,18 +419,18 @@
     }
 
     .donation-name {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 34px;
-      font-weight: 800;
+      font-weight: 700;
       color: var(--name);
       line-height: 1.1;
     }
 
     .donation-amount {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 34px;
-      font-weight: 800;
-      color: var(--accent-text);
+      font-weight: 700;
+      color: var(--accent);
       font-variant-numeric: tabular-nums;
       line-height: 1.1;
     }
@@ -418,10 +447,10 @@
     }
 
     .donation-incentive {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 14px;
       font-weight: 700;
-      color: var(--accent-text);
+      color: var(--kicker);
       text-transform: uppercase;
       letter-spacing: 0.6px;
       margin-top: 7px;
@@ -445,7 +474,7 @@
     }
 
     .poll-option-name {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 19px;
       font-weight: 700;
       color: var(--name);
@@ -471,10 +500,10 @@
     }
 
     .poll-option-amount {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 17px;
-      font-weight: 800;
-      color: var(--accent-text);
+      font-weight: 700;
+      color: var(--accent);
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
       min-width: 72px;
@@ -484,10 +513,10 @@
     /* --- Targets --- */
 
     .targets-header {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 14px;
       font-weight: 700;
-      color: var(--accent-text);
+      color: var(--kicker);
       text-transform: uppercase;
       letter-spacing: 2px;
       margin-bottom: 8px;
@@ -516,7 +545,7 @@
     }
 
     .target-name {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 19px;
       font-weight: 700;
       color: var(--name);
@@ -526,7 +555,7 @@
     .target-amounts {
       font-size: 16px;
       font-weight: 500;
-      color: var(--sub);
+      color: var(--kicker);
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
@@ -549,10 +578,10 @@
     /* --- Milestones --- */
 
     .milestones-header {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 14px;
       font-weight: 700;
-      color: var(--accent-text);
+      color: var(--kicker);
       text-transform: uppercase;
       letter-spacing: 2px;
       margin-bottom: 8px;
@@ -586,9 +615,9 @@
     }
 
     .milestone-check.reached {
-      background: #2ee6a0;
-      border-color: #2ee6a0;
-      color: #08130d;
+      background: var(--good);
+      border-color: var(--good);
+      color: var(--brand--ground);
     }
 
     .milestone-name {
@@ -604,26 +633,31 @@
     }
 
     .milestone-amount {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 16px;
-      font-weight: 800;
-      color: var(--accent-text);
+      font-weight: 700;
+      color: var(--kicker);
       font-variant-numeric: tabular-nums;
       white-space: nowrap;
     }
 
     .milestone-amount.reached {
-      color: #2ee6a0;
+      color: var(--good);
     }
 
     /* --- Schedule runs --- */
 
+    /* Game titles get the display face (brand-guide.md §3). The OFL Bebas Neue
+       fallback has no 800 cut — font-synthesis off so it renders clean, not smeared. */
     .run-game {
-      font-family: 'Barlow Semi Condensed', sans-serif;
-      font-size: 30px;
+      font-family: 'Bebas Neue Pro', 'Bebas Neue', sans-serif;
+      font-size: 34px;
       font-weight: 800;
+      font-synthesis: none;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
       color: var(--name);
-      line-height: 1.1;
+      line-height: 1.06;
       opacity: 0;
       transform: translateX(-20px);
     }
@@ -644,8 +678,8 @@
     }
 
     .run-details .run-platform {
-      color: var(--accent-text);
-      font-family: 'JetBrains Mono', monospace;
+      color: var(--kicker);
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 14px;
     }
 
@@ -667,10 +701,10 @@
     }
 
     .custom-heading {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 14px;
       font-weight: 700;
-      color: var(--accent-text);
+      color: var(--kicker);
       text-transform: uppercase;
       letter-spacing: 2px;
       margin-bottom: 4px;
@@ -679,7 +713,7 @@
     }
 
     .custom-text {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 25px;
       font-weight: 700;
       color: var(--name);
@@ -689,41 +723,43 @@
     }
 
     /* --- Shame Clock --- */
-    .shame-time { font-family: 'JetBrains Mono', monospace; font-size: 44px; font-weight: 700; color: var(--name); font-variant-numeric: tabular-nums; transition: color 0.5s; }
-    .shame-time.warning { color: var(--accent); }
-    .shame-time.urgent { color: #ff6b6b; text-shadow: 0 0 20px rgba(255,107,107,0.3); }
+    /* Running clocks and climbing counts are moving values, so they sit in gold;
+       escalation states switch to the brand red (brand-guide.md §2 semantics). */
+    .shame-time { font-family: 'Barlow Condensed', sans-serif; font-size: 44px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; transition: color 0.5s; }
+    .shame-time.warning { text-shadow: 0 0 18px rgba(253, 187, 28, 0.35); }
+    .shame-time.urgent { color: var(--bad); text-shadow: 0 0 20px rgba(252, 28, 103, 0.35); }
 
     /* --- Hype Meter --- */
     .hype-stats { display: flex; gap: 24px; align-items: baseline; }
-    .hype-big { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 38px; font-weight: 800; color: var(--name); font-variant-numeric: tabular-nums; }
+    .hype-big { font-family: 'Barlow Condensed', sans-serif; font-size: 38px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; }
     .hype-unit { font-size: 16px; color: var(--sub); }
 
     /* --- Donation Train --- */
-    .train-count { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 50px; font-weight: 800; color: var(--name); font-variant-numeric: tabular-nums; transition: color 0.3s, text-shadow 0.3s; }
-    .train-count.hot { color: var(--accent); }
-    .train-count.fire { color: #ff6b6b; text-shadow: 0 0 20px rgba(255,107,107,0.4); }
-    .train-count.epic { color: #ff4444; text-shadow: 0 0 30px rgba(255,68,68,0.6); }
+    .train-count { font-family: 'Barlow Condensed', sans-serif; font-size: 50px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; transition: color 0.3s, text-shadow 0.3s; }
+    .train-count.hot { text-shadow: 0 0 18px rgba(253, 187, 28, 0.4); }
+    .train-count.fire { color: var(--bad); text-shadow: 0 0 20px rgba(252, 28, 103, 0.4); }
+    .train-count.epic { color: var(--bad); text-shadow: 0 0 30px rgba(252, 28, 103, 0.6); }
 
     /* --- Counter --- */
-    .counter-value { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 50px; font-weight: 800; color: var(--name); font-variant-numeric: tabular-nums; transition: transform 0.15s; }
+    .counter-value { font-family: 'Barlow Condensed', sans-serif; font-size: 50px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; transition: transform 0.15s; }
     .counter-value.bump { transform: scale(1.15); }
 
     /* --- Quote --- */
     .quote-text { font-size: 23px; font-weight: 500; color: var(--name); font-style: italic; line-height: 1.4; max-width: 600px; }
-    .quote-attribution { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 16px; font-weight: 600; color: var(--accent-text); margin-top: 7px; }
+    .quote-attribution { font-family: 'Barlow Condensed', sans-serif; font-size: 16px; font-weight: 600; color: var(--kicker); margin-top: 7px; }
 
     /* --- Sleep Tracker --- */
     .sleep-row { display: flex; align-items: baseline; gap: 13px; margin-bottom: 5px; }
-    .sleep-name { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 20px; font-weight: 700; color: var(--name); }
-    .sleep-time { font-family: 'JetBrains Mono', monospace; font-size: 19px; font-weight: 700; color: var(--sub); font-variant-numeric: tabular-nums; transition: color 0.5s; }
-    .sleep-time.groggy { color: var(--accent); }
-    .sleep-time.zombie { color: #ff6b6b; }
+    .sleep-name { font-family: 'Barlow Condensed', sans-serif; font-size: 20px; font-weight: 700; color: var(--name); }
+    .sleep-time { font-family: 'Barlow Condensed', sans-serif; font-size: 19px; font-weight: 700; color: var(--accent); font-variant-numeric: tabular-nums; transition: color 0.5s; }
+    .sleep-time.groggy { text-shadow: 0 0 14px rgba(253, 187, 28, 0.35); }
+    .sleep-time.zombie { color: var(--bad); }
 
     /* --- Stat Card --- */
-    .stat-card-name { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 34px; font-weight: 800; color: var(--name); }
+    .stat-card-name { font-family: 'Barlow Condensed', sans-serif; font-size: 34px; font-weight: 700; color: var(--name); }
     .stat-card-pronouns { font-size: 16px; color: var(--sub); margin-left: 11px; }
     .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px 26px; margin-top: 10px; }
-    .stat-item-label { font-family: 'Barlow Semi Condensed', sans-serif; font-size: 11px; font-weight: 700; color: var(--accent-text); text-transform: uppercase; letter-spacing: 1px; }
+    .stat-item-label { font-family: 'Barlow Condensed', sans-serif; font-size: 11px; font-weight: 700; color: var(--kicker); text-transform: uppercase; letter-spacing: 1px; }
     .stat-item-value { font-size: 18px; font-weight: 600; color: var(--name); }
 
     /* --- Wheel (full-screen overlay) --- */
@@ -798,6 +834,8 @@
       padding: 13px;
       position: relative;
       overflow: hidden;
+      backdrop-filter: blur(16px);
+      box-shadow: var(--sheen);
     }
 
     .image-display.left .image-display-inner::before {
@@ -805,9 +843,9 @@
       position: absolute;
       top: 0;
       right: 0;
-      width: 4px;
+      width: 6px;
       height: 100%;
-      background: linear-gradient(180deg, var(--accent-2) 0%, var(--accent) 100%);
+      background: var(--accent);
       z-index: 1;
     }
 
@@ -816,9 +854,9 @@
       position: absolute;
       top: 0;
       left: 0;
-      width: 4px;
+      width: 6px;
       height: 100%;
-      background: linear-gradient(180deg, var(--accent-2) 0%, var(--accent) 100%);
+      background: var(--accent);
       z-index: 1;
     }
 
@@ -831,10 +869,10 @@
     }
 
     .image-display-title {
-      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-family: 'Barlow Condensed', sans-serif;
       font-size: 15px;
       font-weight: 700;
-      color: var(--accent-text);
+      color: var(--kicker);
       text-transform: uppercase;
       letter-spacing: 1.6px;
       margin-top: 9px;
@@ -880,14 +918,15 @@
     if (urlParams.has('chroma')) document.body.classList.add('chroma');
     if (urlParams.has('luma')) document.body.classList.add('luma');
 
-    // Cube System theme: heritage (purple/gold, default) or mono (graphite/blue)
+    // Theme: ESA Marathon brand (plum/gold glass, default) or mono (graphite/blue)
     if (urlParams.get('theme') === 'mono') document.body.classList.add('theme-mono');
 
     const display = document.getElementById('display');
     const tiltifyDisplay = document.getElementById('tiltifyDisplay');
     const scheduleDisplay = document.getElementById('scheduleDisplay');
-    // ESA logotype for the cube tab. Override with ?logo=<url> (e.g. a self-hosted Winter lockup).
-    const logoUrl = urlParams.get('logo') || 'esa-logotype.png';
+    // ESA Marathon cube (from the brand kit; same artwork the for-dark lockup cuts
+    // use). Override with ?logo=<url> for an event-specific lockup.
+    const logoUrl = urlParams.get('logo') || 'esa-marathon-cube.svg';
     let isVisible = false;
     let currentMode = 'together';
 
@@ -1233,7 +1272,7 @@
           `<div class="tiltify-content">` +
             `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">${escHtml(name)}</div>` +
             `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.22s" id="totalizerAmount">` +
-              `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(goal)}</span>` +
+              `<span class="live">${formatCurrency(raised)}</span> <span class="goal">/ ${formatCurrency(goal)}</span>` +
             `</div>` +
             `<div class="totalizer-fill-track tiltify-stagger" style="--delay: 0.3s">` +
               `<div class="totalizer-fill-bar" id="totalizerFill" data-percent="${pct}"></div>` +
@@ -1258,7 +1297,7 @@
           `<div class="tiltify-content">` +
             `<div class="totalizer-label tiltify-stagger" style="--delay: 0.15s">${escHtml(name)}</div>` +
             `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.22s" id="totalizerAmount">` +
-              `${formatCurrency(raised)}` +
+              `<span class="live">${formatCurrency(raised)}</span>` +
             `</div>` +
           `</div>` +
         `</div>`;
@@ -1274,9 +1313,9 @@
       const amountEl = document.getElementById('totalizerAmount');
       if (amountEl) {
         if (tiltifyCurrentDisplay === 'total') {
-          amountEl.innerHTML = `${formatCurrency(raised)}`;
+          amountEl.innerHTML = `<span class="live">${formatCurrency(raised)}</span>`;
         } else {
-          amountEl.innerHTML = `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(goal)}</span>`;
+          amountEl.innerHTML = `<span class="live">${formatCurrency(raised)}</span> <span class="goal">/ ${formatCurrency(goal)}</span>`;
         }
       }
 
@@ -1358,8 +1397,8 @@
               `${escHtml(t.name || 'Target')}` +
             `</div>` +
             `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.28s">` +
-              `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(goal)}</span>` +
-              `<span class="goal" style="margin-left: 12px">${Math.round(pct)}% &mdash; ${formatCurrency(remaining)} to go</span>` +
+              `<span class="live">${formatCurrency(raised)}</span> <span class="goal">/ ${formatCurrency(goal)}</span>` +
+              `<span class="goal" style="margin-left: 12px">${Math.round(pct)}% &mdash; <span class="live">${formatCurrency(remaining)}</span> to go</span>` +
             `</div>` +
             `<div class="totalizer-fill-track tiltify-stagger" style="--delay: 0.35s">` +
               `<div class="target-fill-bar" data-percent="${pct}"></div>` +
@@ -1399,10 +1438,10 @@
               `${escHtml(m.name || 'Milestone')}` +
             `</div>` +
             `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.28s">` +
-              `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(threshold)}</span>` +
+              `<span class="live">${formatCurrency(raised)}</span> <span class="goal">/ ${formatCurrency(threshold)}</span>` +
               (isReached
                 ? `<span class="goal" style="margin-left: 12px">100% &mdash; Reached!</span>`
-                : `<span class="goal" style="margin-left: 12px">${Math.round(pct)}% &mdash; ${formatCurrency(remaining)} to go</span>`) +
+                : `<span class="goal" style="margin-left: 12px">${Math.round(pct)}% &mdash; <span class="live">${formatCurrency(remaining)}</span> to go</span>`) +
             `</div>` +
             `<div class="totalizer-fill-track tiltify-stagger" style="--delay: 0.35s">` +
               `<div class="target-fill-bar" data-percent="${pct}"></div>` +
@@ -1476,7 +1515,7 @@
               `Matched by ${escHtml(matchedBy)}` +
             `</div>` +
             `<div class="totalizer-amount tiltify-stagger" style="--delay: 0.28s" id="matchingAmount">` +
-              `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(pledged)}</span>` +
+              `<span class="live">${formatCurrency(raised)}</span> <span class="goal">/ ${formatCurrency(pledged)}</span>` +
             `</div>` +
             `<div class="totalizer-fill-track tiltify-stagger" style="--delay: 0.35s">` +
               `<div class="totalizer-fill-bar" id="matchingFill" data-percent="${pct}"></div>` +
@@ -1498,7 +1537,7 @@
 
       const amountEl = document.getElementById('matchingAmount');
       if (amountEl) {
-        amountEl.innerHTML = `${formatCurrency(raised)} <span class="goal">/ ${formatCurrency(pledged)}</span>`;
+        amountEl.innerHTML = `<span class="live">${formatCurrency(raised)}</span> <span class="goal">/ ${formatCurrency(pledged)}</span>`;
       }
 
       const fillEl = document.getElementById('matchingFill');
@@ -2038,7 +2077,8 @@
       const cy = canvas.height / 2;
       const r = cx - 4;
       const n = options.length;
-      const colors = ['#3a1a6e', '#2a1252', '#46208a', '#180a30', '#5a2ea0', '#1c0d38', '#f5b13d', '#cf9326'];
+      // Brand plum/royal family with one gold segment (canvas can't read CSS vars)
+      const colors = ['#3a2657', '#241b38', '#4a326e', '#2c2237', '#734e9e', '#1d1430', '#fdbb1c', '#563d78'];
 
       for (let i = 0; i < n; i++) {
         const startAngle = (i * 2 * Math.PI) / n;
@@ -2050,7 +2090,7 @@
         ctx.closePath();
         ctx.fillStyle = colors[i % colors.length];
         ctx.fill();
-        ctx.strokeStyle = 'rgba(245,177,61,0.35)';
+        ctx.strokeStyle = 'rgba(253,187,28,0.35)';
         ctx.lineWidth = 2;
         ctx.stroke();
 
@@ -2060,7 +2100,7 @@
         ctx.rotate(startAngle + (endAngle - startAngle) / 2);
         ctx.textAlign = 'right';
         ctx.fillStyle = '#fff';
-        ctx.font = "700 14px 'Barlow Semi Condensed', sans-serif";
+        ctx.font = "700 14px 'Barlow Condensed', sans-serif";
         const label = options[i].length > 18 ? options[i].slice(0, 16) + '\u2026' : options[i];
         ctx.fillText(label, r - 12, 5);
         ctx.restore();
@@ -2069,7 +2109,7 @@
       // Center circle
       ctx.beginPath();
       ctx.arc(cx, cy, 20, 0, Math.PI * 2);
-      ctx.fillStyle = '#f5b13d';
+      ctx.fillStyle = '#fdbb1c';
       ctx.fill();
     }
 

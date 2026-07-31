@@ -2,7 +2,7 @@
 // ESA Lower Third — WebSocket relay + Tiltify donation integration + Horaro schedule
 // Usage: node relay.js
 // Env vars: TILTIFY_CLIENT_ID, TILTIFY_CLIENT_SECRET, TILTIFY_CAMPAIGN_ID, TILTIFY_CAMPAIGN_TYPE
-//           HORARO_SCHEDULE (e.g. "esa/2026-winter1")
+//           HORARO_SCHEDULE (e.g. "esa/2026-summer1", stream 2 = "esa/2026-summer2")
 //           TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET
 
 const http = require('http');
@@ -14,7 +14,7 @@ const { WebSocketServer } = require('ws');
 // Static-file serving. STATIC_DIR holds source.html / control.html / index.html
 // alongside relay.js inside the container; set STATIC_DIR=disabled to opt out.
 const STATIC_DIR = process.env.STATIC_DIR === 'disabled' ? null : (process.env.STATIC_DIR || __dirname);
-const STATIC_FILES = new Set(['source.html', 'control.html', 'confidence.html', 'index.html', 'esa-logotype.png']);
+const STATIC_FILES = new Set(['source.html', 'control.html', 'confidence.html', 'index.html', 'esa-logotype.png', 'esa-marathon-cube.svg']);
 const CONTENT_TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json; charset=utf-8' };
 
 const PORT = parseInt(process.env.RELAY_PORT || '8081', 10);
@@ -26,7 +26,7 @@ const TILTIFY_API = 'https://v5api.tiltify.com';
 const POLL_INTERVAL = 15_000;
 const TOKEN_REFRESH_MARGIN = 5 * 60 * 1000; // refresh 5 min before expiry
 
-const HORARO_SCHEDULE = process.env.HORARO_SCHEDULE || ''; // e.g. "esa/2026-winter1"
+const HORARO_SCHEDULE = process.env.HORARO_SCHEDULE || ''; // e.g. "esa/2026-summer1" (stream 2 = "esa/2026-summer2")
 const HORARO_API = 'https://horaro.net/-/api/v1';
 const HORARO_POLL_INTERVAL = 5 * 60 * 1000; // 5 minutes
 
