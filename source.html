@@ -37,21 +37,24 @@
 
       /* Deliberate divergence from the guide's glass panels (§4): these panels sit
          over live gameplay in OBS and must be OPAQUE — video bleeding through the
-         glass fill made the text unreadable. Solid plum-family fills instead. */
-      --brand--panel: linear-gradient(180deg, #34244e 0%, #241b38 100%);
+         glass fill made the text unreadable. Full-saturation plum → keyline fill
+         (blending the glass over the ground read washed out). */
+      --brand--panel: linear-gradient(180deg, var(--brand--plum) 0%, var(--brand--keyline) 100%);
 
       /* Semantic mapping — theme=mono overrides these, not the brand tokens */
       --panel: var(--brand--panel);
-      --tab: linear-gradient(180deg, #241b38 0%, #191225 100%);
+      --tab: linear-gradient(180deg, var(--brand--keyline) 0%, #1a1329 100%);
       --accent: var(--brand--gold);
       --accent-2: var(--brand--gold-2);
       --kicker: var(--brand--cream);
-      --sub: var(--brand--muted);
+      /* --brand--muted is calibrated for the ground; on plum panels it sinks.
+         Same plum-biased neutral family, lifted a step for on-panel secondary. */
+      --sub: #bfb3d1;
       --name: var(--brand--ink);
       --good: var(--brand--good);
       --bad: var(--brand--bad);
-      --hair: rgba(115, 78, 158, 0.5);
-      --sheen: inset 0 2px 0 rgba(255, 255, 255, 0.12);
+      --hair: rgba(115, 78, 158, 0.65);
+      --sheen: inset 0 2px 0 rgba(255, 255, 255, 0.14);
       --track: rgba(20, 17, 24, 0.55);
       --radius: 0.75em;
       --bar-shadow: drop-shadow(0 18px 40px rgba(0, 0, 0, 0.55));
