@@ -462,7 +462,7 @@
         const raised = c ? (c.total_amount_raised?.value ?? c.amount_raised?.value ?? 0) : 0;
         t = 'Donation Total';
         html = '<div class="feat-num">' + (c ? moneyBig(raised) : '—') + '</div>' +
-          '<div class="feat-sub">raised so far — read the milestones</div>';
+          '<div class="feat-sub">raised so far</div>';
       } else if (f === 'donation') {
         const d = feature.d || {};
         t = 'Donation';
