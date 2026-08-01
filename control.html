@@ -1851,7 +1851,9 @@
         case 'milestone': {
           const ms = sortedMilestones(td.milestones);
           const m = ms[idx]; if (!m) return null;
-          const raised = parseFloat(td.campaign?.total_amount_raised?.value ?? td.campaign?.amount_raised?.value ?? 0);
+          const raised = m.campaign_amount_raised != null
+            ? parseFloat(m.campaign_amount_raised)
+            : parseFloat(td.campaign?.total_amount_raised?.value ?? td.campaign?.amount_raised?.value ?? 0);
           const thr = parseFloat(m.amount?.value || m.value || 0);
           return { feature: 'milestone', m: { name: m.name || 'Milestone', raised, threshold: thr, reached: thr > 0 && raised >= thr } };
         }
@@ -2600,13 +2602,16 @@
         msList.innerHTML = filteredMs.map((m) => {
           const origIndex = milestones.indexOf(m);
           const threshold = parseFloat(m.amount?.value || m.value || 0);
-          const isReached = campaignRaised >= threshold;
-          const pct = threshold > 0 ? Math.min(100, (campaignRaised / threshold) * 100) : 0;
-          const remaining = Math.max(0, threshold - campaignRaised);
+          // Sub-campaign milestones (per-run incentives) measure against their
+          // own stream's total, carried by the relay as campaign_amount_raised.
+          const msRaised = m.campaign_amount_raised != null ? parseFloat(m.campaign_amount_raised) : campaignRaised;
+          const isReached = msRaised >= threshold;
+          const pct = threshold > 0 ? Math.min(100, (msRaised / threshold) * 100) : 0;
+          const remaining = Math.max(0, threshold - msRaised);
           return `<div class="tiltify-item-row">` +
             `<div class="tiltify-item-info">` +
               `<div class="tiltify-item-name">${isReached ? '&#10003; ' : ''}${escHtml(m.name || 'Milestone')}</div>` +
-              `<div class="tiltify-item-amounts">${formatCurrency(campaignRaised)} / <span class="gold">${formatCurrency(threshold)}</span> &mdash; ${Math.round(pct)}%${isReached ? '' : ` (${formatCurrency(remaining)} to go)`}</div>` +
+              `<div class="tiltify-item-amounts">${formatCurrency(msRaised)} / <span class="gold">${formatCurrency(threshold)}</span> &mdash; ${Math.round(pct)}%${isReached ? '' : ` (${formatCurrency(remaining)} to go)`}</div>` +
             `</div>` +
             `<button class="tiltify-donation-show" onclick="tiltifyShowMilestone(${origIndex})">Show</button>` +
           `</div>`;

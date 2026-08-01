@@ -1554,9 +1554,13 @@
 
       const m = milestones[Math.min(index, milestones.length - 1)];
       const threshold = parseFloat(m.amount?.value || m.value || 0);
-      const raised = tiltifyData.campaign
-        ? parseFloat(tiltifyData.campaign.total_amount_raised?.value || tiltifyData.campaign.amount_raised?.value || 0)
-        : 0;
+      // Sub-campaign milestones (per-run incentives) measure against their own
+      // stream's total, carried by the relay as campaign_amount_raised.
+      const raised = m.campaign_amount_raised != null
+        ? parseFloat(m.campaign_amount_raised)
+        : (tiltifyData.campaign
+          ? parseFloat(tiltifyData.campaign.total_amount_raised?.value || tiltifyData.campaign.amount_raised?.value || 0)
+          : 0);
       const pct = threshold > 0 ? Math.min(100, (raised / threshold) * 100) : 0;
       const isReached = raised >= threshold;
       const remaining = Math.max(0, threshold - raised);

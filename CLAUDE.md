@@ -160,6 +160,12 @@ terminates TLS at `lowerthird.skenmy.com` and proxies to the container.
   `supporting_campaigns` for incentives, `campaigns` reads them
   directly from the root. The merging logic in `pollTiltify` /
   `fetchIncentives` is the part to look at.
+- Tiltify removed the Targets feature (mid-2026): per-run incentives now
+  live as **milestones on the stream sub-campaigns**. The relay merges
+  them into `tiltify_data.milestones` with `campaign_amount_raised` /
+  `campaign_name` attached; clients must use that (not the team total)
+  for progress. Tiltify's default page size is 10 — every list fetch
+  needs an explicit `?limit=100` or items silently go missing.
 - Adding new static files: only `source.html`, `control.html`,
   `confidence.html`, `index.html` are in the `STATIC_FILES` allowlist in
   `relay.js`; the Dockerfile also `COPY`s exactly those four.

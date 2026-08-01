@@ -286,8 +286,8 @@ async function pollTiltify() {
     const [campaignRes, donationsRes, targetsRes, milestonesRes] = await Promise.all([
       tiltifyGet(base),
       tiltifyGet(`${base}/donations?limit=100`),
-      tiltifyGet(`${base}/targets`),
-      tiltifyGet(`${base}/milestones`),
+      tiltifyGet(`${base}/targets?limit=100`),
+      tiltifyGet(`${base}/milestones?limit=100`),
     ]);
 
     // Fetch incentive data from supporting sub-campaigns
@@ -299,12 +299,20 @@ async function pollTiltify() {
     const seenTargetIds = new Set(teamTargets.map(t => t.id));
     const allTargets = [...teamTargets, ...subTargets.filter(t => !seenTargetIds.has(t.id))];
 
+    // Same for milestones: since Tiltify removed Targets (mid-2026), run
+    // incentives live as milestones on the stream sub-campaigns, while the
+    // team level only holds the historic event-total milestones.
+    const teamMilestones = (milestonesRes.data || milestonesRes) || [];
+    const subMilestones = incentives.milestonesList || [];
+    const seenMilestoneIds = new Set(teamMilestones.map(m => m.id));
+    const allMilestones = [...teamMilestones, ...subMilestones.filter(m => !seenMilestoneIds.has(m.id))];
+
     tiltifyCache = {
       campaign: campaignRes.data || campaignRes,
       donations: (donationsRes.data || donationsRes) || [],
       targets: allTargets,
       polls: incentives.pollsList || [],
-      milestones: (milestonesRes.data || milestonesRes) || [],
+      milestones: allMilestones,
       donationMatches: incentives.matchesList || [],
       incentives,
       lastUpdated: Date.now(),
@@ -318,20 +326,21 @@ async function pollTiltify() {
 
 async function fetchIncentives(base) {
   // targets: lookup map for donation resolution, targetsList: full objects for display
-  const result = { targets: {}, polls: {}, targetsList: [], pollsList: [], matchesList: [] };
+  const result = { targets: {}, polls: {}, targetsList: [], pollsList: [], matchesList: [], milestonesList: [] };
 
   try {
     // For team campaigns, incentives live on supporting sub-campaigns
     if (TILTIFY_CAMPAIGN_TYPE === 'team_campaigns') {
-      const subRes = await tiltifyGetSafe(`${base}/supporting_campaigns`);
+      const subRes = await tiltifyGetSafe(`${base}/supporting_campaigns?limit=100`);
       const subCampaigns = subRes?.data || [];
 
       const fetches = subCampaigns.map(async (sc) => {
         const scBase = `/api/public/campaigns/${sc.id}`;
-        const [targetsRes, pollsRes, matchesRes] = await Promise.all([
-          tiltifyGetSafe(`${scBase}/targets`),
-          tiltifyGetSafe(`${scBase}/polls`),
-          tiltifyGetSafe(`${scBase}/donation_matches`),
+        const [targetsRes, pollsRes, matchesRes, milestonesRes] = await Promise.all([
+          tiltifyGetSafe(`${scBase}/targets?limit=100`),
+          tiltifyGetSafe(`${scBase}/polls?limit=100`),
+          tiltifyGetSafe(`${scBase}/donation_matches?limit=100`),
+          tiltifyGetSafe(`${scBase}/milestones?limit=100`),
         ]);
 
         for (const t of (targetsRes?.data || [])) {
@@ -355,14 +364,21 @@ async function fetchIncentives(base) {
         for (const m of (matchesRes?.data || [])) {
           result.matchesList.push(m);
         }
+
+        // Milestone progress is measured against the OWNING campaign's total,
+        // not the team total — carry it so clients can compute reached/percent.
+        const scRaised = sc.total_amount_raised?.value ?? sc.amount_raised?.value ?? null;
+        for (const m of (milestonesRes?.data || [])) {
+          result.milestonesList.push({ ...m, campaign_amount_raised: scRaised, campaign_name: sc.name || '' });
+        }
       });
 
       await Promise.all(fetches);
     } else {
       const [targetsRes, pollsRes, matchesRes] = await Promise.all([
-        tiltifyGetSafe(`${base}/targets`),
-        tiltifyGetSafe(`${base}/polls`),
-        tiltifyGetSafe(`${base}/donation_matches`),
+        tiltifyGetSafe(`${base}/targets?limit=100`),
+        tiltifyGetSafe(`${base}/polls?limit=100`),
+        tiltifyGetSafe(`${base}/donation_matches?limit=100`),
       ]);
 
       for (const t of (targetsRes?.data || [])) {
