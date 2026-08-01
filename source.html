@@ -896,6 +896,122 @@
       animation: textHide 0.15s ease-in forwards;
     }
 
+    /* --- Schedule side panel (coming up on stream 1 / stream 2) --- */
+    .sched-panel {
+      position: fixed;
+      top: 120px;
+      width: 500px;
+      opacity: 0;
+      filter: var(--bar-shadow);
+    }
+
+    .sched-panel.left { left: 80px; transform: translateX(-120%); }
+    .sched-panel.right { right: 80px; transform: translateX(120%); }
+    .sched-panel.show.left { animation: imageInLeft 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .sched-panel.show.right { animation: imageInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+    .sched-panel.hide.left { animation: imageOutLeft 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards; }
+    .sched-panel.hide.right { animation: imageOutRight 0.4s cubic-bezier(0.7, 0, 0.84, 0) forwards; }
+
+    .sched-panel-inner {
+      background: var(--panel);
+      border: 1px solid var(--hair);
+      border-radius: var(--radius);
+      padding: 24px 30px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--sheen);
+    }
+
+    /* Gold leading rule sits on the frame-inner edge, like the image display */
+    .sched-panel.left .sched-panel-inner::before,
+    .sched-panel.right .sched-panel-inner::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      width: 6px;
+      height: 100%;
+      background: var(--accent);
+      z-index: 1;
+    }
+    .sched-panel.left .sched-panel-inner::before { right: 0; }
+    .sched-panel.right .sched-panel-inner::before { left: 0; }
+
+    .sched-panel-header {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--kicker);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 14px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .sched-panel-stream {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin: 16px 0 8px;
+      padding-top: 12px;
+      border-top: 1px solid var(--hair);
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .sched-panel-stream:first-child { margin-top: 0; padding-top: 0; border-top: none; }
+
+    .sched-run {
+      margin-bottom: 12px;
+      opacity: 0;
+      transform: translateX(-20px);
+    }
+
+    .sched-run:last-child { margin-bottom: 0; }
+
+    .sched-run-top {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    .sched-run-time {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--kicker);
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+      min-width: 76px;
+    }
+
+    .sched-run-game {
+      font-family: 'Barlow Condensed', sans-serif;
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--name);
+      line-height: 1.15;
+    }
+
+    .sched-run-detail {
+      font-size: 16px;
+      color: var(--sub);
+      line-height: 1.3;
+      margin-top: 2px;
+      padding-left: 86px;
+    }
+
+    .sched-panel.show .sched-stagger {
+      animation: textReveal 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+      animation-delay: var(--delay, 0s);
+    }
+    .sched-panel.hide .sched-stagger {
+      animation: textHide 0.2s ease-in forwards;
+    }
+
     /* --- Title rotation --- */
     .title-rotate { transition: opacity 0.3s, transform 0.3s; }
     .title-rotate.fade-out { opacity: 0; transform: translateY(8px); }
@@ -917,6 +1033,7 @@
   <div id="scheduleDisplay"></div>
   <div id="wheelDisplay"></div>
   <div id="imageDisplay"></div>
+  <div id="schedPanelDisplay"></div>
 
   <script>
     const urlParams = new URLSearchParams(window.location.search);
@@ -977,7 +1094,7 @@
           case 'hide':
             if (data.scene && myScene && data.scene !== myScene) break;
             hideBar();
-            if (!data.scene) { hideTiltify(); hideSchedule(); hideImage(); }
+            if (!data.scene) { hideTiltify(); hideSchedule(); hideImage(); hideSchedPanel(); }
             break;
           case 'tiltify_data':
             handleTiltifyData(data);
@@ -996,12 +1113,19 @@
               stream2: data.stream2 || null,
               lastUpdated: data.lastUpdated || Date.now(),
             };
+            if (schedPanelVisible) updateSchedPanelInPlace();
             break;
           case 'schedule_show':
             handleScheduleShow(data);
             break;
           case 'schedule_hide':
             hideSchedule();
+            break;
+          case 'schedule_panel_show':
+            handleSchedPanelShow(data);
+            break;
+          case 'schedule_panel_hide':
+            hideSchedPanel();
             break;
           case 'custom_show':
             handleCustomShow(data);
@@ -2176,6 +2300,107 @@
       if (!imageVisible) return;
       triggerImageHide();
       imageVisible = false;
+    }
+
+    // ===== Schedule side panel =====
+
+    const schedPanelDisplay = document.getElementById('schedPanelDisplay');
+    let schedPanelVisible = false;
+    let schedPanelConfig = null; // { side: 'left'|'right', streams: [1] | [2] | [1,2], count }
+
+    function handleSchedPanelShow(data) {
+      const streams = (Array.isArray(data.streams) ? data.streams : [1])
+        .map(Number).filter(n => n === 1 || n === 2);
+      const config = {
+        side: data.side === 'right' ? 'right' : 'left',
+        streams: streams.length ? [...new Set(streams)] : [1],
+        count: Math.min(5, Math.max(1, parseInt(data.count) || 3)),
+      };
+      showAfterHide(schedPanelVisible, triggerSchedPanelHide, () => buildAndShowSchedPanel(config));
+    }
+
+    function schedPanelBodyHtml(config) {
+      const showLabels = config.streams.length > 1;
+      let delay = 0.15;
+      let html = `<div class="sched-panel-header sched-stagger" style="--delay: ${delay}s">Coming Up</div>`;
+      let any = false;
+
+      for (const sn of config.streams) {
+        const src = sn === 2 ? (scheduleData.stream2 || {}) : scheduleData;
+        const runs = (src.upcoming || []).slice(0, config.count);
+        if (!runs.length) continue;
+        any = true;
+
+        if (showLabels) {
+          delay += 0.07;
+          html += `<div class="sched-panel-stream sched-stagger" style="--delay: ${delay}s">Stream ${sn}</div>`;
+        }
+
+        runs.forEach((run, i) => {
+          delay += 0.07;
+          const time = i === 0 ? 'Next' : formatRunTime(run.scheduled);
+          const detailParts = [run.players, run.category].filter(Boolean).map(escHtml);
+          html += `<div class="sched-run sched-stagger" style="--delay: ${delay}s">` +
+            `<div class="sched-run-top">` +
+              `<span class="sched-run-time">${escHtml(time)}</span>` +
+              `<span class="sched-run-game">${escHtml(run.game || 'TBD')}</span>` +
+            `</div>` +
+            (detailParts.length ? `<div class="sched-run-detail">${detailParts.join(' &mdash; ')}</div>` : '') +
+          `</div>`;
+        });
+      }
+
+      return any ? html : '';
+    }
+
+    function buildAndShowSchedPanel(config) {
+      const body = schedPanelBodyHtml(config);
+      if (!body) {
+        schedPanelDisplay.innerHTML = '';
+        schedPanelVisible = false;
+        schedPanelConfig = null;
+        return;
+      }
+
+      schedPanelConfig = config;
+      schedPanelDisplay.innerHTML =
+        `<div class="sched-panel ${config.side}">` +
+          `<div class="sched-panel-inner">${body}</div>` +
+        `</div>`;
+      void schedPanelDisplay.offsetWidth;
+      schedPanelDisplay.querySelector('.sched-panel').classList.add('show');
+      schedPanelVisible = true;
+    }
+
+    // Schedule refresh while the panel is up: swap the content without replaying
+    // the slide-in (the stagger classes have already animated, so mark them done).
+    function updateSchedPanelInPlace() {
+      if (!schedPanelConfig) return;
+      const inner = schedPanelDisplay.querySelector('.sched-panel-inner');
+      if (!inner) return;
+      const body = schedPanelBodyHtml(schedPanelConfig);
+      if (!body) { hideSchedPanel(); return; }
+      inner.innerHTML = body;
+      inner.querySelectorAll('.sched-stagger').forEach(el => {
+        el.style.opacity = 1;
+        el.style.transform = 'none';
+        el.style.animation = 'none';
+      });
+    }
+
+    function triggerSchedPanelHide() {
+      const panel = schedPanelDisplay.querySelector('.sched-panel');
+      if (panel) {
+        panel.classList.remove('show');
+        panel.classList.add('hide');
+      }
+    }
+
+    function hideSchedPanel() {
+      if (!schedPanelVisible) return;
+      triggerSchedPanelHide();
+      schedPanelVisible = false;
+      schedPanelConfig = null;
     }
 
     // ===== Fun Title Rotation =====

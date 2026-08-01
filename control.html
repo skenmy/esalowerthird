@@ -1286,6 +1286,33 @@
     #tiltifySection .tiltify-tab-panel.active > div { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
     /* Stream toggle is a control, not a list — don't let the panel flex squash it */
     #tiltifySection .tiltify-tab-panel.active > #schedStreamRow { flex: 0 0 auto; overflow: visible; align-self: flex-start; }
+    #tiltifySection .tiltify-tab-panel.active > .sched-panel-controls { flex: 0 0 auto; overflow: visible; }
+
+    /* Schedule side-panel config row */
+    .sched-panel-controls {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+    }
+    .sched-panel-controls .spc-label {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-size: 11px; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #8b93a7;
+    }
+    .sched-panel-controls select,
+    .sched-panel-controls input[type="number"] {
+      font-family: 'Barlow Semi Condensed', sans-serif;
+      font-weight: 700; font-size: 12px;
+      color: #cfd5e3; background: #0e1119;
+      border: 1px solid #2a3144; border-radius: 6px;
+      padding: 4px 6px; cursor: pointer;
+    }
+    .sched-panel-controls input[type="number"] { width: 48px; cursor: text; }
+    .sched-panel-controls select:focus,
+    .sched-panel-controls input[type="number"]:focus { outline: none; border-color: #4d7cff; }
+    .sched-panel-controls .spc-hide { color: #ff8a82; }
 
     /* Custom Message: the stacked inputs use the flex gap for spacing, so drop
        the global .tab-filter margin that pushed content past the bottom strip
@@ -1483,6 +1510,21 @@
             <div class="mode-toggle sm" id="schedStreamRow" style="display: none; margin-bottom: 8px;">
               <button class="mode-btn active" id="schedStreamBtn1" onclick="setSchedStream(1)">Stream 1</button>
               <button class="mode-btn" id="schedStreamBtn2" onclick="setSchedStream(2)">Stream 2</button>
+            </div>
+            <div class="sched-panel-controls" title="Side panel on the Program overlay listing upcoming runs">
+              <span class="spc-label">Side panel</span>
+              <select id="spSide" onchange="saveSchedPanelCfg()">
+                <option value="left">Left</option>
+                <option value="right">Right</option>
+              </select>
+              <select id="spStreams" onchange="saveSchedPanelCfg()">
+                <option value="1">Stream 1</option>
+                <option value="2">Stream 2</option>
+                <option value="both">Both</option>
+              </select>
+              <input id="spCount" type="number" min="1" max="5" value="3" onchange="saveSchedPanelCfg()" title="Runs per stream (max 5)">
+              <button class="tiltify-donation-show" onclick="schedPanelShow()">Show</button>
+              <button class="tiltify-donation-show spc-hide" onclick="schedPanelHide()">Hide</button>
             </div>
             <input class="tab-filter" type="text" placeholder="Filter runs..." oninput="onFilterInput('schedule', this.value)" onkeydown="event.stopPropagation()">
             <div id="listSchedule"></div>
@@ -2817,6 +2859,50 @@
       showToast(`${label}: ${run ? run.game : 'Run'}`);
     }
 
+    // --- Schedule side panel (Program overlay) ---
+
+    function schedPanelCfg() {
+      const streamsVal = document.getElementById('spStreams').value;
+      return {
+        side: document.getElementById('spSide').value === 'right' ? 'right' : 'left',
+        streams: streamsVal === 'both' ? [1, 2] : [parseInt(streamsVal, 10)],
+        count: Math.min(5, Math.max(1, parseInt(document.getElementById('spCount').value, 10) || 3)),
+      };
+    }
+
+    function saveSchedPanelCfg() {
+      lsSet('esa-lt-schedpanel', JSON.stringify({
+        side: document.getElementById('spSide').value,
+        streams: document.getElementById('spStreams').value,
+        count: document.getElementById('spCount').value,
+      }));
+    }
+
+    function loadSchedPanelCfg() {
+      let saved = null;
+      try { saved = JSON.parse(localStorage.getItem('esa-lt-schedpanel')); } catch (e) {}
+      if (!saved) return;
+      if (saved.side) document.getElementById('spSide').value = saved.side;
+      if (saved.streams) document.getElementById('spStreams').value = saved.streams;
+      if (saved.count) document.getElementById('spCount').value = saved.count;
+    }
+
+    function schedPanelShow() {
+      if (!progAllowed()) { showToast('Send target is Confidence-only — the side panel goes to Program'); return; }
+      const cfg = schedPanelCfg();
+      if (cfg.streams.includes(2) && !scheduleDataCache2) {
+        showToast('No Stream 2 schedule configured on the relay');
+        if (cfg.streams.length === 1) return;
+      }
+      wsSend(Object.assign({ type: 'schedule_panel_show' }, cfg));
+      showToast(`Schedule panel: ${cfg.streams.map(s => 'Stream ' + s).join(' + ')}, ${cfg.count} runs, ${cfg.side}`);
+    }
+
+    function schedPanelHide() {
+      wsSend({ type: 'schedule_panel_hide' });
+      showToast('Schedule panel hidden');
+    }
+
     // Split a Horaro "players" string into individual runner names. Handles the
     // common separators (comma, "vs"/"versus", ampersand, slash) so both solo
     // runs and races/co-op split sensibly.
@@ -3486,6 +3572,7 @@
     loadFunToolsState();
     loadImagePresets();
     loadConfTarget();
+    loadSchedPanelCfg();
     render();
     renderQuoteLog();
     renderSleepList();

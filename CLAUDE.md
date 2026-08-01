@@ -89,7 +89,9 @@ dispatched by `source.html` also includes:
 
 `custom_show`, `counter_show`/`_update`/`_hide`, `quote_show`,
 `sleep_show`/`_hide`, `stat_card_show`, `wheel_show`/`_hide`,
-`image_show`/`_hide`, `status` (sent by source on visibility change).
+`image_show`/`_hide`, `schedule_panel_show`/`_hide` (side panel of
+upcoming runs per stream, configured from the Schedule tab), `status`
+(sent by source on visibility change).
 
 `remote_cmd { cmd: go|hide|total }` — Bitfocus Companion deck press,
 emitted by the relay's `/api/cmd/*` endpoint and dispatched by

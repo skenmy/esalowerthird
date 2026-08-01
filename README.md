@@ -61,6 +61,7 @@ either a server-originated broadcast or a request the relay handles.
 | `tiltify_show` / `tiltify_hide` | control → source | `{}` |
 | `tiltify_data` | server → all | `{ campaign, donations, targets, polls, milestones, donationMatches, … }` (every 15s) |
 | `schedule_show` / `schedule_hide` | control → source | `{ runIndex, mode, list, stream? }` (`stream: 2` shows from the second schedule) |
+| `schedule_panel_show` / `schedule_panel_hide` | control → source | `{ side: left\|right, streams: [1,2], count }` — side panel listing the next `count` runs per stream, live-updating |
 | `schedule_data` | server → all | `{ schedule, upcoming, previous, stream2? }` (every 5m; `stream2` only when `HORARO_SCHEDULE_2` is set) |
 | `src_lookup` | control → server | `{ username }` |
 | `src_result` | server → control | `{ username, gamesRun, totalPBs, worldRecords }` |
