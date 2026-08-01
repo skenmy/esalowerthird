@@ -88,9 +88,11 @@
     .don-row:first-child { border-top: none; padding-top: 4px; }
     .don-row.fadein { animation: donIn .55s cubic-bezier(.16,1,.3,1) both; }
     .don-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-    .don-name { font: 700 40px 'Barlow Semi Condensed'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .don-amt { font: 800 40px 'Barlow Semi Condensed'; color: var(--live); font-variant-numeric: tabular-nums; flex-shrink: 0; }
-    .don-comment { font-size: 28px; color: var(--muted-2); margin-top: 4px; line-height: 1.25; max-height: 2.5em; overflow: hidden; }
+    /* The message is what the host reads out — it gets the size; name/amount
+       are the smaller identifying line above it. */
+    .don-name { font: 700 32px 'Barlow Semi Condensed'; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .don-amt { font: 800 32px 'Barlow Semi Condensed'; color: var(--live); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .don-comment { font: 600 38px 'Barlow'; color: var(--text); margin-top: 5px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
 
     /* bid war / progress bars */
     .bar-block { margin-bottom: 22px; }
@@ -351,9 +353,9 @@
       const titleEl = document.getElementById('secondaryTitle');
       const body = document.getElementById('secondaryBody');
       titleEl.textContent = 'Latest Donations';
-      // 4 rows max — the type is sized for distance reading, more would clip.
+      // 3 rows max — the type is sized for distance reading, more would clip.
       const dons = (tiltifyData.donations || []).slice().sort((a, b) =>
-        new Date(b.completed_at || b.created_at || 0) - new Date(a.completed_at || a.created_at || 0)).slice(0, 4);
+        new Date(b.completed_at || b.created_at || 0) - new Date(a.completed_at || a.created_at || 0)).slice(0, 3);
       if (!dons.length) { body.innerHTML = '<div class="empty">No donations yet.</div>'; return; }
       const animate = donationsSeeded; // don't fade in the whole backlog on first load
       body.innerHTML = dons.map(d => {
