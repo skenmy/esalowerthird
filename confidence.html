@@ -51,10 +51,6 @@
     .ev-title { font: 800 36px 'Barlow Semi Condensed'; letter-spacing: .01em; line-height: 1; }
     .ev-sub { font: 600 17px 'Barlow Semi Condensed'; letter-spacing: .18em; text-transform: uppercase; color: var(--muted); margin-top: 6px; }
     #clock { font: 700 62px 'JetBrains Mono'; font-variant-numeric: tabular-nums; letter-spacing: -.02em; line-height: 1; }
-    #slipChip { display: flex; align-items: center; gap: 13px; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 14px 22px; }
-    #slipChip .k { font: 600 14px 'Barlow Semi Condensed'; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); }
-    #slipChip .v { font: 800 36px 'Barlow Semi Condensed'; font-variant-numeric: tabular-nums; line-height: 1; }
-    #slipChip .l { font: 700 16px 'Barlow Semi Condensed'; letter-spacing: .1em; text-transform: uppercase; }
 
     /* hero */
     #hero { display: grid; grid-template-columns: 1.28fr 1fr; gap: 26px; min-height: 0; }
@@ -76,25 +72,25 @@
     /* modules */
     #modules { display: grid; grid-template-columns: 1.12fr 1fr; gap: 26px; min-height: 0; }
     .mod { padding: 26px 32px; display: flex; flex-direction: column; }
-    .mod-title { font: 700 18px 'Barlow Semi Condensed'; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
-    .run-row { display: flex; align-items: center; gap: 18px; padding: 11px 0; border-top: 1px solid rgba(255,255,255,.06); }
-    .run-est { font: 700 22px 'JetBrains Mono'; font-variant-numeric: tabular-nums; color: var(--accent); min-width: 112px; }
+    .mod-title { font: 700 22px 'Barlow Semi Condensed'; letter-spacing: .15em; text-transform: uppercase; color: var(--muted); margin-bottom: 14px; }
+    .run-row { display: flex; align-items: center; gap: 18px; padding: 13px 0; border-top: 1px solid rgba(255,255,255,.06); }
+    .run-est { font: 700 28px 'JetBrains Mono'; font-variant-numeric: tabular-nums; color: var(--accent); min-width: 142px; }
     .run-mid { flex: 1; min-width: 0; }
-    .run-game { font: 700 30px 'Barlow Semi Condensed'; }
-    .run-cat { font-size: 21px; color: var(--muted); margin-left: 12px; }
-    .run-players { font-size: 21px; color: #cfd5e3; }
-    .run-plat { font: 600 14px 'Barlow Semi Condensed'; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--bg); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 5px 11px; }
-    .empty { color: #5d6478; font-size: 22px; padding: 16px 0; }
+    .run-game { font: 700 40px 'Barlow Semi Condensed'; }
+    .run-cat { font-size: 27px; color: var(--muted-2); margin-left: 12px; }
+    .run-players { font-size: 27px; color: #cfd5e3; }
+    .run-plat { font: 600 18px 'Barlow Semi Condensed'; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); background: var(--bg); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 6px 13px; }
+    .empty { color: #5d6478; font-size: 26px; padding: 16px 0; }
 
     /* latest donations module */
     @keyframes donIn { 0% { opacity: 0; transform: translateY(-10px); } 100% { opacity: 1; transform: translateY(0); } }
-    .don-row { padding: 11px 0; border-top: 1px solid rgba(255,255,255,.06); }
+    .don-row { padding: 13px 0; border-top: 1px solid rgba(255,255,255,.06); }
     .don-row:first-child { border-top: none; padding-top: 4px; }
     .don-row.fadein { animation: donIn .55s cubic-bezier(.16,1,.3,1) both; }
     .don-top { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
-    .don-name { font: 700 30px 'Barlow Semi Condensed'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .don-amt { font: 800 30px 'Barlow Semi Condensed'; color: var(--live); font-variant-numeric: tabular-nums; flex-shrink: 0; }
-    .don-comment { font-size: 20px; color: var(--muted); margin-top: 3px; line-height: 1.25; max-height: 2.5em; overflow: hidden; }
+    .don-name { font: 700 40px 'Barlow Semi Condensed'; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .don-amt { font: 800 40px 'Barlow Semi Condensed'; color: var(--live); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .don-comment { font-size: 28px; color: var(--muted-2); margin-top: 4px; line-height: 1.25; max-height: 2.5em; overflow: hidden; }
 
     /* bid war / progress bars */
     .bar-block { margin-bottom: 22px; }
@@ -182,11 +178,6 @@
         </div>
         <div class="row" style="gap:28px;">
           <div id="clock" class="mono">--:--:--</div>
-          <div id="slipChip" style="display:none;">
-            <span class="k">Schedule</span>
-            <span class="v" id="slipVal">ON TIME</span>
-            <span class="l" id="slipLbl"></span>
-          </div>
         </div>
       </div>
 
@@ -288,31 +279,8 @@
     function tickClock() {
       const d = new Date();
       document.getElementById('clock').textContent = pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds());
-      renderSlip();
     }
     setInterval(tickClock, 1000);
-
-    // ===== Schedule slip =====
-    function renderSlip() {
-      const chip = document.getElementById('slipChip');
-      const runs = scheduleData.upcoming || [];
-      if (!runs.length || !runs[0].scheduled_t) { chip.style.display = 'none'; return; }
-      chip.style.display = 'flex';
-      const now = Math.floor(Date.now() / 1000);
-      const slip = now - runs[0].scheduled_t; // +behind / -ahead (seconds)
-      const a = Math.abs(slip);
-      const valEl = document.getElementById('slipVal');
-      const lblEl = document.getElementById('slipLbl');
-      if (a < 60) {
-        valEl.textContent = 'ON TIME'; valEl.style.color = 'var(--accent)';
-        lblEl.textContent = ''; lblEl.style.color = 'var(--accent)';
-      } else {
-        valEl.textContent = (slip < 0 ? '−' : '+') + Math.floor(a / 60) + ':' + pad(a % 60);
-        const col = slip > 0 ? 'var(--wrap)' : 'var(--live)';
-        valEl.style.color = col; lblEl.style.color = col;
-        lblEl.textContent = slip > 0 ? 'Behind' : 'Ahead';
-      }
-    }
 
     // ===== Studio state =====
     const MODES = {
@@ -383,8 +351,9 @@
       const titleEl = document.getElementById('secondaryTitle');
       const body = document.getElementById('secondaryBody');
       titleEl.textContent = 'Latest Donations';
+      // 4 rows max — the type is sized for distance reading, more would clip.
       const dons = (tiltifyData.donations || []).slice().sort((a, b) =>
-        new Date(b.completed_at || b.created_at || 0) - new Date(a.completed_at || a.created_at || 0)).slice(0, 6);
+        new Date(b.completed_at || b.created_at || 0) - new Date(a.completed_at || a.created_at || 0)).slice(0, 4);
       if (!dons.length) { body.innerHTML = '<div class="empty">No donations yet.</div>'; return; }
       const animate = donationsSeeded; // don't fade in the whole backlog on first load
       body.innerHTML = dons.map(d => {
@@ -593,7 +562,7 @@
             break;
           case 'schedule_data':
             scheduleData = { upcoming: data.upcoming || [], previous: data.previous || [] };
-            renderUpNext(); renderSlip(); renderFeature();
+            renderUpNext(); renderFeature();
             break;
           case 'confidence_state':
             if (data.scene && data.scene !== myScene) break;
