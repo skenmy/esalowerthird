@@ -120,6 +120,15 @@
     .feat-line { font: 800 78px 'Barlow Semi Condensed'; line-height: 1; color: #fff; }
     .feat-sub { font: 600 30px 'Barlow'; color: var(--muted-2); margin-top: 12px; text-align: center; }
     .feat-quote { font: 500 42px 'Barlow'; font-style: italic; color: #fff; margin-top: 18px; line-height: 1.2; text-align: center; text-wrap: balance; }
+    /* donation feature: takes over the whole stage (hero row collapses) so the
+       name, chosen incentive, and above all the message read from across the studio */
+    #stage.fullfeat { grid-template-rows: 120px 1fr 104px; }
+    #stage.fullfeat #hero { display: none; }
+    .feat-don-head { display: flex; justify-content: center; align-items: baseline; gap: 34px; }
+    .feat-don-head .n { font: 700 76px 'Barlow Semi Condensed'; color: #fff; max-width: 62%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feat-don-head .a { font: 800 76px 'Barlow Semi Condensed'; color: var(--live); font-variant-numeric: tabular-nums; }
+    .feat-don-inc { font: 700 42px 'Barlow Semi Condensed'; color: var(--wrap); margin-top: 20px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feat-don-msg { font: 600 84px 'Barlow'; color: #fff; margin-top: 36px; line-height: 1.15; text-align: center; text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
     .feat-attr { font: 700 24px 'Barlow Semi Condensed'; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2); margin-top: 14px; text-align: center; }
     .feat-meta { display: flex; gap: 46px; justify-content: center; margin-top: 22px; }
     .feat-meta .mv { font: 700 34px 'JetBrains Mono'; color: #fff; font-variant-numeric: tabular-nums; }
@@ -415,8 +424,10 @@
       const f = feature.feature || 'none';
       const featEl = document.getElementById('feature');
       const modEl = document.getElementById('modules');
-      if (f === 'none') { featEl.style.display = 'none'; modEl.style.display = 'grid'; return; }
+      if (f === 'none') { featEl.style.display = 'none'; modEl.style.display = 'grid'; stage.classList.remove('fullfeat'); return; }
       featEl.style.display = 'flex'; modEl.style.display = 'none';
+      // Donations take over the whole stage (hero row collapses too).
+      stage.classList.toggle('fullfeat', f === 'donation');
       // Relabel the chip: only claim "Live on Stream" when the control panel
       // says this push is also on Program. Confidence-only pushes get a
       // "Preview" chip so hosts know it isn't on air yet.
@@ -437,11 +448,17 @@
       } else if (f === 'donation') {
         const d = feature.d || {};
         t = 'Donation';
-        html = '<div style="text-align:center;">' +
-          '<div class="feat-line" style="font-size:88px;line-height:1;">' + escHtml(d.name || 'Anonymous') + '</div>' +
-          '<div class="feat-num" style="font-size:104px;color:var(--live);margin-top:6px;">' + moneyBig(d.amount) + '</div>' +
-          (d.comment ? '<div class="feat-quote">“' + escHtml(d.comment) + '”</div>' : '') +
-          '</div>';
+        const inc = d.incentive ? '<div class="feat-don-inc">&rarr; ' + escHtml(d.incentive) + '</div>' : '';
+        // Name + amount up top, chosen incentive under it, and the message —
+        // the thing the host reads out — as the headline.
+        html = d.comment
+          ? '<div class="feat-don-head"><span class="n">' + escHtml(d.name || 'Anonymous') + '</span><span class="a">' + moneyBig(d.amount) + '</span></div>' +
+            inc +
+            '<div class="feat-don-msg">“' + escHtml(d.comment) + '”</div>'
+          : '<div style="text-align:center;">' +
+            '<div class="feat-line" style="font-size:104px;line-height:1;">' + escHtml(d.name || 'Anonymous') + '</div>' +
+            '<div class="feat-num" style="font-size:130px;color:var(--live);margin-top:14px;">' + moneyBig(d.amount) + '</div>' +
+            '</div>' + inc;
       } else if (f === 'incentive') {
         const x = feature.t || {};
         const raised = parseFloat(x.raised) || 0, goal = parseFloat(x.goal) || 0;

@@ -1842,7 +1842,7 @@
         case 'total': return { feature: 'total' };
         case 'donation': {
           const d = (td.donations || [])[idx]; if (!d) return null;
-          return { feature: 'donation', d: { name: d.donor_name || d.name || 'Anonymous', amount: d.amount?.value ?? d.amount ?? 0, comment: d.donor_comment || d.comment || '' } };
+          return { feature: 'donation', d: { name: d.donor_name || d.name || 'Anonymous', amount: d.amount?.value ?? d.amount ?? 0, comment: d.donor_comment || d.comment || '', incentive: getDonationIncentive(d) || '' } };
         }
         case 'target': {
           const t = (td.targets || [])[idx]; if (!t) return null;

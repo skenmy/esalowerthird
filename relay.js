@@ -428,8 +428,13 @@ let horaroCache2 = null; // stream 2, populated only when HORARO_SCHEDULE_2 is s
 let confidenceCache = {
   state: null,    // { type: 'confidence_state', state }
   feature: null,  // { type: 'confidence_feature', feature, ... }
+  featureAt: 0,   // when the feature was last pushed — replay expires below
   producer: null, // { type: 'producer_msg', text, level, active }
 };
+// Feature takeovers are "look at this now" moments: replay them to a client
+// that (re)connects shortly after the push, but not hours later — a stale
+// donation would otherwise hide the default board on every refresh.
+const FEATURE_REPLAY_TTL = 10 * 60 * 1000;
 
 // Horaro cells can carry markdown — most commonly runner names as Twitch links,
 // "[name](https://twitch.tv/name)". Overlays want plain text, so unwrap links
@@ -686,6 +691,7 @@ const server = http.createServer((req, res) => {
     liveState.total = false;
     // Clear the host confidence feature takeover (studio state + producer banner left intact)
     confidenceCache.feature = { type: 'confidence_feature', feature: 'none' };
+    confidenceCache.featureAt = Date.now();
     broadcastToAll(confidenceCache.feature);
     console.log('[API] GET /api/hide — broadcast all hide commands');
     res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
@@ -739,7 +745,8 @@ wss.on('connection', (ws, req) => {
     ws.send(scheduleMessage());
   }
   // Replay last-known confidence state so a host monitor opened late still syncs
-  for (const cached of [confidenceCache.state, confidenceCache.feature, confidenceCache.producer]) {
+  const featureFresh = confidenceCache.feature && (Date.now() - confidenceCache.featureAt) < FEATURE_REPLAY_TTL;
+  for (const cached of [confidenceCache.state, featureFresh ? confidenceCache.feature : null, confidenceCache.producer]) {
     if (cached) ws.send(JSON.stringify(cached));
   }
 
@@ -778,7 +785,7 @@ wss.on('connection', (ws, req) => {
 
     // Cache confidence state so it can be replayed to clients that connect later
     if (data.type === 'confidence_state') confidenceCache.state = data;
-    else if (data.type === 'confidence_feature') confidenceCache.feature = data;
+    else if (data.type === 'confidence_feature') { confidenceCache.feature = data; confidenceCache.featureAt = Date.now(); }
     else if (data.type === 'producer_msg') confidenceCache.producer = data;
 
     // Track overlay state from real traffic for Companion button feedback
