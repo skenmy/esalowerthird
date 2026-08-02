@@ -125,10 +125,15 @@
     #stage.fullfeat { grid-template-rows: 120px 1fr 104px; }
     #stage.fullfeat #hero { display: none; }
     .feat-don-head { display: flex; justify-content: center; align-items: baseline; gap: 34px; }
-    .feat-don-head .n { font: 700 76px 'Barlow Semi Condensed'; color: #fff; max-width: 62%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .feat-don-head .a { font: 800 76px 'Barlow Semi Condensed'; color: var(--live); font-variant-numeric: tabular-nums; }
-    .feat-don-inc { font: 700 42px 'Barlow Semi Condensed'; color: var(--wrap); margin-top: 20px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .feat-don-msg { font: 600 84px 'Barlow'; color: #fff; margin-top: 36px; line-height: 1.15; text-align: center; text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; }
+    .feat-don-head .n { font: 700 96px 'Barlow Semi Condensed'; color: #fff; max-width: 62%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .feat-don-head .a { font: 800 96px 'Barlow Semi Condensed'; color: var(--live); font-variant-numeric: tabular-nums; }
+    .feat-don-inc { font: 700 52px 'Barlow Semi Condensed'; color: var(--wrap); margin-top: 20px; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* Message size steps down with length so short ones go huge and long ones
+       still fit the box in full — same idea as the bid-war poll tiers. */
+    .feat-don-msg { font: 600 96px 'Barlow'; color: #fff; margin-top: 32px; line-height: 1.12; text-align: center; text-wrap: balance; display: -webkit-box; -webkit-line-clamp: 5; -webkit-box-orient: vertical; overflow: hidden; }
+    .feat-don-msg.msg-xl { font-size: 112px; }
+    .feat-don-msg.msg-md { font-size: 82px; }
+    .feat-don-msg.msg-sm { font-size: 64px; }
     .feat-attr { font: 700 24px 'Barlow Semi Condensed'; letter-spacing: .1em; text-transform: uppercase; color: var(--muted-2); margin-top: 14px; text-align: center; }
     .feat-meta { display: flex; gap: 46px; justify-content: center; margin-top: 22px; }
     .feat-meta .mv { font: 700 34px 'JetBrains Mono'; color: #fff; font-variant-numeric: tabular-nums; }
@@ -450,14 +455,16 @@
         t = 'Donation';
         const inc = d.incentive ? '<div class="feat-don-inc">&rarr; ' + escHtml(d.incentive) + '</div>' : '';
         // Name + amount up top, chosen incentive under it, and the message —
-        // the thing the host reads out — as the headline.
+        // the thing the host reads out — as the headline, sized by length.
+        const mlen = (d.comment || '').length;
+        const msgCls = mlen <= 64 ? ' msg-xl' : mlen <= 115 ? '' : mlen <= 180 ? ' msg-md' : ' msg-sm';
         html = d.comment
           ? '<div class="feat-don-head"><span class="n">' + escHtml(d.name || 'Anonymous') + '</span><span class="a">' + moneyBig(d.amount) + '</span></div>' +
             inc +
-            '<div class="feat-don-msg">“' + escHtml(d.comment) + '”</div>'
+            '<div class="feat-don-msg' + msgCls + '">“' + escHtml(d.comment) + '”</div>'
           : '<div style="text-align:center;">' +
-            '<div class="feat-line" style="font-size:104px;line-height:1;">' + escHtml(d.name || 'Anonymous') + '</div>' +
-            '<div class="feat-num" style="font-size:130px;color:var(--live);margin-top:14px;">' + moneyBig(d.amount) + '</div>' +
+            '<div class="feat-line" style="font-size:120px;line-height:1;">' + escHtml(d.name || 'Anonymous') + '</div>' +
+            '<div class="feat-num" style="font-size:150px;color:var(--live);margin-top:16px;">' + moneyBig(d.amount) + '</div>' +
             '</div>' + inc;
       } else if (f === 'incentive') {
         const x = feature.t || {};
