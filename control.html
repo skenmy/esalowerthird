@@ -2045,6 +2045,7 @@
         return `
           <div class="preset-card ${isQueued ? 'queued' : ''}" data-id="${preset.id}" data-index="${index}"
                draggable="true"
+               onmousedown="this.draggable = !event.target.closest('input')"
                ondragstart="onDragStart(event)" ondragend="onDragEnd(event)"
                ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
             <div class="preset-key">${num <= 9 ? num : ''}</div>
