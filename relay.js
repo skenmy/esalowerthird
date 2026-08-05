@@ -577,6 +577,26 @@ function trackOverlayState(data) {
   }
 }
 
+// Normalized public JSON for one poll: options sorted by amount with the
+// share (%) precomputed, so consumers don't need to know Tiltify's shape.
+function pollJson(p) {
+  const options = (p.options || []).map(o => ({
+    id: o.id,
+    name: o.name,
+    amount: parseFloat(o.total_amount_raised?.value ?? o.amount_raised?.value ?? 0) || 0,
+  })).sort((a, b) => b.amount - a.amount);
+  const total = options.reduce((sum, o) => sum + o.amount, 0);
+  for (const o of options) o.share = total > 0 ? Math.round((o.amount / total) * 1000) / 10 : 0;
+  const c = tiltifyCache.campaign;
+  return {
+    id: p.id,
+    name: p.name,
+    total,
+    currency: (c && (c.total_amount_raised?.currency || c.amount_raised?.currency)) || null,
+    options,
+  };
+}
+
 const server = http.createServer((req, res) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
@@ -607,6 +627,28 @@ const server = http.createServer((req, res) => {
   if (url.pathname === '/healthz' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'text/plain', ...CORS_HEADERS });
     res.end('ok');
+    return;
+  }
+
+  // GET /api/polls and /api/polls/<id> — public JSON poll standings.
+  // Deliberately NOT token-gated: this exposes exactly what the open /ws
+  // feed already broadcasts (reads are open, writes are gated).
+  if ((url.pathname === '/api/polls' || url.pathname.startsWith('/api/polls/')) && req.method === 'GET') {
+    const id = decodeURIComponent(url.pathname.slice('/api/polls/'.length).replace(/\/+$/, ''));
+    const lastUpdated = tiltifyCache.lastUpdated || null;
+    if (!id || url.pathname === '/api/polls') {
+      res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      res.end(JSON.stringify({ ok: true, lastUpdated, polls: (tiltifyCache.polls || []).map(pollJson) }));
+      return;
+    }
+    const poll = (tiltifyCache.polls || []).find(p => String(p.id) === id);
+    if (!poll) {
+      res.writeHead(404, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+      res.end(JSON.stringify({ ok: false, error: 'Unknown poll id' }));
+      return;
+    }
+    res.writeHead(200, { 'Content-Type': 'application/json', ...CORS_HEADERS });
+    res.end(JSON.stringify({ ok: true, lastUpdated, poll: pollJson(poll) }));
     return;
   }
 

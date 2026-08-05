@@ -11,11 +11,14 @@ Five hand-written files. No build step, no bundler, no framework.
 - `relay.js` (~650 lines) — Node WebSocket relay. Also serves the static
   HTML files over plain HTTP (so the same port hosts `/ws`, the static
   files, `/healthz`, `/api/send`, `/api/hide`, `/api/cmd/<go|hide|total>`,
-  `/api/studio/<clear|standby|air|recording|wrap>`, `/api/state`).
+  `/api/studio/<clear|standby|air|recording|wrap>`, `/api/state`,
+  `/api/polls[/<id>]`).
   `RELAY_TOKEN` (when set) makes `/ws` reads open but gates *writes* — a
   connection may mutate the overlay only if it carries a Caddy-injected
   `X-Forwarded-User` (control panel via the `/adminws` forward_auth path)
-  or a valid `?token=`; `/api/*` always needs the token. `liveState`
+  or a valid `?token=`; `/api/*` always needs the token except
+  `/api/polls[/<id>]`, which is a public read (same data as the open
+  `/ws` feed). `liveState`
   (names/total/studio) is inferred from relayed traffic so `/api/state`
   can drive Companion button feedback. Polls Tiltify (15s) and
   Horaro (5m); handles `src_lookup` / `twitch_lookup` itself rather

@@ -127,11 +127,13 @@ All optional — the relay degrades gracefully when a section is unset.
 
 The relay serves a small HTTP surface on the same port (handy for
 Bitfocus Companion, scripts, health probes). All `/api/*` routes require
-the token when `RELAY_TOKEN` is set; `/healthz` and the static files stay
-open.
+the token when `RELAY_TOKEN` is set, except `/api/polls`; that,
+`/healthz`, and the static files stay open.
 
 | route | does |
 |---|---|
+| `GET /api/polls` | public JSON of all poll standings: `{ ok, lastUpdated, polls: [{ id, name, total, currency, options: [{ id, name, amount, share }] }] }`, options sorted by amount. No token needed — it's the same data the open `/ws` feed broadcasts. |
+| `GET /api/polls/<id>` | same shape for one poll (`{ ok, lastUpdated, poll }`); 404 on unknown id. |
 | `POST /api/send` | broadcast the JSON body to every WS client (arbitrary `{ type, … }`). |
 | `GET /api/hide` | hide every overlay (names, tiltify, schedule, wheel, image) + clear the host feature. |
 | `GET /api/cmd/<go\|hide\|total>` | fire a Companion deck press — relayed to `control.html` as `remote_cmd`. |
