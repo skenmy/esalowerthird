@@ -40,6 +40,10 @@ Five hand-written files. No build step, no bundler, no framework.
   stage to fit. Reads the same `tiltify_data` / `schedule_data` feeds for
   the always-on board (total, up next, bid war, studio state, producer
   banner) and surfaces a large feature takeover on `confidence_feature`.
+- `polls.html` (~350 lines) — public viewer-facing poll results page.
+  Listen-only; reads `tiltify_data.polls`, selectable poll list
+  (deep-link `?poll=<id>`), updates option rows in place so bar
+  transitions animate between refreshes. Responsive, brand skin.
 - `index.html` (~330 lines) — standalone keyboard-driven demo, no
   WebSocket. Lives on for designing overlay states without a relay.
 
@@ -167,5 +171,6 @@ terminates TLS at `lowerthird.skenmy.com` and proxies to the container.
   for progress. Tiltify's default page size is 10 — every list fetch
   needs an explicit `?limit=100` or items silently go missing.
 - Adding new static files: only `source.html`, `control.html`,
-  `confidence.html`, `index.html` are in the `STATIC_FILES` allowlist in
-  `relay.js`; the Dockerfile also `COPY`s exactly those four.
+  `confidence.html`, `polls.html`, `index.html` are in the
+  `STATIC_FILES` allowlist in `relay.js`; the Dockerfile also `COPY`s
+  exactly those five.

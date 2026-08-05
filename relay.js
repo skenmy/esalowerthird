@@ -14,7 +14,7 @@ const { WebSocketServer } = require('ws');
 // Static-file serving. STATIC_DIR holds source.html / control.html / index.html
 // alongside relay.js inside the container; set STATIC_DIR=disabled to opt out.
 const STATIC_DIR = process.env.STATIC_DIR === 'disabled' ? null : (process.env.STATIC_DIR || __dirname);
-const STATIC_FILES = new Set(['source.html', 'control.html', 'confidence.html', 'index.html', 'esa-logotype.png', 'esa-marathon-cube.svg']);
+const STATIC_FILES = new Set(['source.html', 'control.html', 'confidence.html', 'polls.html', 'index.html', 'esa-logotype.png', 'esa-marathon-cube.svg']);
 const CONTENT_TYPES = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'application/javascript; charset=utf-8', '.png': 'image/png', '.svg': 'image/svg+xml', '.json': 'application/json; charset=utf-8' };
 
 const PORT = parseInt(process.env.RELAY_PORT || '8081', 10);

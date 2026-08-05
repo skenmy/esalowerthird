@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESA Donation Polls</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;500;600;700&family=Bebas+Neue&family=Cabin:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    :root {
+      --brand--ground:   #141118;
+      --brand--keyline:  #241b38;
+      --brand--plum:     #3a2657;
+      --brand--royal:    #734e9e;
+      --brand--gold:     #fdbb1c;
+      --brand--gold-2:   #ffd968;
+      --brand--cream:    #fff1c4;
+      --brand--ink:      #efeeec;
+      --brand--good:     #5cbd7d;
+      --brand--bad:      #fc1c67;
+      --brand--muted:    #a99cb8;
+
+      --panel: linear-gradient(135deg, #2a1252 0%, #180a30 100%);
+      --sub: #c9b3ec;
+      --track: rgba(20, 17, 24, 0.55);
+    }
+
+    html { background: var(--brand--ground); }
+    body {
+      font-family: 'Cabin', system-ui, sans-serif;
+      color: var(--brand--ink);
+      min-height: 100vh;
+      background:
+        radial-gradient(1000px 500px at 70% -10%, rgba(115, 78, 158, 0.18), transparent 70%),
+        radial-gradient(800px 420px at 0% 100%, rgba(58, 38, 87, 0.35), transparent 70%),
+        var(--brand--ground);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #wrap { max-width: 1040px; margin: 0 auto; padding: 28px 20px 60px; }
+
+    /* ===== Header ===== */
+    header { display: flex; align-items: center; gap: 18px; margin-bottom: 26px; }
+    header img { height: 52px; width: auto; display: block; }
+    .head-title { font-family: 'Bebas Neue', sans-serif; font-size: 40px; letter-spacing: 0.03em; line-height: 0.95; color: var(--brand--cream); }
+    .head-sub { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 15px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--brand--muted); margin-top: 4px; }
+    .head-right { margin-left: auto; text-align: right; }
+
+    @keyframes livedot { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(0.65); opacity: 0.5; } }
+    #status {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 14px;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--brand--muted);
+      border: 1px solid var(--brand--keyline); border-radius: 999px; padding: 6px 14px;
+      background: rgba(20, 17, 24, 0.5);
+    }
+    #status .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--brand--good); animation: livedot 1.6s ease-in-out infinite; }
+    #status.down .dot { background: var(--brand--bad); animation: none; }
+    #updated { font-family: 'Barlow Condensed', sans-serif; font-size: 13px; letter-spacing: 0.08em; color: var(--brand--muted); margin-top: 6px; }
+
+    /* ===== Layout ===== */
+    #layout { display: grid; grid-template-columns: 300px 1fr; gap: 22px; align-items: start; }
+
+    /* ===== Poll list ===== */
+    #pollList { display: flex; flex-direction: column; gap: 10px; }
+    .poll-item {
+      text-align: left; cursor: pointer; width: 100%;
+      background: rgba(36, 27, 56, 0.45); border: 1px solid var(--brand--keyline);
+      border-radius: 12px; padding: 13px 16px; color: var(--brand--ink);
+      font-family: inherit; transition: border-color 0.2s ease, background 0.2s ease;
+    }
+    .poll-item:hover { border-color: var(--brand--royal); }
+    .poll-item.active { background: var(--panel); border-color: var(--brand--gold); box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08); }
+    .poll-item .pi-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 19px; line-height: 1.15; }
+    .poll-item .pi-meta { display: flex; justify-content: space-between; align-items: baseline; margin-top: 5px; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; letter-spacing: 0.05em; color: var(--brand--muted); }
+    .poll-item .pi-amt { color: var(--brand--gold); font-weight: 600; font-variant-numeric: tabular-nums; }
+    .poll-item.active .pi-name { color: var(--brand--cream); }
+
+    /* ===== Selected poll panel ===== */
+    #pollPanel {
+      background: var(--panel); border: 1px solid var(--brand--keyline);
+      border-radius: 16px; padding: 26px 28px 30px;
+      box-shadow: inset 0 2px 0 rgba(255, 255, 255, 0.08), 0 18px 40px rgba(0, 0, 0, 0.45);
+    }
+    .pp-kicker { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 14px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--brand--cream); opacity: 0.8; }
+    #ppName { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 0.02em; line-height: 1; color: #fff; margin-top: 6px; text-wrap: balance; }
+    .pp-total { display: flex; align-items: baseline; gap: 10px; margin: 10px 0 22px; font-family: 'Barlow Condensed', sans-serif; }
+    #ppTotal { font-weight: 700; font-size: 26px; color: var(--brand--gold); font-variant-numeric: tabular-nums; }
+    .pp-total span.lbl { font-size: 15px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sub); }
+
+    /* option rows */
+    #ppOptions { display: flex; flex-direction: column; gap: 16px; }
+    .opt { }
+    .opt-head { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; margin-bottom: 6px; }
+    .opt-name { font-family: 'Barlow Condensed', sans-serif; font-weight: 600; font-size: 21px; color: #fff; min-width: 0; overflow-wrap: anywhere; }
+    .opt-nums { display: flex; align-items: baseline; gap: 10px; flex-shrink: 0; font-family: 'Barlow Condensed', sans-serif; font-variant-numeric: tabular-nums; }
+    .opt-amt { font-weight: 700; font-size: 21px; color: var(--sub); }
+    .opt-pct { font-weight: 700; font-size: 21px; color: var(--sub); min-width: 52px; text-align: right; }
+    .opt-track { height: 22px; background: var(--track); border-radius: 7px; overflow: hidden; }
+    .opt-fill { height: 100%; width: 0; border-radius: 7px; background: var(--brand--royal); transition: width 0.6s cubic-bezier(0.16, 1, 0.3, 1), background 0.3s ease; }
+    .opt.lead .opt-name { color: var(--brand--cream); }
+    .opt.lead .opt-amt, .opt.lead .opt-pct { color: var(--brand--gold); }
+    .opt.lead .opt-fill { background: linear-gradient(90deg, var(--brand--gold) 0%, var(--brand--gold-2) 100%); }
+
+    @keyframes bump { 0% { transform: scale(1); } 35% { transform: scale(1.14); color: var(--brand--gold-2); } 100% { transform: scale(1); } }
+    .opt-amt.bump { animation: bump 0.6s cubic-bezier(0.16, 1, 0.3, 1); }
+
+    .empty {
+      font-family: 'Barlow Condensed', sans-serif; font-size: 20px; color: var(--brand--muted);
+      background: rgba(36, 27, 56, 0.45); border: 1px dashed var(--brand--keyline);
+      border-radius: 12px; padding: 30px; text-align: center;
+    }
+
+    footer { margin-top: 34px; text-align: center; font-family: 'Barlow Condensed', sans-serif; font-size: 14px; letter-spacing: 0.08em; color: var(--brand--muted); }
+    footer a { color: var(--sub); }
+
+    /* ===== Mobile ===== */
+    @media (max-width: 760px) {
+      #wrap { padding: 18px 14px 44px; }
+      header { flex-wrap: wrap; gap: 12px; margin-bottom: 18px; }
+      header img { height: 40px; }
+      .head-title { font-size: 30px; }
+      .head-right { width: 100%; margin-left: 0; text-align: left; }
+      #layout { grid-template-columns: 1fr; gap: 16px; }
+      /* poll list becomes a horizontal chip rail */
+      #pollList { flex-direction: row; overflow-x: auto; padding-bottom: 6px; -webkit-overflow-scrolling: touch; }
+      .poll-item { width: auto; flex-shrink: 0; max-width: 260px; }
+      .poll-item .pi-meta { gap: 14px; }
+      #pollPanel { padding: 20px 18px 24px; }
+      #ppName { font-size: 32px; }
+      .opt-name, .opt-amt, .opt-pct { font-size: 18px; }
+    }
+  </style>
+</head>
+<body>
+  <div id="wrap">
+    <header>
+      <img src="esa-marathon-cube.svg" alt="ESA">
+      <div>
+        <div class="head-title">Donation Polls</div>
+        <div class="head-sub" id="eventName">ESA Marathon</div>
+      </div>
+      <div class="head-right">
+        <span id="status"><span class="dot"></span><span id="statusText">Connecting</span></span>
+        <div id="updated"></div>
+      </div>
+    </header>
+
+    <div id="layout" style="display:none;">
+      <div id="pollList"></div>
+      <div id="pollPanel">
+        <div class="pp-kicker">Donate to vote — highest total wins</div>
+        <div id="ppName"></div>
+        <div class="pp-total"><span id="ppTotal"></span><span class="lbl">raised in this poll</span></div>
+        <div id="ppOptions"></div>
+      </div>
+    </div>
+    <div id="emptyState" class="empty">Waiting for poll data…</div>
+
+    <footer>Live results from <a href="https://tiltify.com" rel="noopener">Tiltify</a> — updates automatically every few seconds.</footer>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+
+    // ===== State =====
+    let polls = [];
+    let campaign = null;
+    let selectedId = urlParams.get('poll') || null;
+    let lastUpdate = null;
+
+    // Escapes for element text AND quoted attribute values.
+    function escHtml(str) {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    // ===== Currency =====
+    const CUR = { USD: '$', EUR: '€', GBP: '£', SEK: 'kr ', NOK: 'kr ', DKK: 'kr ', CAD: '$', AUD: '$' };
+    function curSymbol() {
+      const code = campaign && (campaign.total_amount_raised?.currency || campaign.amount_raised?.currency || campaign.goal?.currency);
+      return CUR[code] || '$';
+    }
+    function money(value) {
+      const n = parseFloat(value) || 0;
+      const whole = Math.abs(n - Math.round(n)) < 0.005;
+      return curSymbol() + n.toLocaleString('en-US', { minimumFractionDigits: whole ? 0 : 2, maximumFractionDigits: whole ? 0 : 2 });
+    }
+
+    function optAmount(o) { return parseFloat(o.total_amount_raised?.value ?? o.amount_raised?.value ?? 0) || 0; }
+    function pollTotal(p) { return (p.options || []).reduce((sum, o) => sum + optAmount(o), 0); }
+
+    // ===== Poll list (sidebar / chip rail) =====
+    function renderList() {
+      const host = document.getElementById('pollList');
+      host.innerHTML = polls.map(p => {
+        const total = pollTotal(p);
+        return '<button class="poll-item' + (p.id === selectedId ? ' active' : '') + '" data-id="' + escHtml(p.id) + '">' +
+          '<div class="pi-name">' + escHtml(p.name || 'Poll') + '</div>' +
+          '<div class="pi-meta"><span>' + (p.options || []).length + ' options</span>' +
+          '<span class="pi-amt">' + money(total) + '</span></div>' +
+        '</button>';
+      }).join('');
+      host.querySelectorAll('.poll-item').forEach(btn => {
+        btn.addEventListener('click', () => selectPoll(btn.dataset.id));
+      });
+    }
+
+    function selectPoll(id) {
+      if (id === selectedId) return;
+      selectedId = id;
+      // Deep-linkable: keep ?poll=<id> in the URL without reloading.
+      const url = new URL(window.location);
+      url.searchParams.set('poll', id);
+      history.replaceState(null, '', url);
+      optionRows.clear();
+      document.getElementById('ppOptions').innerHTML = '';
+      renderList();
+      renderPoll();
+    }
+
+    // ===== Selected poll =====
+    // Option rows are kept and updated in place (not re-innerHTML'd) so the
+    // bar-width CSS transitions actually animate between 15s data refreshes.
+    const optionRows = new Map(); // option id -> { row, name, fill, amt, pct, lastAmt }
+
+    function renderPoll() {
+      const poll = polls.find(p => p.id === selectedId);
+      if (!poll) return;
+      document.getElementById('ppName').textContent = poll.name || 'Poll';
+      const total = pollTotal(poll);
+      document.getElementById('ppTotal').textContent = money(total);
+
+      const host = document.getElementById('ppOptions');
+      const sorted = (poll.options || []).slice().sort((a, b) => optAmount(b) - optAmount(a));
+      const liveIds = new Set(sorted.map(o => String(o.id)));
+
+      // Drop rows for options that no longer exist.
+      for (const [id, refs] of optionRows) {
+        if (!liveIds.has(id)) { refs.row.remove(); optionRows.delete(id); }
+      }
+
+      sorted.forEach((o, i) => {
+        const id = String(o.id);
+        let refs = optionRows.get(id);
+        if (!refs) {
+          const row = document.createElement('div');
+          row.className = 'opt';
+          row.innerHTML = '<div class="opt-head"><span class="opt-name"></span>' +
+            '<span class="opt-nums"><span class="opt-amt"></span><span class="opt-pct"></span></span></div>' +
+            '<div class="opt-track"><div class="opt-fill"></div></div>';
+          refs = {
+            row,
+            name: row.querySelector('.opt-name'),
+            fill: row.querySelector('.opt-fill'),
+            amt: row.querySelector('.opt-amt'),
+            pct: row.querySelector('.opt-pct'),
+            lastAmt: null,
+          };
+          optionRows.set(id, refs);
+        }
+        const amt = optAmount(o);
+        const share = total > 0 ? (amt / total) * 100 : 0;
+        refs.name.textContent = o.name || 'Option';
+        refs.amt.textContent = money(amt);
+        refs.pct.textContent = Math.round(share) + '%';
+        refs.fill.style.width = share.toFixed(1) + '%';
+        refs.row.classList.toggle('lead', i === 0 && amt > 0);
+        if (refs.lastAmt !== null && amt > refs.lastAmt) {
+          refs.amt.classList.remove('bump');
+          void refs.amt.offsetWidth; // restart the animation
+          refs.amt.classList.add('bump');
+        }
+        refs.lastAmt = amt;
+        // appendChild moves existing rows, so the ranking reorders live while
+        // the width transition keeps running on the reused elements.
+        host.appendChild(refs.row);
+      });
+    }
+
+    function render() {
+      const layout = document.getElementById('layout');
+      const empty = document.getElementById('emptyState');
+      if (!polls.length) {
+        layout.style.display = 'none';
+        empty.style.display = 'block';
+        empty.textContent = lastUpdate ? 'No polls are running right now — check back soon!' : 'Waiting for poll data…';
+        return;
+      }
+      layout.style.display = 'grid';
+      empty.style.display = 'none';
+      if (!selectedId || !polls.some(p => p.id === selectedId)) selectedId = polls[0].id;
+      renderList();
+      renderPoll();
+    }
+
+    // ===== Updated-ago ticker =====
+    function tickUpdated() {
+      const el = document.getElementById('updated');
+      if (!lastUpdate) { el.textContent = ''; return; }
+      const s = Math.max(0, Math.round((Date.now() - lastUpdate) / 1000));
+      el.textContent = 'Updated ' + (s < 5 ? 'just now' : s + 's ago');
+    }
+    setInterval(tickUpdated, 1000);
+
+    // ===== WebSocket =====
+    // Listen-only public page: open /ws with no credential, same as source.html.
+    const wsUrl = (location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws';
+    let ws;
+    function setStatus(up) {
+      document.getElementById('status').classList.toggle('down', !up);
+      document.getElementById('statusText').textContent = up ? 'Live' : 'Reconnecting';
+    }
+    function connect() {
+      ws = new WebSocket(wsUrl);
+      ws.onopen = () => setStatus(true);
+      ws.onmessage = (event) => {
+        let data;
+        try { data = JSON.parse(event.data); } catch { return; }
+        if (data.type === 'ping') { ws.send(JSON.stringify({ type: 'pong' })); return; }
+        if (data.type !== 'tiltify_data') return;
+        campaign = data.campaign || null;
+        polls = data.polls || [];
+        lastUpdate = Date.now();
+        if (campaign?.name) document.getElementById('eventName').textContent = campaign.name;
+        render();
+        tickUpdated();
+      };
+      ws.onclose = () => { setStatus(false); setTimeout(connect, 2000); };
+    }
+    connect();
+    render();
+  </script>
+</body>
+</html>

@@ -1,7 +1,7 @@
 # esalowerthird
 
 Browser-source overlay system for ESA (European Speedrunner Assembly)
-marathon streams. Four surfaces, one tiny WebSocket relay:
+marathon streams. Five surfaces, one tiny WebSocket relay:
 
 - **`/source.html`** — the OBS browser source. Transparent background,
   renders animated lower-thirds (runner names, Tiltify donation totals,
@@ -20,19 +20,23 @@ marathon streams. Four surfaces, one tiny WebSocket relay:
   studio state, producer banner) that surfaces what viewers see large so
   hosts can react. Listen only (`?scene=confidence`); self-scales to any
   1920×1080 display.
+- **`/polls.html`** — public poll-results page for viewers. Selectable
+  list of the campaign's donation polls (bid wars) with live-updating
+  bars, amounts, and percentages. Listen only, mobile-friendly;
+  deep-link a poll with `?poll=<id>`.
 - **`/index.html`** — standalone demo (no WebSocket, keyboard-driven).
   Useful for designing overlays without the relay running.
 
 Live at **<https://lowerthird.skenmy.com>** — `/control.html` is gated
 behind a Twitch sign-in via [tools.skenmy.com](https://tools.skenmy.com);
-`/source.html` and `/confidence.html` are public so OBS / the host
-monitor can hit them without credentials.
+`/source.html`, `/confidence.html`, and `/polls.html` are public so
+OBS, the host monitor, and viewers can hit them without credentials.
 
 ## What the relay does
 
 `relay.js` is a single ~600-line Node script. It:
 
-1. Serves the three HTML files.
+1. Serves the static HTML files.
 2. Hosts a WebSocket relay — broadcasts any message a client sends to
    every other connected client. Designed for tiny operator-team setups;
    the protocol is just JSON `{ type, … }`. Reads stay open; set
@@ -140,9 +144,10 @@ open.
 The relay separates **reading** the feed from **writing** to the overlay,
 so the public-facing parts stay open while injection is locked down.
 
-- **Reads are always open.** `source.html` / `confidence.html` connect to
-  `/ws` with no credential and just receive — an OBS browser source can't
-  do an interactive login, so this has to work. They never need a token.
+- **Reads are always open.** `source.html` / `confidence.html` /
+  `polls.html` connect to `/ws` with no credential and just receive — an
+  OBS browser source can't do an interactive login, so this has to work.
+  They never need a token.
 - **Writes need to be trusted.** A WS connection may send overlay-mutating
   messages (and trigger `src_lookup` / `twitch_lookup`) only if it is
   either:
