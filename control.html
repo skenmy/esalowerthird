@@ -1284,8 +1284,9 @@
     #tiltifySection .tiltify-tab-panel.active { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
     #tiltifySection .tiltify-tab-panel.active > input.tab-filter { flex-shrink: 0; }
     #tiltifySection .tiltify-tab-panel.active > div { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
-    /* Stream toggle is a control, not a list — don't let the panel flex squash it */
-    #tiltifySection .tiltify-tab-panel.active > #schedStreamRow { flex: 0 0 auto; overflow: visible; align-self: flex-start; }
+    /* Stream toggles are controls, not lists — don't let the panel flex squash them */
+    #tiltifySection .tiltify-tab-panel.active > #schedStreamRow,
+    #tiltifySection .tiltify-tab-panel.active > #donStreamRow { flex: 0 0 auto; overflow: visible; align-self: flex-start; }
     #tiltifySection .tiltify-tab-panel.active > .sched-panel-controls { flex: 0 0 auto; overflow: visible; }
 
     /* Schedule side-panel config row */
@@ -1324,6 +1325,9 @@
     .sc-panel-body .preset-list { margin-bottom: 0; }
     .sc-panel-body .shortcuts, .sc-shortcuts .shortcuts { background: none; border: none; padding: 0; }
     .mode-toggle.sm .mode-btn { padding: 4px 9px; font-size: 10px; }
+    /* Per-poll on-stream position (left/centre/right) picker */
+    .poll-pos { flex-shrink: 0; align-self: center; }
+    .poll-pos .mode-btn { padding: 4px 7px; font-size: 10px; }
     .btn-add.sm { padding: 4px 9px; font-size: 11px; }
     #funToolsSection .sc-panel-body { padding-top: 4px; }
     /* Confidence controls live in the left rail (compact) */
@@ -1492,6 +1496,7 @@
         <div class="sc-panel-body" style="padding-top:10px;">
           <div class="tiltify-tab-panel active" id="tiltifyPanelDonations">
             <input class="tab-filter" type="text" placeholder="Filter donations..." oninput="onFilterInput('donations', this.value)" onkeydown="event.stopPropagation()">
+            <div class="mode-toggle sm" id="donStreamRow" style="display: none; margin-bottom: 8px;"></div>
             <div id="listDonations"></div>
           </div>
           <div class="tiltify-tab-panel" id="tiltifyPanelTargets">
@@ -2387,7 +2392,7 @@
 
     // --- Tiltify ---
 
-    let tiltifyData = { campaign: null, donations: [], targets: [], milestones: [], donationMatches: [], incentives: {}, lastUpdated: 0 };
+    let tiltifyData = { campaign: null, donations: [], targets: [], milestones: [], donationMatches: [], incentives: {}, supportingCampaigns: [], lastUpdated: 0 };
     let autoCycleInterval = null;
     let autoCycleIndex = 0;
 
@@ -2408,9 +2413,37 @@
         milestones: data.milestones || [],
         donationMatches: data.donationMatches || [],
         incentives: data.incentives || {},
+        supportingCampaigns: data.supportingCampaigns || [],
         lastUpdated: data.lastUpdated || Date.now(),
       };
       renderTiltify();
+    }
+
+    // --- Donation stream filter (sub-campaign id, or 'all') ---
+    let donStreamId = 'all';
+    try { donStreamId = localStorage.getItem('esa-lt-don-stream') || 'all'; } catch (e) {}
+
+    function setDonStream(id) {
+      donStreamId = id;
+      lsSet('esa-lt-don-stream', id);
+      renderTiltifyLists();
+    }
+
+    // "ESA Summer 2026 - Stream 1" → "Stream 1"; anything else keeps its name
+    function streamLabel(name) {
+      const m = String(name || '').match(/stream\s*\d+/i);
+      return m ? m[0].replace(/\s*(\d+)$/, ' $1').replace(/^\w/, c => c.toUpperCase()) : (name || 'Campaign');
+    }
+
+    // --- Per-poll on-stream position (centre by default) ---
+    let pollPositions = {};
+    try { pollPositions = JSON.parse(localStorage.getItem('esa-lt-poll-pos') || '{}'); } catch (e) {}
+
+    function setPollPos(pollId, pos) {
+      if (pos === 'centre') delete pollPositions[pollId];
+      else pollPositions[pollId] = pos;
+      lsSet('esa-lt-poll-pos', JSON.stringify(pollPositions));
+      renderTiltifyLists();
     }
 
     function getDonationIncentive(d) {
@@ -2510,13 +2543,34 @@
       const pollFilter = (tabFilters.polls || '').toLowerCase();
       const msFilter = (tabFilters.milestones || '').toLowerCase();
 
+      // Donation stream filter — only offered when the team campaign has
+      // multiple supporting sub-campaigns (one per stream) to filter by.
+      const subCampaigns = tiltifyData.supportingCampaigns || [];
+      const donStreamRow = document.getElementById('donStreamRow');
+      if (subCampaigns.length > 1) {
+        if (donStreamId !== 'all' && !subCampaigns.some(sc => sc.id === donStreamId)) donStreamId = 'all';
+        donStreamRow.style.display = 'flex';
+        donStreamRow.innerHTML =
+          `<button class="mode-btn ${donStreamId === 'all' ? 'active' : ''}" onclick="setDonStream('all')">All</button>` +
+          subCampaigns.map(sc => {
+            const count = donations.filter(d => d.campaign_id === sc.id).length;
+            return `<button class="mode-btn ${donStreamId === sc.id ? 'active' : ''}" onclick="setDonStream('${escHtml(sc.id)}')" title="${escHtml(sc.name)}">${escHtml(streamLabel(sc.name))}<span class="tab-count">${count}</span></button>`;
+          }).join('');
+      } else {
+        donStreamRow.style.display = 'none';
+        donStreamId = 'all';
+      }
+
       // Donations list
+      const streamDonations = donStreamId === 'all'
+        ? donations
+        : donations.filter(d => d.campaign_id === donStreamId);
       const filteredDonations = donFilter
-        ? donations.filter(d => {
+        ? streamDonations.filter(d => {
             const text = [d.donor_name, d.name, d.donor_comment, d.comment, getDonationIncentive(d)].filter(Boolean).join(' ').toLowerCase();
             return text.includes(donFilter);
           })
-        : donations;
+        : streamDonations;
       const donList = document.getElementById('listDonations');
       if (filteredDonations.length === 0) {
         donList.innerHTML = emptyRow(donations.length ? 'No matches' : 'No donations yet');
@@ -2582,10 +2636,17 @@
             const amt = parseFloat(o.total_amount_raised?.value || o.amount_raised?.value || 0);
             return `${escHtml(o.name)} (${formatCurrency(amt)})`;
           }).join(' / ');
+          const pos = pollPositions[p.id] || 'centre';
+          const pid = escHtml(p.id);
           return `<div class="tiltify-item-row">` +
             `<div class="tiltify-item-info">` +
               `<div class="tiltify-item-name">${escHtml(p.name || 'Poll')}</div>` +
               `<div class="tiltify-item-amounts">${options}</div>` +
+            `</div>` +
+            `<div class="mode-toggle sm poll-pos">` +
+              `<button class="mode-btn ${pos === 'left' ? 'active' : ''}" onclick="setPollPos('${pid}', 'left')" title="Show on left">L</button>` +
+              `<button class="mode-btn ${pos === 'centre' ? 'active' : ''}" onclick="setPollPos('${pid}', 'centre')" title="Show centred">C</button>` +
+              `<button class="mode-btn ${pos === 'right' ? 'active' : ''}" onclick="setPollPos('${pid}', 'right')" title="Show on right">R</button>` +
             `</div>` +
             `<button class="tiltify-donation-show" onclick="tiltifyShowPoll(${origIndex})">Show</button>` +
           `</div>`;
@@ -2672,10 +2733,11 @@
     }
 
     function tiltifyShowPoll(index) {
-      if (progAllowed()) wsSend({ type: 'tiltify_show', display: 'poll', pollIndex: index });
-      confShow(buildFeat('poll', index));
       const p = tiltifyData.polls[index];
-      showToast(`Showing poll: ${p ? p.name : 'Poll'}`);
+      const position = (p && pollPositions[p.id]) || 'centre';
+      if (progAllowed()) wsSend({ type: 'tiltify_show', display: 'poll', pollIndex: index, position });
+      confShow(buildFeat('poll', index));
+      showToast(`Showing poll: ${p ? p.name : 'Poll'}${position !== 'centre' ? ` (${position})` : ''}`);
     }
 
     function tiltifyShowMatch(index) {

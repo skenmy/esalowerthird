@@ -80,6 +80,7 @@ let tiltifyCache = {
   milestones: [],
   incentives: {},  // { targets: {id: {name, raised, goal}}, polls: {id: {name, options: {optId: name}}} }
   donationMatches: [],
+  supportingCampaigns: [],  // [{id, name}] — lets clients map donation.campaign_id to a stream
   lastUpdated: 0,
 };
 
@@ -314,6 +315,7 @@ async function pollTiltify() {
       polls: incentives.pollsList || [],
       milestones: allMilestones,
       donationMatches: incentives.matchesList || [],
+      supportingCampaigns: incentives.campaignsList || [],
       incentives,
       lastUpdated: Date.now(),
     };
@@ -326,13 +328,14 @@ async function pollTiltify() {
 
 async function fetchIncentives(base) {
   // targets: lookup map for donation resolution, targetsList: full objects for display
-  const result = { targets: {}, polls: {}, targetsList: [], pollsList: [], matchesList: [], milestonesList: [] };
+  const result = { targets: {}, polls: {}, targetsList: [], pollsList: [], matchesList: [], milestonesList: [], campaignsList: [] };
 
   try {
     // For team campaigns, incentives live on supporting sub-campaigns
     if (TILTIFY_CAMPAIGN_TYPE === 'team_campaigns') {
       const subRes = await tiltifyGetSafe(`${base}/supporting_campaigns?limit=100`);
       const subCampaigns = subRes?.data || [];
+      result.campaignsList = subCampaigns.map(sc => ({ id: sc.id, name: sc.name || '' }));
 
       const fetches = subCampaigns.map(async (sc) => {
         const scBase = `/api/public/campaigns/${sc.id}`;
